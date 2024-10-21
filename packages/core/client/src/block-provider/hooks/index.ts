@@ -52,6 +52,7 @@ import { useBlockRequestContext, useFilterByTk, useParamsFromRecord } from '../B
 import { useOperators } from '../CollectOperators';
 import { useDetailsBlockContext } from '../DetailsBlockProvider';
 import { TableFieldResource } from '../TableFieldProvider';
+import escapeStringRegexp from 'escape-string-regexp';
 
 export * from './useBlockHeightProps';
 export * from './useDataBlockParentRecord';
@@ -906,7 +907,8 @@ export const useUpdateActionProps = () => {
         skipValidator,
         triggerWorkflows,
       } = actionSchema?.['x-action-settings'] ?? {};
-      const { manualClose, redirecting, redirectTo, successMessage, actionAfterSuccess } = onSuccess || {};
+      const { manualClose, redirecting, successMessage, actionAfterSuccess } = onSuccess || {};
+      let redirectTo: string = onSuccess?.redirectTo;
       const assignedValues = {};
       const waitList = Object.keys(originalAssignedValues).map(async (key) => {
         const value = originalAssignedValues[key];
@@ -987,6 +989,21 @@ export const useUpdateActionProps = () => {
           });
         } else {
           message.success(compile(successMessage));
+          if (redirectTo) {
+            // 提交成功后跳转到支持变量
+            const VARIABLE_REG = /\{\{.+?\}\}/g;
+            const hasVariable = VARIABLE_REG.test(redirectTo);
+            if (hasVariable) {
+              const _variables = redirectTo.match(VARIABLE_REG);
+              const _variableValues = await Promise.all(
+                _variables.map((va) => variables.parseVariable(va, localVariables)),
+              );
+              _variables.forEach((v, index) => {
+                const val = _variableValues[index];
+                redirectTo = redirectTo.replace(new RegExp(escapeStringRegexp(v), 'g'), val.value);
+              });
+            }
+          }
           if (
             ((redirecting && !actionAfterSuccess) ||
               actionAfterSuccess === 'redirect' ||
