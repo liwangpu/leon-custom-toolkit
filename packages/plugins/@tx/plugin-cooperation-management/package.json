@@ -1,0 +1,22 @@
+{
+  "name": "@tx/plugin-cooperation-management",
+  "version": "0.0.9",
+  "main": "dist/server/index.js",
+  "displayName": "泰香: 协同文件管理",
+  "displayName.zh-CN": "泰香: 协同文件管理",
+  "description": "提供协同文件管理相关服务",
+  "dependencies": {
+    "mobx": "^6.13.1",
+    "classnames": "^2.5.1",
+    "mobx-react-lite": "^4.0.7",
+    "mobx-state-tree": "^6.0.1",
+    "react-contexify": "^6.0.0",
+    "color-hash": "^2.0.2",
+    "react-resizable-panels": "^2.1.6"
+  },
+  "peerDependencies": {
+    "@nocobase/client": "1.x",
+    "@nocobase/server": "1.x",
+    "@nocobase/test": "1.x"
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "name": "@tx/plugin-tiktok",
+  "version": "0.0.6",
+  "main": "dist/server/index.js",
+  "displayName": "泰香: tiktok管理",
+  "displayName.zh-CN": "泰香: tiktok管理",
+  "description": "tiktok管理相关",
+  "dependencies": {
+    "copy-to-clipboard": "^3.3.3",
+    "fingerprint-generator": "^2.1.61"
+  },
+  "peerDependencies": {
+    "@nocobase/client": "1.x",
+    "@nocobase/server": "1.x",
+    "@nocobase/test": "1.x"
+  }
+}

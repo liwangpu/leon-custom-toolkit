@@ -1,0 +1,1 @@
+# @tx/plugin-cooperation-management
