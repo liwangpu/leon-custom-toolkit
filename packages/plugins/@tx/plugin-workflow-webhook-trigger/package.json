@@ -1,0 +1,20 @@
+{
+  "name": "@tx/plugin-workflow-webhook-trigger",
+  "version": "0.0.10",
+  "main": "dist/server/index.js",
+  "displayName": "Workflow: WebhookTrigger",
+  "displayName.zh-CN": "泰香: 工作流-接受外部HTTP请求并启动工作流",
+  "description": "Trigger a workflow by external http request.",
+  "description.zh-CN": "接受外部HTTP请求并启动工作流",
+  "peerDependencies": {
+    "@nocobase/client": "1.x",
+    "@nocobase/database": "1.x",
+    "@nocobase/plugin-workflow": ">=0.17.0-alpha.3",
+    "@nocobase/server": "1.x",
+    "@nocobase/test": "1.x"
+  },
+  "keywords": [
+    "Workflow"
+  ],
+  "gitHead": "1bb62ceb7f30a24622b8b98c5accb1de2775c1f2"
+}

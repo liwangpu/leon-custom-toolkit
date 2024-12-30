@@ -1,0 +1,27 @@
+{
+  "name": "@tx/plugin-workflow-webhook-response",
+  "version": "0.0.10",
+  "main": "dist/server/index.js",
+  "displayName": "Workflow: WebhookResponse",
+  "displayName.zh-CN": "泰香: 工作流-向外部HTTP请求返回数据",
+  "description": "send http response by webhook.",
+  "description.zh-CN": "向外部HTTP请求返回数据",
+  "devDependencies": {
+    "antd": "5.x",
+    "axios": "^0.26.1",
+    "react": "18.x",
+    "react-i18next": "^11.15.1"
+  },
+  "peerDependencies": {
+    "@tx/plugin-workflow-webhook-trigger": ">=0.0.2",
+    "@nocobase/client": "1.x",
+    "@nocobase/database": "1.x",
+    "@nocobase/plugin-workflow": ">=0.17.0-alpha.3",
+    "@nocobase/server": "1.x",
+    "@nocobase/test": "1.x"
+  },
+  "keywords": [
+    "Workflow"
+  ],
+  "gitHead": "1bb62ceb7f30a24622b8b98c5accb1de2775c1f2"
+}
