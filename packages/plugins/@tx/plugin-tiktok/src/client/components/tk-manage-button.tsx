@@ -10,7 +10,7 @@
 import React, { FC } from 'react';
 import { createStyles, useCollectionRecordData, withDynamicSchemaProps } from '@nocobase/client';
 import { Button, Flex, Dropdown, Space } from 'antd';
-import { DownOutlined, SmileOutlined } from '@ant-design/icons';
+import { ApiOutlined, DownOutlined, SmileOutlined, TabletOutlined } from '@ant-design/icons';
 import type { MenuProps } from 'antd';
 import { useMessageCenter } from '../hooks';
 import { useT } from '../locale';
@@ -36,9 +36,19 @@ export const TKManageButton: FC<any> = withDynamicSchemaProps(
 
     const items: MenuProps['items'] = [
       {
+        key: 'auto_switch_video',
+        label: '授权',
+        icon: <ApiOutlined />,
+        onClick: ({ domEvent }) => {
+          domEvent.stopPropagation();
+          console.log(`account:`, account);
+          // messageCenter.autoWatchVideo({ account });
+        },
+      },
+      {
         key: 'open',
         label: '打开',
-        // icon: <SmileOutlined />,
+        icon: <TabletOutlined />,
         onClick: ({ domEvent }) => {
           domEvent.stopPropagation();
           messageCenter.startupTiktokWindow({ account });

@@ -7,8 +7,6 @@
  * For more information, please refer to: https://www.nocobase.com/agreement.
  */
 
-window
-
 // CSS modules
 type CSSModuleClasses = { readonly [key: string]: string };
 

@@ -1,7 +1,8 @@
 import { Plugin } from '@nocobase/server';
-import { getSubcription, tkDailyTaskReport } from './actions';
+import { getSubcription, tkAuthorize, tkAuthorizeFeedback, tkDailyTaskReport } from './actions';
 import { isNil } from 'lodash';
 import { generateBrowserFingerprint } from './utils';
+import { TikTokAuth } from './tiktok-auth';
 
 export class PluginTiktokServer extends Plugin {
   async afterAdd() {}
@@ -21,9 +22,19 @@ export class PluginTiktokServer extends Plugin {
       name: 'tiktok',
       actions: {
         dailyTaskReport: tkDailyTaskReport(),
+        authorize: tkAuthorize(),
+        authorizeFeedback: tkAuthorizeFeedback(),
+        // tokenFeedback: tkFetchTokenFeedback(),
       },
     });
     this.app.acl.allow('tiktok', '*', 'loggedIn');
+    this.app.acl.allow('tiktok', 'authorize', 'public');
+    this.app.acl.allow('tiktok', 'authorizeFeedback', 'public');
+    // this.app.acl.allow('tiktok', 'tokenFeedback', 'public');
+
+    this.app.authManager.registerTypes('TikTok', {
+      auth: TikTokAuth,
+    });
 
     const appendFingerprint = async (account, options) => {
       if (isNil(account.LanguageId) || !isNil(account.fingerprint)) return;
