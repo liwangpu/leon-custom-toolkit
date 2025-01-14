@@ -1,4 +1,5 @@
-import { Context } from '@nocobase/actions';
+import actions, { Context } from '@nocobase/actions';
+import Application from '@nocobase/server';
 import { FingerprintGenerator } from 'fingerprint-generator';
 import { floor, merge } from 'lodash';
 
