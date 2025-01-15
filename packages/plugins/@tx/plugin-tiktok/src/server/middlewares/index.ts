@@ -80,15 +80,15 @@ export function organizationResourceMiddeware(plugin: Plugin) {
    */
   const getUserInfo = (props: { ctx: any }) => {
     const { ctx } = props;
-    const { currentUser } = ctx.state || {};
+    const { currentUser, currentRole } = ctx.state || {};
     if (isNil(currentUser)) {
       return {};
     }
     const { organizationId, roles } = currentUser || { roles: [], organizationId: null };
-    const rolesSet = new Set(roles.map((r) => r.name));
-    const isRootAdmin = rolesSet.has('root');
-    const isOrganizationAdminUser = rolesSet.has('organizationAdmin');
-    const isOrganizationUser = rolesSet.has('organizationAdmin');
+    // const rolesSet = new Set(roles.map((r) => r.name));
+    const isRootAdmin = currentRole === 'root';
+    const isOrganizationAdminUser = currentRole === 'organizationAdmin';
+    const isOrganizationUser = currentRole === 'organizationAdmin';
     const { resourceName, actionName } = ctx.action;
     return {
       userId: currentUser.id,
