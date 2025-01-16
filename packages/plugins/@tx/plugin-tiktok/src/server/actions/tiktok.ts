@@ -77,8 +77,7 @@ export function tkAuthorize() {
   };
   return async (ctx: Context, next: () => any) => {
     const { accountId } = (ctx.request.query as any) || {};
-    console.log(`----------------[ data ]----------------`);
-    console.log(accountId);
+
     const authorizationRep = ctx.db.getRepository('tk_authorization');
     let record = await authorizationRep.findOne({
       filter: {
@@ -112,7 +111,7 @@ export function tkAuthorizeFeedback() {
   const persistingCodes = new Set<string>();
   return async (ctx: Context, next: () => any) => {
     const { code, state, error, errorDescription } = (ctx.request.body as any) || {};
-    console.log(`----------------[ data ]----------------`);
+
     if (isNil(code) || isNil(state) || persistingCodes.has(code)) return;
     persistingCodes.add(code);
     const authorizationRep = ctx.db.getRepository('tk_authorization');
@@ -147,8 +146,7 @@ export function tkAuthorizeFeedback() {
     });
 
     const tokenRep = ctx.db.getRepository('tk_token');
-    console.log(`---------[ data ]---------`);
-    console.log(data);
+
     await tokenRep.create({
       values: data,
     });
@@ -156,39 +154,3 @@ export function tkAuthorizeFeedback() {
     persistingCodes.delete(code);
   };
 }
-
-// export function tkFetchTokenFeedback() {
-//   return async (ctx: Context, next: () => any) => {
-//     // const { open_id, scope, access_token, expires_in, refresh_token, refresh_expires_in, token_type } =
-//     //   (ctx.request.body as any) || {};
-//     console.log(`----------------[ data ]----------------`);
-
-//     const tokenRep = ctx.db.getRepository('tk_token');
-
-//     // tokenRep.create({
-//     //   values: ctx.request.body,
-//     // });
-
-//     const params = new URLSearchParams();
-//     params.append(
-//       'code',
-//       'TIfJRZsbKvuAXReXY3DnC371vPaviYTCrx2EAibIshSHSkQuHl9bHnjej9HIPHgJuu5jMM1SV8rShXScKUqoinVczXFjIyugKBMyIMtDqjhiUtK2dKol17vC15iAVq3XpbuImW9l9E3jyd4gvtoZk7osNYEsQz2jaiDcIt66KssO9hH_SJ1FBHso6T1z7fOllSSWm5pmHZfmcqHzh1vbFQ*0!5022.e1',
-//     );
-//     params.append('client_key', 'sbaw4lzoqtmuncf23w');
-//     params.append('client_secret', 'WM4ScBYDkntf3E99EBM3J386He0AB1Gt');
-//     params.append('grant_type', 'authorization_code');
-//     params.append('redirect_uri', 'https://astrolabe.taixiang-tech.com/tk-authorize');
-
-//     const { data } = await axios.post('https://open.tiktokapis.com/v2/oauth/token/', params, {
-//       headers: {
-//         'Content-Type': 'application/x-www-form-urlencoded',
-//       },
-//     });
-
-//     console.log(`---------[ data ]---------`);
-//     console.log(data);
-//     tokenRep.create({
-//       values: data,
-//     });
-//   };
-// }

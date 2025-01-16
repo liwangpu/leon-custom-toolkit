@@ -41,7 +41,8 @@
     "version:alpha": "lerna version prerelease --preid alpha --force-publish=* --no-git-tag-version -m \"chore(versions): publish packages %s\"",
     "release:force": "lerna publish from-package --yes --no-git-tag-version",
     "release": "lerna publish",
-    "run:example": "tsx -r dotenv/config -r tsconfig-paths/register ./examples/index.ts"
+    "run:example": "tsx -r dotenv/config -r tsconfig-paths/register ./examples/index.ts",
+    "build_and_tar_tk":"yarn build @tx/plugin-tiktok && yarn nocobase tar @tx/plugin-tiktok"
   },
   "resolutions": {
     "@types/react": "^17.0.0",

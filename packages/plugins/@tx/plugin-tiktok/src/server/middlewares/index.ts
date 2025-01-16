@@ -7,7 +7,7 @@ interface IPermissionDefinition {
   afterCreate?: (props: { model: any; options: any; userInfo: { isOrganizationAdminUser?: boolean } }) => void;
   permissionFilter?: (props: {
     db: Database;
-    userInfo: { isOrganizationAdminUser: boolean; userId: number };
+    userInfo: { isOrganizationAdminUser: boolean; isRootAdmin: boolean; userId: number };
   }) => Promise<any>;
 }
 
@@ -32,8 +32,8 @@ const permissionDefinitions: Array<IPermissionDefinition> = [
     name: 'tk_account',
     async permissionFilter(props) {
       const { userInfo } = props;
-      const { userId, isOrganizationAdminUser } = userInfo;
-      if (isOrganizationAdminUser) return;
+      const { userId, isOrganizationAdminUser, isRootAdmin } = userInfo;
+      if (isOrganizationAdminUser || isRootAdmin) return;
       const filter = {
         $and: [{ operators: { id: { $eq: [userId] } } }],
       };
@@ -102,15 +102,15 @@ export function organizationResourceMiddeware(plugin: Plugin) {
   };
   //
   return async (ctx: any, next: () => Promise<any>) => {
-    const { resourceName, organizationId, userId, isOrganizationAdminUser } = getUserInfo({ ctx });
-    if (organizationResourceDefinitions.has(resourceName)) {
+    const { resourceName, organizationId, userId, isRootAdmin, isOrganizationAdminUser } = getUserInfo({ ctx });
+    if (organizationResourceDefinitions.has(resourceName) && !isRootAdmin) {
       const filter = {
         $and: [{ organizationId }],
       };
 
       const def = permissionDefinitionMap.get(resourceName);
       if (isFunction(def.permissionFilter)) {
-        const _filter = await def.permissionFilter({ db, userInfo: { userId, isOrganizationAdminUser } });
+        const _filter = await def.permissionFilter({ db, userInfo: { userId, isRootAdmin, isOrganizationAdminUser } });
         if (!isNil(_filter)) {
           merge(filter, _filter);
         }

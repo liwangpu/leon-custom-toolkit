@@ -1,6 +1,6 @@
 {
   "name": "@tx/plugin-tiktok",
-  "version": "0.0.22",
+  "version": "0.0.44",
   "main": "dist/server/index.js",
   "displayName": "泰香: tiktok管理",
   "displayName.zh-CN": "泰香: tiktok管理",
@@ -9,12 +9,15 @@
     "copy-to-clipboard": "^3.3.3",
     "fingerprint-generator": "^2.1.61",
     "mobx": "^6.13.1",
-    "mobx-react-lite": "^4.0.7",
-    "query-string": "^9.1.1"
+    "mobx-react-lite": "^4.0.7"
   },
   "peerDependencies": {
     "@nocobase/client": "1.x",
     "@nocobase/server": "1.x",
-    "@nocobase/test": "1.x"
+    "@nocobase/test": "1.x",
+    "query-string": "^6.13.8",
+    "axios": "^1.7.9",
+    "dayjs": "^1.11.13",
+    "lodash": "^4.17.21"
   }
 }

@@ -59,6 +59,9 @@ async function listWithPagination(ctx: Context) {
       pageSize: Number(pageSize),
     };
   } else {
+    console.log(`---------[ title ]---------`);
+    console.log(`repository.collection.name:`, repository.collection.name);
+    console.log(`options:`, options);
     const [rows, count] = await repository.findAndCount(options);
 
     ctx.body = {

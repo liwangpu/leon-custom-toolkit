@@ -34,7 +34,7 @@ export function getRepositoryFromParams(ctx: Context) {
   if (sourceId) {
     return ctx.db.getRepository<MultipleRelationRepository>(resourceName, sourceId);
   }
-
+  // console.log(`resourceName:`, resourceName);
   return ctx.db.getRepository<Repository>(resourceName);
 }
 

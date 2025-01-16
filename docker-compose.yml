@@ -1,80 +1,30 @@
 version: "3"
+
 networks:
-  nocobase:
+  tk-pro-net:
     driver: bridge
+
 services:
-  verdaccio:
-    image: verdaccio/verdaccio
+  noco-app:
+    image: registry.cn-shanghai.aliyuncs.com/leon-pu/noco:amd64-latest
+    container_name: tk_noco_app_c
     networks:
-      - nocobase
+      - tk-pro-net
     environment:
-      VERDACCIO_PORT: ${VERDACCIO_PORT}
-    restart: always
-    ports:
-      - "${VERDACCIO_PORT}:${VERDACCIO_PORT}"
-  mysql:
-    image: mysql:8
-    environment:
-      MYSQL_DATABASE: ${DB_DATABASE}
-      MYSQL_USER: ${DB_USER}
-      MYSQL_PASSWORD: ${DB_PASSWORD}
-      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
-    restart: always
-    ports:
-      - "${DB_MYSQL_PORT}:3306"
-    networks:
-      - nocobase
-  kingbase:
-    image: registry.cn-shanghai.aliyuncs.com/nocobase/kingbase:v009r001c001b0030_single_x86
-    platform: linux/amd64
-    restart: always
-    privileged: true
-    networks:
-      - nocobase
-    ports:
-      - "${DB_KINGBASE_PORT}:54321"
-    environment:
-      ENABLE_CI: no
-      DB_USER: ${DB_USER}
-      DB_PASSWORD: ${DB_PASSWORD}
-      DB_MODE: pg
-      NEED_START: yes
-    command: ["/usr/sbin/init"]
+      - APP_KEY=taixiangtk
+      - DB_DIALECT=postgres
+      - DB_HOST=106.55.173.188
+      - DB_PORT=9201
+      - DB_DATABASE=tiktok
+      - DB_USER=postgres
+      - DB_PASSWORD=Leon.pu199139!
+      - DB_TIMEZONE=+08:00
+      - INIT_APP_LANG=zh-CN
+      - DB_LOGGING=off
+      - LOGGER_LEVEL=error
     volumes:
-      - ./storage/db/kingbase:/home/kingbase/userdata
-  postgres:
-    image: postgres:latest
+      - /var/tk/storage:/app/nocobase/storage
+    ports:
+      - "9900:80"
+    init: true
     restart: always
-    networks:
-      - nocobase
-    command: postgres -c wal_level=logical
-    ports:
-      - "${DB_POSTGRES_PORT}:5432"
-    volumes:
-      - ./storage/db/postgres/backups:/backups
-    environment:
-      POSTGRES_USER: ${DB_USER}
-      POSTGRES_DB: ${DB_DATABASE}
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
-  adminer:
-    image: nocobase/adminer
-    restart: always
-    networks:
-      - nocobase
-    ports:
-      - ${ADMINER_PORT}:8080
-    volumes:
-      - ./:/var/www/app
-  nocobase:
-    image: node:16-stretch-slim
-    networks:
-      - nocobase
-    command: [ "yarn", "start" ]
-    working_dir: /app
-    env_file: ./.env
-    volumes:
-      - ./:/app
-    expose:
-      - ${APP_PORT}
-    ports:
-      - "${APP_PORT}:${APP_PORT}"

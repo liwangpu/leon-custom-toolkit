@@ -1,7 +1,6 @@
-import actions, { Context } from '@nocobase/actions';
-import Application from '@nocobase/server';
+import { Context } from '@nocobase/actions';
 import { FingerprintGenerator } from 'fingerprint-generator';
-import { floor, merge } from 'lodash';
+import { merge } from 'lodash';
 
 export function generateBrowserFingerprint(props: { language: string }) {
   const { language } = props;
