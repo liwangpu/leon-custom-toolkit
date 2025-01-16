@@ -45,6 +45,7 @@ export function tkDailyTaskReport() {
           likeCount: likeVideo ? 1 : 0,
           createdById: accountOwner,
           updatedById: accountOwner,
+          organizationId: tkAccount.organizationId,
           noMoreVideo,
         },
         context: changeCurrentUserContext(ctx, accountOwner),
