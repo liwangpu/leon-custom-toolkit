@@ -7,8 +7,8 @@
  * For more information, please refer to: https://www.nocobase.com/agreement.
  */
 
-import React, { FC } from 'react';
-import { createStyles, useCollectionRecordData, withDynamicSchemaProps } from '@nocobase/client';
+import React, { FC, useCallback } from 'react';
+import { createStyles, useAPIClient, useCollectionRecordData, withDynamicSchemaProps } from '@nocobase/client';
 import { Button, Flex, Dropdown, Space } from 'antd';
 import { ApiOutlined, DownOutlined, SmileOutlined, TabletOutlined } from '@ant-design/icons';
 import type { MenuProps } from 'antd';
@@ -31,27 +31,44 @@ export const TKManageButton: FC<any> = withDynamicSchemaProps(
   (props) => {
     const { styles } = useStyles();
     const t = useT();
+    const apiClient = useAPIClient();
     const account: ITKAccount = useCollectionRecordData();
     const messageCenter = useMessageCenter();
+
+    const getFullAccount = useCallback(async (id: number) => {
+      const {
+        data: { data: record },
+      } = await apiClient.request({
+        url: 'tk_account:get',
+        method: 'GET',
+        params: {
+          filterByTk: id,
+          appends: ['country', 'language', 'proxy', 'search_term'],
+        },
+      });
+      return record;
+    }, []);
 
     const items: MenuProps['items'] = [
       {
         key: 'auto_switch_video',
         label: '授权',
         icon: <ApiOutlined />,
-        onClick: ({ domEvent }) => {
+        onClick: async ({ domEvent }) => {
           domEvent.stopPropagation();
-          console.log(`account:`, account);
-          // messageCenter.autoWatchVideo({ account });
+          // console.log(`account:`, account);
+          // const record = await getFullAccount(account.id);
+          // messageCenter.autoWatchVideo({ account: record });
         },
       },
       {
         key: 'open',
         label: '打开',
         icon: <TabletOutlined />,
-        onClick: ({ domEvent }) => {
+        onClick: async ({ domEvent }) => {
           domEvent.stopPropagation();
-          messageCenter.startupTiktokWindow({ account });
+          const record = await getFullAccount(account.id);
+          messageCenter.startupTiktokWindow({ account: record });
         },
       },
       // {
