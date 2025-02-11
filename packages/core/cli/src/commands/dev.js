@@ -39,6 +39,8 @@ module.exports = (cli) => {
       let subprocess;
       const runDevClient = () => {
         console.log('starting client', 1 * clientPort);
+        console.log(`---------[ title ]---------`);
+        console.log(`serverPort:`,serverPort);
         subprocess = run('umi', ['dev'], {
           env: {
             ...process.env,
@@ -46,6 +48,10 @@ module.exports = (cli) => {
             shell: true,
             PORT: clientPort,
             APP_ROOT: `${APP_PACKAGE_ROOT}/client`,
+            // WEBSOCKET_URL:
+            //   process.env.WEBSOCKET_URL ||
+            //   (serverPort ? `ws://localhost:9209${process.env.WS_PATH}` : undefined),
+
             WEBSOCKET_URL:
               process.env.WEBSOCKET_URL ||
               (serverPort ? `ws://localhost:${serverPort}${process.env.WS_PATH}` : undefined),

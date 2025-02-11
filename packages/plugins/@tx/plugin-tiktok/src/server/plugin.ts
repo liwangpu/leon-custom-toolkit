@@ -1,5 +1,14 @@
 import { Plugin } from '@nocobase/server';
-import { getSubcription, tkAuthorize, tkAuthorizeFeedback, tkDailyTaskReport } from './actions';
+import {
+  getSubcription,
+  tkAuthorize,
+  tkAuthorizeFeedback,
+  tkDailyTaskReport,
+  tkRegisterAuthorize,
+  tkUpdateRegisterUserInfo,
+  tkUploadResource,
+  tkUploadResource1,
+} from './actions';
 import { organizationResourceDBEvent, organizationResourceMiddeware } from './middlewares';
 import { TikTokAuth } from './tiktok-auth';
 import { isNil } from 'lodash';
@@ -23,9 +32,14 @@ export class PluginTiktokServer extends Plugin {
       actions: {
         dailyTaskReport: tkDailyTaskReport(),
         authorize: tkAuthorize(),
+        registerAuthorize: tkRegisterAuthorize(),
+        updateRegisterUserInfo: tkUpdateRegisterUserInfo(),
         authorizeFeedback: tkAuthorizeFeedback(),
+        uploadTKResource: tkUploadResource(),
+        uploadTKResource1: tkUploadResource1(),
       },
     });
+    // this.app.
     this.app.on('afterStart', () => {
       // 给resource filter加上organizationId字段过滤
       this.app.acl.use(organizationResourceMiddeware(this));
@@ -35,13 +49,14 @@ export class PluginTiktokServer extends Plugin {
 
     this.app.acl.allow('tiktok', '*', 'loggedIn');
     this.app.acl.allow('tiktok', 'authorize', 'public');
+    this.app.acl.allow('tiktok', 'registerAuthorize', 'public');
+    this.app.acl.allow('tiktok', 'updateRegisterUserInfo', 'public');
     this.app.acl.allow('tiktok', 'authorizeFeedback', 'public');
 
     this.app.authManager.registerTypes('TikTok', {
       auth: TikTokAuth,
     });
-    const appendFingerprint = async (account, options, ...sss) => {
-      console.log(`---------[ appendFingerprint ]---------`);
+    const appendFingerprint = async (account, options) => {
       if (isNil(account.LanguageId) || !isNil(account.fingerprint)) return;
       const languageRep = this.db.getRepository('tk_language');
       const lang = await languageRep.findById(account.LanguageId);

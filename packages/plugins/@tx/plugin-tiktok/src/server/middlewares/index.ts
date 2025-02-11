@@ -144,6 +144,7 @@ export function organizationResourceDBEvent(props: { db: Database }) {
   for (const def of permissionDefinitions) {
     db.on(`${def.name}.beforeCreate`, (model, options) => {
       if (isNil(model.organizationId)) {
+        if (isNil(options.context) || isNil(options.context.state)) return;
         const { currentUser } = options.context.state || {};
         const { organizationId, isOrganizationAdminUser } = getUserInfo({ currentUser });
         model.organizationId = organizationId;

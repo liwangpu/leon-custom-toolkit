@@ -9,3 +9,4 @@
 
 export * from './message-center';
 export * from './notify';
+export * from './common';

@@ -7,7 +7,7 @@ import {
   tkManageButtonActionSettings,
   useCopyProxySubscribeActionProps,
 } from './actions';
-import { TikTokSignIn, TKAuthorize, TKManageButton } from './components';
+import { TikTokSignIn, TKAuthorizeFeedback, TKManageButton } from './components';
 import { CopyProxySubscribeActionName, TKManageButtonName } from './consts';
 
 export class PluginTiktokClient extends Plugin {
@@ -26,9 +26,9 @@ export class PluginTiktokClient extends Plugin {
       CopyProxySubscribeActionName,
       createCopySubscribeActionInitializerItem(),
     );
-    this.app.router.add('tk_authorize', {
-      path: 'tk-authorize',
-      Component: TKAuthorize,
+    this.app.router.add('tk_authorize_feedback', {
+      path: 'tk-authorize-feedback',
+      Component: TKAuthorizeFeedback,
     });
     const auth = this.app.pm.get(AuthPlugin);
     auth.registerType('TikTok', {
