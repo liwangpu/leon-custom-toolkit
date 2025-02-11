@@ -9,10 +9,12 @@ on:
     branches:
       - main
       - next
+      - develop
     paths:
       - 'package.json'
       - '**/yarn.lock'
       - 'packages/core/acl/**'
+      - 'packages/core/auth/**'
       - 'packages/core/actions/**'
       - 'packages/core/database/**'
       - 'packages/core/resourcer/**'
@@ -26,6 +28,7 @@ on:
       - 'package.json'
       - '**/yarn.lock'
       - 'packages/core/acl/**'
+      - 'packages/core/auth/**'
       - 'packages/core/actions/**'
       - 'packages/core/database/**'
       - 'packages/core/resourcer/**'
@@ -39,8 +42,8 @@ jobs:
   sqlite-test:
     strategy:
       matrix:
-        node_version: [ '20' ]
-        underscored: [ true, false ]
+        node_version: ['20']
+        underscored: [true, false]
     runs-on: ubuntu-latest
     container: node:${{ matrix.node_version }}
     services:
@@ -70,10 +73,10 @@ jobs:
   postgres-test:
     strategy:
       matrix:
-        node_version: [ '20' ]
-        underscored: [ true, false ]
-        schema: [ public, nocobase ]
-        collection_schema: [ public, user_schema ]
+        node_version: ['20']
+        underscored: [true, false]
+        schema: [public, nocobase]
+        collection_schema: [public, user_schema]
     runs-on: ubuntu-latest
     container: node:${{ matrix.node_version }}
     services:
@@ -129,8 +132,8 @@ jobs:
   mysql-test:
     strategy:
       matrix:
-        node_version: [ '20' ]
-        underscored: [ true, false ]
+        node_version: ['20']
+        underscored: [true, false]
     runs-on: ubuntu-latest
     container: node:${{ matrix.node_version }}
     services:
@@ -175,8 +178,8 @@ jobs:
   mariadb-test:
     strategy:
       matrix:
-        node_version: [ '20' ]
-        underscored: [ true, false ]
+        node_version: ['20']
+        underscored: [true, false]
     runs-on: ubuntu-latest
     container: node:${{ matrix.node_version }}
     services:
