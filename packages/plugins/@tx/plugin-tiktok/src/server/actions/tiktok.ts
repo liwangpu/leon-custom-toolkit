@@ -480,16 +480,12 @@ export function tkUploadResource() {
   // 附件切片 1024*1024是MB,当前切片用500kb
   const CHUNK_UNIT_SIZE = (1024 * 1024) / 2;
   return async (ctx: Context, next: () => any) => {
-    const { id } = (ctx.request.body as any) || {};
-    console.log(`body:`, ctx.request.body);
+    const { id } = (ctx.query as any) || {};
     console.log(`---------[ title ]---------`);
     console.log(`---------[ title ]---------`);
     console.log(`---------[ title ]---------`);
-    console.log(`---------[ title ]---------`);
-    console.log(`---------[ title ]---------`);
-    console.log(`---------[ title ]---------`);
-    console.log(`---------[ title ]---------`);
-    console.log(`---------[ title ]---------`);
+    console.log(`query:`, ctx.query);
+    console.log(`body:`, ctx.body);
     console.log(`id:`, id);
     if (isNil(id)) return;
 
@@ -503,10 +499,10 @@ export function tkUploadResource() {
       filterByTk: id,
       appends: ['attachment'],
     });
-    console.log(`resourceRecord:`, resourceRecord);
+    // console.log(`resourceRecord:`, resourceRecord);
     if (!isArray(resourceRecord.attachment) || !resourceRecord.attachment.length) return;
     const attachment = resourceRecord.attachment[0];
-    console.log(`attachment:`, attachment);
+    // console.log(`attachment:`, attachment);
 
     const postInfo: { [key: string]: any } = {
       privacy_level: 'SELF_ONLY',
@@ -615,12 +611,15 @@ export function tkUploadResource() {
 
 export function tkUploadResource1() {
   return async (ctx: Context, next: () => any) => {
+    console.log(`---------[ get id ]---------`);
+    console.log(`ctx:`, ctx);
     const { id } = (ctx.request.body as any) || {};
     console.log(`---------[ title ]---------`);
     console.log(`---------[ title ]---------`);
     console.log(`---------[ title ]---------`);
     console.log(`---------[ title ]---------`);
     console.log(`---------[ title ]---------`);
+    console.log(`query:`, ctx.query);
     console.log(`body:`, ctx.request.body);
 
     ctx.body = {

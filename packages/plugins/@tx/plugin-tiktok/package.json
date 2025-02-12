@@ -1,6 +1,6 @@
 {
   "name": "@tx/plugin-tiktok",
-  "version": "0.0.57",
+  "version": "0.0.61",
   "main": "dist/server/index.js",
   "displayName": "泰香: tiktok管理",
   "displayName.zh-CN": "泰香: tiktok管理",
