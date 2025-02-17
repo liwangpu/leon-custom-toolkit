@@ -35,6 +35,15 @@ export class PluginTiktokClient extends Plugin {
       `otherBlocks.${PaymentInitializerItem.name}`,
       PaymentInitializerItem,
     );
+    this.app.schemaInitializerManager.addItem(
+      'page:addBlock',
+      `otherBlocks.${PaymentInitializerItem.name}`,
+      PaymentInitializerItem,
+    );
+    this.app.router.add('payment', {
+      path: 'payment',
+      Component: Payment,
+    });
     this.app.router.add('tk_authorize_feedback', {
       path: 'tk-authorize-feedback',
       Component: TKAuthorizeFeedback,
