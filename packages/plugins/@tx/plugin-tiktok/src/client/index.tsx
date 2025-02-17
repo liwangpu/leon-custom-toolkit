@@ -7,12 +7,14 @@ import {
   tkManageButtonActionSettings,
   useCopyProxySubscribeActionProps,
 } from './actions';
-import { TikTokSignIn, TKAuthorizeFeedback, TKManageButton } from './components';
+import { Payment, TikTokSignIn, TKAuthorizeFeedback, TKManageButton } from './components';
 import { CopyProxySubscribeActionName, TKManageButtonName } from './consts';
+import { PaymentInitializerItem } from './Initializer';
+import { PaymentSettings } from './settings';
 
 export class PluginTiktokClient extends Plugin {
   async load() {
-    this.app.addComponents({ TKManageButton });
+    this.app.addComponents({ TKManageButton, Payment });
     this.app.addScopes({ useCopyProxySubscribeActionProps });
     this.app.schemaSettingsManager.add(tkManageButtonActionSettings);
     this.app.schemaSettingsManager.add(copySubscribeActionSettings);
@@ -25,6 +27,13 @@ export class PluginTiktokClient extends Plugin {
       'table:configureItemActions',
       CopyProxySubscribeActionName,
       createCopySubscribeActionInitializerItem(),
+    );
+
+    this.app.schemaSettingsManager.add(PaymentSettings);
+    this.app.schemaInitializerManager.addItem(
+      'popup:addNew:addBlock',
+      `otherBlocks.${PaymentInitializerItem.name}`,
+      PaymentInitializerItem,
     );
     this.app.router.add('tk_authorize_feedback', {
       path: 'tk-authorize-feedback',
