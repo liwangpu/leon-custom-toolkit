@@ -11,6 +11,8 @@ services:
       context: .
       dockerfile: Dockerfile
     container_name: astrolabe_app_c
+    depends_on:
+      - verdaccio
     networks:
       - tk-pro-net
     environment:
