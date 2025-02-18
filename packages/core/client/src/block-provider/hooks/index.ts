@@ -604,7 +604,6 @@ export const useCustomizeUpdateActionProps = () => {
         triggerWorkflows,
       } = actionSchema?.['x-action-settings'] ?? {};
       const { manualClose, redirecting, redirectTo, successMessage, actionAfterSuccess } = onSuccess || {};
-      debugger;
       const assignedValues = {};
       const waitList = Object.keys(originalAssignedValues).map(async (key) => {
         const value = originalAssignedValues[key];
@@ -705,7 +704,6 @@ export const useCustomizeBulkUpdateActionProps = () => {
         updateMode,
       } = actionSchema?.['x-action-settings'] ?? {};
       const { manualClose, redirecting, redirectTo, successMessage, actionAfterSuccess } = onSuccess || {};
-      debugger;
       actionField.data = field.data || {};
       actionField.data.loading = true;
 
@@ -822,7 +820,6 @@ export const useCustomizeRequestActionProps = () => {
     async onClick() {
       const { skipValidator, onSuccess, requestSettings } = actionSchema?.['x-action-settings'] ?? {};
       const { manualClose, redirecting, redirectTo, successMessage, actionAfterSuccess } = onSuccess || {};
-      debugger;
       const xAction = actionSchema?.['x-action'];
       if (!requestSettings['url']) {
         return;
@@ -933,7 +930,6 @@ export const useUpdateActionProps = () => {
       } = actionSchema?.['x-action-settings'] ?? {};
       const { manualClose, redirecting, successMessage, actionAfterSuccess } = onSuccess || {};
       let redirectTo: string = onSuccess?.redirectTo;
-      debugger;
       const assignedValues = {};
       const waitList = Object.keys(originalAssignedValues).map(async (key) => {
         const value = originalAssignedValues[key];
