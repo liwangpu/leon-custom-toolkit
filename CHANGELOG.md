@@ -5,6 +5,85 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v1.5.10](https://github.com/nocobase/nocobase/compare/v1.5.9...v1.5.10) - 2025-02-17
+
+### 🚀 Improvements
+
+- **[Collection field: Markdown(Vditor)]** Vditor CDN use local resources ([#6229](https://github.com/nocobase/nocobase/pull/6229)) by @chenos
+
+### 🐛 Bug Fixes
+
+- **[Workflow: Loop node]** Fix loop exit earlier when node inside pending ([#6236](https://github.com/nocobase/nocobase/pull/6236)) by @mytharcher
+
+## [v1.5.9](https://github.com/nocobase/nocobase/compare/v1.5.8...v1.5.9) - 2025-02-17
+
+### 🐛 Bug Fixes
+
+- **[client]**
+  - horizontal scrollbar issue on the page ([#6232](https://github.com/nocobase/nocobase/pull/6232)) by @katherinehhh
+
+  - When closing the sub-page, multiple block data requests are triggered ([#6233](https://github.com/nocobase/nocobase/pull/6233)) by @zhangzhonghe
+
+  - Missing unique key for association fields submenu in UI ([#6230](https://github.com/nocobase/nocobase/pull/6230)) by @gchust
+
+- **[Data visualization]** Filterting error occurs when the data source name contains a hyphen `-` ([#6231](https://github.com/nocobase/nocobase/pull/6231)) by @2013xile
+
+## [v1.5.8](https://github.com/nocobase/nocobase/compare/v1.5.7...v1.5.8) - 2025-02-16
+
+### 🐛 Bug Fixes
+
+- **[client]**
+  - Can't open field link popup in embed page ([#6222](https://github.com/nocobase/nocobase/pull/6222)) by @gchust
+
+  - In the edit form, the displayed association field value does not change when the associated field updates ([#6210](https://github.com/nocobase/nocobase/pull/6210)) by @Cyx649312038
+
+- **[Mobile]** Mobile menu data is incomplete in permission configuration table ([#6219](https://github.com/nocobase/nocobase/pull/6219)) by @zhangzhonghe
+
+## [v1.5.7](https://github.com/nocobase/nocobase/compare/v1.5.6...v1.5.7) - 2025-02-13
+
+### 🚀 Improvements
+
+- **[Notification: In-app message]** Remove console error logging for SSE connection retries. ([#6205](https://github.com/nocobase/nocobase/pull/6205)) by @sheldon66
+
+### 🐛 Bug Fixes
+
+- **[client]**
+  - missing drag setting in relation data quick-create operation modal ([#6201](https://github.com/nocobase/nocobase/pull/6201)) by @katherinehhh
+
+  - issue with high precision number formatting not applying ([#6202](https://github.com/nocobase/nocobase/pull/6202)) by @katherinehhh
+
+  - Fix an issue where clearing a association field in a form doesn't actually clear the field value when submitting the form ([#5540](https://github.com/nocobase/nocobase/pull/5540)) by @zhangzhonghe
+
+  - Block does not refresh after form submission ([#6206](https://github.com/nocobase/nocobase/pull/6206)) by @zhangzhonghe
+
+  - linked field value persisting on submission after relation field reset ([#6207](https://github.com/nocobase/nocobase/pull/6207)) by @katherinehhh
+
+  - update action displaying for rows without update permissions in table ([#6204](https://github.com/nocobase/nocobase/pull/6204)) by @katherinehhh
+
+- **[Collection field: Sort]** Fix sort field type not registered in external data source ([#6212](https://github.com/nocobase/nocobase/pull/6212)) by @mytharcher
+
+- **[Authentication]** WebSocket authentication issue ([#6209](https://github.com/nocobase/nocobase/pull/6209)) by @2013xile
+
+- **[Collection field: Attachment(URL)]** Fix deprecated request URL in hook by @mytharcher
+
+## [v1.5.6](https://github.com/nocobase/nocobase/compare/v1.5.5...v1.5.6) - 2025-02-12
+
+### 🐛 Bug Fixes
+
+- **[client]**
+  - Block does not refresh after page navigation ([#6200](https://github.com/nocobase/nocobase/pull/6200)) by @zhangzhonghe
+
+  - Form block not displayed when adding a create form via a popup action in a table row ([#6190](https://github.com/nocobase/nocobase/pull/6190)) by @katherinehhh
+
+  - table block height setting not applied when there is no data ([#6192](https://github.com/nocobase/nocobase/pull/6192)) by @katherinehhh
+
+- **[Action: Custom request]**
+  - Incorrect 'Current record' variable value in custom request button ([#6196](https://github.com/nocobase/nocobase/pull/6196)) by @zhangzhonghe
+
+  - Custom request button compatibility with legacy variables ([#6194](https://github.com/nocobase/nocobase/pull/6194)) by @zhangzhonghe
+
+- **[Data visualization]** Chart blocks do not display when added to the popups of action panel ([#6198](https://github.com/nocobase/nocobase/pull/6198)) by @2013xile
+
 ## [v1.5.5](https://github.com/nocobase/nocobase/compare/v1.5.4...v1.5.5) - 2025-02-11
 
 ### 🚀 Improvements
