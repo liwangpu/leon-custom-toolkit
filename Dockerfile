@@ -20,7 +20,12 @@ EOD
 
 WORKDIR /tmp
 COPY . /tmp
-RUN  yarn install && yarn build --no-dts
+
+# 自定义开发插件不参与编译,因为他们是通过插件上传来维护的
+RUN rm -fR /tmp/packages/plugins/@tx
+RUN ls -al /tmp/packages/plugins/
+
+# RUN  yarn install && yarn build --no-dts
 
 SHELL ["/bin/bash", "-c"]
 
@@ -65,7 +70,6 @@ RUN wget --quiet -O - http://mirrors.ustc.edu.cn/postgresql/repos/apt/ACCC4CF8.a
 RUN apt-get update && apt-get install -y --no-install-recommends \
   nginx \
   libaio1 \
-  postgresql-client-16 \
   postgresql-client-17 \
   libfreetype6 \
   fontconfig \

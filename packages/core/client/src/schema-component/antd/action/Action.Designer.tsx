@@ -43,6 +43,8 @@ import {
 import { DefaultValueProvider } from '../../../schema-settings/hooks/useIsAllowToSetDefaultValue';
 import { useLinkageAction } from './hooks';
 import { requestSettingsSchema } from './utils';
+import { useRecord } from '../../../record-provider';
+import { useVariableOptions } from '../../../schema-settings';
 
 const MenuGroup = (props) => {
   return props.children;
@@ -267,6 +269,16 @@ export function AfterSuccess() {
   const { t } = useTranslation();
   const fieldSchema = useFieldSchema();
   const { onSuccess } = fieldSchema?.['x-action-settings'] || {};
+  const { form } = useFormBlockContext();
+  const record = useRecord();
+  const scope = useVariableOptions({
+    collectionField: { uiSchema: fieldSchema },
+    form,
+    record,
+    uiSchema: fieldSchema,
+    noDisabled: true,
+  });
+
   return (
     <SchemaSettingsModalItem
       title={t('After successful submission')}
@@ -345,8 +357,15 @@ export function AfterSuccess() {
             redirectTo: {
               title: t('Link'),
               'x-decorator': 'FormItem',
-              'x-component': 'Input',
-              'x-component-props': {},
+              // 泰香：提交成功后跳转到支持变量
+              'x-component': 'Variable.TextArea',
+              'x-component-props': {
+                scope,
+                fieldNames: {
+                  value: 'value',
+                  label: 'label',
+                },
+              },
             },
           },
         } as ISchema

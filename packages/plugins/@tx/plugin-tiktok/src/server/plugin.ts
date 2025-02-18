@@ -1,6 +1,7 @@
 import { Plugin } from '@nocobase/server';
 import {
   getSubcription,
+  makePayment,
   tkAuthorize,
   tkAuthorizeFeedback,
   tkDailyTaskReport,
@@ -39,6 +40,12 @@ export class PluginTiktokServer extends Plugin {
         uploadTKResource1: tkUploadResource1(),
       },
     });
+    this.app.resourceManager.define({
+      name: 'payment',
+      actions: {
+        makePayment: makePayment(),
+      },
+    });
     // this.app.
     this.app.on('afterStart', () => {
       // 给resource filter加上organizationId字段过滤
@@ -52,6 +59,8 @@ export class PluginTiktokServer extends Plugin {
     this.app.acl.allow('tiktok', 'registerAuthorize', 'public');
     this.app.acl.allow('tiktok', 'updateRegisterUserInfo', 'public');
     this.app.acl.allow('tiktok', 'authorizeFeedback', 'public');
+
+    this.app.acl.allow('payment', '*', 'loggedIn');
 
     this.app.authManager.registerTypes('TikTok', {
       auth: TikTokAuth,
