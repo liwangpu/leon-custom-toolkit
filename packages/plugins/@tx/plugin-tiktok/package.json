@@ -10,7 +10,8 @@
     "fingerprint-generator": "^2.1.61",
     "mobx": "^6.13.1",
     "mobx-react-lite": "^4.0.7",
-    "@faker-js/faker": "^7.6.0"
+    "@faker-js/faker": "^7.6.0",
+    "alipay-sdk": "^4.13.0"
   },
   "peerDependencies": {
     "@nocobase/client": "1.x",
