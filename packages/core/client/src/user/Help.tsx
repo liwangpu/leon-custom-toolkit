@@ -31,56 +31,57 @@ const SettingsMenu: React.FC<{
   const isSimplifiedChinese = data?.data?.lang === 'zh-CN';
 
   const items = [
+    // @泰香定制图标
     {
-      key: 'nocobase',
+      key: 'taixiang',
       disabled: true,
       label: (
         <div style={{ cursor: 'text' }}>
-          <div style={{ color: token.colorText }}>NocoBase</div>
+          <div style={{ color: token.colorText }}>泰香</div>
           <div style={{ fontSize: '0.8em', color: token.colorTextDescription }}>v{data?.data?.version}</div>
         </div>
       ),
     },
-    {
-      key: 'divider_1',
-      type: 'divider',
-    },
-    {
-      key: 'homePage',
-      label: (
-        <a
-          href={isSimplifiedChinese ? 'https://www.nocobase.com/cn/' : 'https://www.nocobase.com'}
-          target="_blank"
-          rel="noreferrer"
-        >
-          {t('Home page')}
-        </a>
-      ),
-    },
-    {
-      key: 'userManual',
-      label: (
-        <a
-          href={isSimplifiedChinese ? 'https://docs-cn.nocobase.com/handbook' : 'https://docs.nocobase.com/handbook'}
-          target="_blank"
-          rel="noreferrer"
-        >
-          {t('Handbook')}
-        </a>
-      ),
-    },
-    {
-      key: 'license',
-      label: (
-        <a
-          href={isSimplifiedChinese ? 'https://www.nocobase.com/cn/agreement' : 'https://www.nocobase.com/en/agreement'}
-          target="_blank"
-          rel="noreferrer"
-        >
-          {t('License')}
-        </a>
-      ),
-    },
+    // {
+    //   key: 'divider_1',
+    //   type: 'divider',
+    // },
+    // {
+    //   key: 'homePage',
+    //   label: (
+    //     <a
+    //       href={isSimplifiedChinese ? 'https://www.nocobase.com/cn/' : 'https://www.nocobase.com'}
+    //       target="_blank"
+    //       rel="noreferrer"
+    //     >
+    //       {t('Home page')}
+    //     </a>
+    //   ),
+    // },
+    // {
+    //   key: 'userManual',
+    //   label: (
+    //     <a
+    //       href={isSimplifiedChinese ? 'https://docs-cn.nocobase.com/handbook' : 'https://docs.nocobase.com/handbook'}
+    //       target="_blank"
+    //       rel="noreferrer"
+    //     >
+    //       {t('Handbook')}
+    //     </a>
+    //   ),
+    // },
+    // {
+    //   key: 'license',
+    //   label: (
+    //     <a
+    //       href={isSimplifiedChinese ? 'https://www.nocobase.com/cn/agreement' : 'https://www.nocobase.com/en/agreement'}
+    //       target="_blank"
+    //       rel="noreferrer"
+    //     >
+    //       {t('License')}
+    //     </a>
+    //   ),
+    // },
   ];
 
   return <Menu items={items} />;

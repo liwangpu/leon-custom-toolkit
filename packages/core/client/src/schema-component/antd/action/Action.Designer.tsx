@@ -43,6 +43,8 @@ import {
 import { DefaultValueProvider } from '../../../schema-settings/hooks/useIsAllowToSetDefaultValue';
 import { useLinkageAction } from './hooks';
 import { requestSettingsSchema } from './utils';
+import { useRecord } from '../../../record-provider';
+import { useVariableOptions } from '../../../schema-settings';
 
 const MenuGroup = (props) => {
   return props.children;
@@ -267,6 +269,16 @@ export function AfterSuccess() {
   const { t } = useTranslation();
   const fieldSchema = useFieldSchema();
   const { onSuccess } = fieldSchema?.['x-action-settings'] || {};
+  const { form } = useFormBlockContext();
+  const record = useRecord();
+  const scope = useVariableOptions({
+    collectionField: { uiSchema: fieldSchema },
+    form,
+    record,
+    uiSchema: fieldSchema,
+    noDisabled: true,
+  });
+
   return (
     <SchemaSettingsModalItem
       title={t('After successful submission')}
@@ -333,19 +345,48 @@ export function AfterSuccess() {
               'x-decorator': 'FormItem',
               'x-component': 'Radio.Group',
               'x-component-props': {},
-              'x-reactions': {
-                target: 'redirectTo',
-                fulfill: {
-                  state: {
-                    visible: "{{$self.value==='redirect'}}",
+              'x-reactions': [
+                {
+                  target: 'redirectTo',
+                  fulfill: {
+                    state: {
+                      visible: "{{$self.value==='redirect'}}",
+                    },
                   },
                 },
-              },
+                {
+                  target: 'redirectType',
+                  fulfill: {
+                    state: {
+                      visible: "{{$self.value==='redirect'}}",
+                    },
+                  },
+                },
+              ],
             },
             redirectTo: {
               title: t('Link'),
               'x-decorator': 'FormItem',
-              'x-component': 'Input',
+              // @泰香：提交成功后跳转到支持变量
+              'x-component': 'Variable.TextArea',
+              'x-component-props': {
+                scope,
+                fieldNames: {
+                  value: 'value',
+                  label: 'label',
+                },
+              },
+            },
+            redirectType: {
+              title: t('连接跳转方式'),
+              enum: [
+                { label: t('当前页签跳转'), value: 'current' },
+                { label: t('当前页签刷新打开'), value: 'currentRefresh' },
+                { label: t('新页签打开'), value: 'newTab' },
+                // { label: t('Redirect to'), value: 'redirect' },
+              ],
+              'x-decorator': 'FormItem',
+              'x-component': 'Radio.Group',
               'x-component-props': {},
             },
           },

@@ -1,6 +1,8 @@
 import { Plugin } from '@nocobase/server';
 import {
   getSubcription,
+  makeDevicePayment,
+  devicePaymentFeedback,
   tkAuthorize,
   tkAuthorizeFeedback,
   tkDailyTaskReport,
@@ -27,6 +29,7 @@ export class PluginTiktokServer extends Plugin {
       },
     });
     this.app.acl.allow('proxySubscription', '*', 'public');
+
     this.app.resourceManager.define({
       name: 'tiktok',
       actions: {
@@ -39,19 +42,27 @@ export class PluginTiktokServer extends Plugin {
         uploadTKResource1: tkUploadResource1(),
       },
     });
-    // this.app.
+    this.app.acl.allow('tiktok', '*', 'loggedIn');
+    this.app.acl.allow('tiktok', 'authorize', 'public');
+    this.app.acl.allow('tiktok', 'registerAuthorize', 'public');
+    this.app.acl.allow('tiktok', 'updateRegisterUserInfo', 'public');
+    this.app.acl.allow('tiktok', 'authorizeFeedback', 'public');
+
+    this.app.resourceManager.define({
+      name: 'payment',
+      actions: {
+        makeDevicePayment: makeDevicePayment(),
+        devicePaymentFeedback: devicePaymentFeedback(),
+      },
+    });
+    this.app.acl.allow('payment', '*', 'public');
+
     this.app.on('afterStart', () => {
       // 给resource filter加上organizationId字段过滤
       this.app.acl.use(organizationResourceMiddeware(this));
       // 监听db事件,填写organizationId字段信息
       organizationResourceDBEvent({ db: this.db });
     });
-
-    this.app.acl.allow('tiktok', '*', 'loggedIn');
-    this.app.acl.allow('tiktok', 'authorize', 'public');
-    this.app.acl.allow('tiktok', 'registerAuthorize', 'public');
-    this.app.acl.allow('tiktok', 'updateRegisterUserInfo', 'public');
-    this.app.acl.allow('tiktok', 'authorizeFeedback', 'public');
 
     this.app.authManager.registerTypes('TikTok', {
       auth: TikTokAuth,

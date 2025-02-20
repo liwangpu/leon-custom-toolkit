@@ -1,6 +1,6 @@
 FROM node:20-bookworm as builder
-ARG VERDACCIO_URL=http://host.docker.internal:10104/
-ARG COMMIT_HASH
+ARG VERDACCIO_URL=http://host.docker.internal:10104
+# ARG COMMIT_HASH
 ARG APPEND_PRESET_LOCAL_PLUGINS
 ARG BEFORE_PACK_NOCOBASE="ls -l"
 ARG PLUGINS_DIRS
@@ -9,17 +9,24 @@ ENV PLUGINS_DIRS=${PLUGINS_DIRS}
 
 RUN apt-get update && apt-get install -y jq expect
 
-RUN expect <<EOD
-spawn npm adduser --registry $VERDACCIO_URL
-expect {
-  "Username:" {send "test\r"; exp_continue}
-  "Password:" {send "test\r"; exp_continue}
-  "Email: (this IS public)" {send "test@nocobase.com\r"; exp_continue}
-}
-EOD
+#RUN expect <<EOD
+#spawn npm adduser --registry $VERDACCIO_URL
+#expect {
+#  "Username:" {send "test\r"; exp_continue}
+#  "Password:" {send "test\r"; exp_continue}
+#  "Email: (this IS public)" {send "test@nocobase.com\r"; exp_continue}
+#}
+#EOD
 
 WORKDIR /tmp
 COPY . /tmp
+
+# 自定义开发插件不参与编译,因为他们是通过插件上传来维护的
+RUN rm -fR /tmp/packages/plugins/@tx
+RUN ls -al /tmp/packages/plugins/
+
+RUN npx npm-cli-login -u test -p test -e test@nocobase.com -r $VERDACCIO_URL
+
 RUN  yarn install && yarn build --no-dts
 
 SHELL ["/bin/bash", "-c"]
@@ -65,7 +72,6 @@ RUN wget --quiet -O - http://mirrors.ustc.edu.cn/postgresql/repos/apt/ACCC4CF8.a
 RUN apt-get update && apt-get install -y --no-install-recommends \
   nginx \
   libaio1 \
-  postgresql-client-16 \
   postgresql-client-17 \
   libfreetype6 \
   fontconfig \

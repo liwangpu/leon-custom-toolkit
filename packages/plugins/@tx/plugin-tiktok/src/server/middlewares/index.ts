@@ -7,7 +7,7 @@ interface IPermissionDefinition {
   afterCreate?: (props: { model: any; options: any; userInfo: { isOrganizationAdminUser?: boolean } }) => void;
   permissionFilter?: (props: {
     db: Database;
-    userInfo: { isOrganizationAdminUser: boolean; isRootAdmin: boolean; userId: number };
+    userInfo: { isOrganizationAdminUser: boolean; isRootOrAdmin: boolean; userId: number };
   }) => Promise<any>;
 }
 
@@ -32,13 +32,16 @@ const permissionDefinitions: Array<IPermissionDefinition> = [
     name: 'tk_account',
     async permissionFilter(props) {
       const { userInfo } = props;
-      const { userId, isOrganizationAdminUser, isRootAdmin } = userInfo;
-      if (isOrganizationAdminUser || isRootAdmin) return;
+      const { userId, isOrganizationAdminUser, isRootOrAdmin } = userInfo;
+      if (isOrganizationAdminUser || isRootOrAdmin) return;
       const filter = {
         $and: [{ operators: { id: { $eq: [userId] } } }],
       };
       return filter;
     },
+  },
+  {
+    name: 'tk_device_order',
   },
   {
     name: 'tk_package_proxy_node',
@@ -86,14 +89,14 @@ export function organizationResourceMiddeware(plugin: Plugin) {
     }
     const { organizationId, roles } = currentUser || { roles: [], organizationId: null };
     // const rolesSet = new Set(roles.map((r) => r.name));
-    const isRootAdmin = currentRole === 'root';
+    const isRootOrAdmin = currentRole === 'root' || currentRole === 'admin';
     const isOrganizationAdminUser = currentRole === 'organizationAdmin';
     const isOrganizationUser = currentRole === 'organizationAdmin';
     const { resourceName, actionName } = ctx.action;
     return {
       userId: currentUser.id,
       organizationId,
-      isRootAdmin,
+      isRootOrAdmin,
       isOrganizationAdminUser,
       isOrganizationUser,
       resourceName,
@@ -102,15 +105,18 @@ export function organizationResourceMiddeware(plugin: Plugin) {
   };
   //
   return async (ctx: any, next: () => Promise<any>) => {
-    const { resourceName, organizationId, userId, isRootAdmin, isOrganizationAdminUser } = getUserInfo({ ctx });
-    if (organizationResourceDefinitions.has(resourceName) && !isRootAdmin) {
+    const { resourceName, organizationId, userId, isRootOrAdmin, isOrganizationAdminUser } = getUserInfo({ ctx });
+    if (organizationResourceDefinitions.has(resourceName) && !isRootOrAdmin) {
       const filter = {
         $and: [{ organizationId }],
       };
 
       const def = permissionDefinitionMap.get(resourceName);
       if (isFunction(def.permissionFilter)) {
-        const _filter = await def.permissionFilter({ db, userInfo: { userId, isRootAdmin, isOrganizationAdminUser } });
+        const _filter = await def.permissionFilter({
+          db,
+          userInfo: { userId, isRootOrAdmin, isOrganizationAdminUser },
+        });
         if (!isNil(_filter)) {
           merge(filter, _filter);
         }
