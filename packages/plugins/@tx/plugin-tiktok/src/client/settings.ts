@@ -1,4 +1,4 @@
-import { SchemaSettings, SchemaSettingsBlockHeightItem } from '@nocobase/client';
+import { SchemaSettings } from '@nocobase/client';
 import { PaymentNameLowercase } from './consts';
 
 export const PaymentSettings = new SchemaSettings({

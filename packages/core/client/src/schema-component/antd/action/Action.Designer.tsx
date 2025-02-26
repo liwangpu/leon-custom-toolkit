@@ -389,6 +389,30 @@ export function AfterSuccess() {
               'x-component': 'Radio.Group',
               'x-component-props': {},
             },
+            publishMessage: {
+              type: 'boolean',
+              'x-decorator': 'FormItem',
+              'x-component': 'Checkbox',
+              default: false,
+              'x-content': t('发布事件'),
+              'x-reactions': [
+                {
+                  target: 'messageTopic',
+                  fulfill: {
+                    state: {
+                      visible: '{{$self.value===true}}',
+                      required: '{{$self.value===true}}',
+                    },
+                  },
+                },
+              ],
+            },
+            messageTopic: {
+              type: 'string',
+              title: t('事件主题'),
+              'x-component': 'Input',
+              'x-decorator': 'FormItem',
+            },
           },
         } as ISchema
       }

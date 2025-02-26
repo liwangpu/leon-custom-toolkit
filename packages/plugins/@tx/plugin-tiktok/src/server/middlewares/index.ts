@@ -44,6 +44,12 @@ const permissionDefinitions: Array<IPermissionDefinition> = [
     name: 'tk_device_order',
   },
   {
+    name: 'tk_grow_fans_plan',
+  },
+  {
+    name: 'tk_grow_fans_plan_log',
+  },
+  {
     name: 'tk_package_proxy_node',
   },
   {

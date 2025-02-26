@@ -9,8 +9,8 @@
 
 export interface ITKAccount {
   id?: number;
-  email: string;
-  password: string;
+  email?: string;
+  password?: string;
   search_term?: IAccountSearchTerm[];
 }
 

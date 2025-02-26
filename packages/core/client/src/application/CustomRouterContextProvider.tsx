@@ -21,6 +21,9 @@ import {
   useParams,
   useSearchParams,
 } from 'react-router-dom';
+import { MessageCenter } from './messageCenter';
+
+MessageCenter.integrateElectron();
 
 const NavigateNoUpdateContext = React.createContext<NavigateFunction>(null);
 NavigateNoUpdateContext.displayName = 'NavigateNoUpdateContext';
@@ -67,8 +70,8 @@ const IsSubPageClosedByPageMenuContext = React.createContext<{
   reset: () => void;
 }>({
   isSubPageClosedByPageMenu: () => false,
-  setFieldSchema: () => { },
-  reset: () => { },
+  setFieldSchema: () => {},
+  reset: () => {},
 });
 IsSubPageClosedByPageMenuContext.displayName = 'IsSubPageClosedByPageMenuContext';
 
@@ -92,7 +95,10 @@ export const IsSubPageClosedByPageMenuProvider: FC = ({ children }) => {
     prevParamsRef.current = {};
   }, []);
 
-  const value = useMemo(() => ({ isSubPageClosedByPageMenu, setFieldSchema, reset }), [isSubPageClosedByPageMenu, reset]);
+  const value = useMemo(
+    () => ({ isSubPageClosedByPageMenu, setFieldSchema, reset }),
+    [isSubPageClosedByPageMenu, reset],
+  );
 
   return (
     <IsSubPageClosedByPageMenuContext.Provider value={value}>{children}</IsSubPageClosedByPageMenuContext.Provider>

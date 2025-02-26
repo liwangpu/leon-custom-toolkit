@@ -26405,6 +26405,13 @@ rxjs@^7.0.0, rxjs@^7.5.5:
   dependencies:
     tslib "^2.1.0"
 
+rxjs@^7.8.2:
+  version "7.8.2"
+  resolved "https://registry.npmmirror.com/rxjs/-/rxjs-7.8.2.tgz#955bc473ed8af11a002a2be52071bf475638607b"
+  integrity sha512-dhKf903U/PQZY6boNNtAGdWbG85WAbjT/1xYoZIC7FAY0yWapOBQVsVrDl58W86//e1VpMNBtRV4MaXfdMySFA==
+  dependencies:
+    tslib "^2.1.0"
+
 sade@^1.7.3:
   version "1.8.1"
   resolved "https://registry.npmmirror.com/sade/-/sade-1.8.1.tgz#0a78e81d658d394887be57d2a409bf703a3b2701"

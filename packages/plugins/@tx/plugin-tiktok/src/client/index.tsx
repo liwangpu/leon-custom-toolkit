@@ -3,31 +3,30 @@ import AuthPlugin from '@nocobase/plugin-auth/client';
 import {
   copySubscribeActionSettings,
   createCopySubscribeActionInitializerItem,
-  createTKManageButtonActionInitializerItem,
-  tkManageButtonActionSettings,
   useCopyProxySubscribeActionProps,
 } from './actions';
-import { Payment, TikTokSignIn, TKAuthorizeFeedback, TKManageButton } from './components';
-import { CopyProxySubscribeActionName, TKManageButtonName } from './consts';
+import { Payment, TikTokSignIn, TKAuthorizeFeedback } from './components';
+import { CopyProxySubscribeActionName } from './consts';
 import { PaymentInitializerItem } from './Initializer';
 import { PaymentSettings } from './settings';
+import {
+  subscribeGrowPlanStart,
+  subscribeGrowPlanStop,
+  subscribeGrowFansPlanStatusChange,
+  subscribeOpenWindow,
+} from './subscriptions';
 
 export class PluginTiktokClient extends Plugin {
   async load() {
-    this.app.addComponents({ TKManageButton, Payment });
+    this.app.addComponents({ Payment });
     this.app.addScopes({ useCopyProxySubscribeActionProps });
-    this.app.schemaSettingsManager.add(tkManageButtonActionSettings);
-    this.app.schemaSettingsManager.add(copySubscribeActionSettings);
-    this.app.schemaInitializerManager.addItem(
-      'table:configureItemActions',
-      TKManageButtonName,
-      createTKManageButtonActionInitializerItem(),
-    );
+    // 注册组件相关
     this.app.schemaInitializerManager.addItem(
       'table:configureItemActions',
       CopyProxySubscribeActionName,
       createCopySubscribeActionInitializerItem(),
     );
+    this.app.schemaSettingsManager.add(copySubscribeActionSettings);
 
     this.app.schemaSettingsManager.add(PaymentSettings);
     this.app.schemaInitializerManager.addItem(
@@ -54,6 +53,11 @@ export class PluginTiktokClient extends Plugin {
         SignInButton: TikTokSignIn,
       },
     });
+
+    subscribeGrowPlanStart.subscribe();
+    subscribeGrowPlanStop.subscribe();
+    subscribeOpenWindow.subscribe();
+    subscribeGrowFansPlanStatusChange.subscribe();
   }
 }
 

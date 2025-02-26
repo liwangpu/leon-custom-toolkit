@@ -1,6 +1,6 @@
 {
   "name": "@tx/plugin-tiktok",
-  "version": "0.0.62",
+  "version": "0.0.64",
   "main": "dist/server/index.js",
   "displayName": "泰香: tiktok管理",
   "displayName.zh-CN": "泰香: tiktok管理",
@@ -11,7 +11,8 @@
     "mobx": "^6.13.1",
     "mobx-react-lite": "^4.0.7",
     "@faker-js/faker": "^7.6.0",
-    "alipay-sdk": "^4.13.0"
+    "alipay-sdk": "^4.13.0",
+    "rxjs": "^7.8.2"
   },
   "peerDependencies": {
     "@nocobase/client": "1.x",

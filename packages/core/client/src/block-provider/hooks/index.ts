@@ -14,7 +14,7 @@ import { untracked } from '@formily/reactive';
 import { evaluators } from '@nocobase/evaluators/client';
 import { isURL, parse } from '@nocobase/utils/client';
 import { App, message } from 'antd';
-import _ from 'lodash';
+import _, { isFunction, isNil } from 'lodash';
 import get from 'lodash/get';
 import omit from 'lodash/omit';
 import qs from 'qs';
@@ -23,9 +23,11 @@ import { useTranslation } from 'react-i18next';
 import { NavigateFunction } from 'react-router-dom';
 import {
   AssociationFilter,
+  MessageCenter,
   useCollection,
   useCollectionManager,
   useCollectionRecord,
+  useDataBlockRequestGetter,
   useDataSourceHeaders,
   useFormActiveFields,
   useParsedFilter,
@@ -600,17 +602,39 @@ export const useResetBlockActionProps = () => {
 };
 
 export const useCustomizeUpdateActionProps = () => {
-  const { resource, __parent, service } = useBlockRequestContext();
+  const { resource, __parent } = useBlockRequestContext();
+  const { getDataBlockRequest } = useDataBlockRequestGetter();
   const filterByTk = useFilterByTk();
   const actionSchema = useFieldSchema();
   const navigate = useNavigateNoUpdate();
   const compile = useCompile();
+  const apiClient = useAPIClient();
   const form = useForm();
   const { modal } = App.useApp();
   const variables = useVariables();
   const localVariables = useLocalVariables({ currentForm: form });
   const { name, getField } = useCollection_deprecated();
   const { setVisible } = useActionContext();
+
+  const refresh = getDataBlockRequest()?.refresh;
+  useEffect(() => {
+    // @泰香: 定制数据更新
+    // name是resource name
+    const topic = `resource:refresh@${name}@${filterByTk}`;
+    const subscrition = MessageCenter.subscribe({
+      key: topic,
+      topic,
+      fn(params) {
+        const { data } = params;
+        const { resource, id } = data;
+        if (name !== resource || !isFunction(refresh) || id !== filterByTk) return;
+        refresh();
+      },
+    });
+    return () => {
+      subscrition.unsubscribe();
+    };
+  }, [filterByTk, name, refresh]);
 
   return {
     async onClick(e?, callBack?) {
@@ -620,49 +644,58 @@ export const useCustomizeUpdateActionProps = () => {
         skipValidator,
         triggerWorkflows,
       } = actionSchema?.['x-action-settings'] ?? {};
-      const { manualClose, redirecting, redirectTo, successMessage, actionAfterSuccess } = onSuccess || {};
+      // @泰香: 优化原功能,加个判断是否刷新数据
+      const hasUpdateProperties = Object.keys(originalAssignedValues).length > 0;
+      const { manualClose, redirecting, redirectTo, successMessage, actionAfterSuccess, publishMessage, messageTopic } =
+        onSuccess || {};
       const assignedValues = {};
-      const waitList = Object.keys(originalAssignedValues).map(async (key) => {
-        const value = originalAssignedValues[key];
-        const collectionField = getField(key);
+      if (hasUpdateProperties) {
+        const waitList = Object.keys(originalAssignedValues).map(async (key) => {
+          const value = originalAssignedValues[key];
+          const collectionField = getField(key);
 
-        if (process.env.NODE_ENV !== 'production') {
-          if (!collectionField) {
-            throw new Error(`useCustomizeUpdateActionProps: field "${key}" not found in collection "${name}"`);
+          if (process.env.NODE_ENV !== 'production') {
+            if (!collectionField) {
+              throw new Error(`useCustomizeUpdateActionProps: field "${key}" not found in collection "${name}"`);
+            }
           }
-        }
 
-        if (isVariable(value)) {
-          const { value: parsedValue } = (await variables?.parseVariable(value, localVariables)) || {};
-          if (parsedValue) {
-            assignedValues[key] = transformVariableValue(parsedValue, { targetCollectionField: collectionField });
+          if (isVariable(value)) {
+            const { value: parsedValue } = (await variables?.parseVariable(value, localVariables)) || {};
+            if (parsedValue) {
+              assignedValues[key] = transformVariableValue(parsedValue, { targetCollectionField: collectionField });
+            }
+          } else if (value != null && value !== '') {
+            assignedValues[key] = value;
           }
-        } else if (value != null && value !== '') {
-          assignedValues[key] = value;
-        }
-      });
-      await Promise.all(waitList);
+        });
+        await Promise.all(waitList);
 
-      if (skipValidator === false) {
-        await form.submit();
+        if (skipValidator === false) {
+          await form.submit();
+        }
+        await resource.update({
+          filterByTk,
+          values: { ...assignedValues },
+          // TODO(refactor): should change to inject by plugin
+          triggerWorkflows: triggerWorkflows?.length
+            ? triggerWorkflows.map((row) => [row.workflowKey, row.context].filter(Boolean).join('!')).join(',')
+            : undefined,
+        });
       }
-      await resource.update({
-        filterByTk,
-        values: { ...assignedValues },
-        // TODO(refactor): should change to inject by plugin
-        triggerWorkflows: triggerWorkflows?.length
-          ? triggerWorkflows.map((row) => [row.workflowKey, row.context].filter(Boolean).join('!')).join(',')
-          : undefined,
-      });
       if (actionAfterSuccess === 'previous' || (!actionAfterSuccess && redirecting !== true)) {
         setVisible?.(false);
       }
       // service?.refresh?.();
-      if (callBack) {
+      if (hasUpdateProperties && callBack) {
         callBack?.();
       }
-      if (!(resource instanceof TableFieldResource)) {
+      if (hasUpdateProperties && !(resource instanceof TableFieldResource)) {
         __parent?.service?.refresh?.();
+      }
+      // @泰香定制事件发布
+      if (publishMessage && !isNil(messageTopic)) {
+        MessageCenter.publish({ topic: messageTopic, data: { id: filterByTk }, apiClient, callBack });
       }
       if (!successMessage) {
         return;

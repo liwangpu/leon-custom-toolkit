@@ -10,6 +10,10 @@
 export enum MessageTopic {
   settingEnv = 'settingEnv',
   openTKWindow = 'openTKWindow',
-  // tkOpenWindow = 'tkOpenWindow',
+  closeTKWindow = 'closeTKWindow',
+  startGrowFansPlan = 'startGrowFansPlan',
+  afterStartGrowFansPlan = 'afterStartGrowFansPlan',
+  stopGrowFansPlan = 'stopGrowFansPlan',
+  afterStopGrowFansPlan = 'afterStopGrowFansPlan',
   // tkCloseWindow = 'tkCloseWindow',
 }

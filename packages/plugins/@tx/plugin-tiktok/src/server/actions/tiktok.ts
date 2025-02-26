@@ -8,46 +8,106 @@ import { faker } from '@faker-js/faker';
 import { TIKTOK_API_URL } from '../../common';
 import path from 'path';
 import { promises } from 'fs';
-// import { getVideoDurationInSeconds } from 'get-video-duration';
 
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 
-interface ITKDailyTaskReportData {
+interface IGrowFansPlanReportData {
+  planId: number;
+  planDetailId: number;
+  searchTermId: number;
   accountId: any;
-  searchTermId: any;
   videoTime: number;
   followUser?: boolean;
   likeVideo?: boolean;
   noMoreVideo?: boolean;
 }
 
-export function tkDailyTaskReport() {
+export function summaryGrowFansPlan() {
+  return async (ctx: Context, next: () => any) => {
+    const { planId } = ctx.query as any;
+    const planRepo = ctx.db.getRepository('tk_grow_fans_plan');
+
+    const plan = await planRepo.findOne({
+      filterByTk: planId,
+      appends: ['searchTermDetail'],
+    });
+
+    const planDetails: Array<any> = plan.searchTermDetail || [];
+    let totalSerchTermCount = 0;
+    let totalVideoCount = 0;
+    let watchVideoCount = 0;
+    let watchVideoTime = 0;
+    for (const detail of planDetails) {
+      totalSerchTermCount++;
+      totalVideoCount += detail.watchGoal;
+      watchVideoCount += detail.watchCount;
+      watchVideoTime += detail.watchTime;
+    }
+    let executingPercentage = totalVideoCount > 0 ? floor(watchVideoCount / totalVideoCount, 2) : 0;
+    if (executingPercentage > 1) {
+      executingPercentage = 1;
+    }
+    const completedFlag = executingPercentage >= 1;
+
+    const partialPlan: { [key: string]: any } = {
+      totalSerchTermCount,
+      totalVideoCount,
+      watchVideoCount,
+      watchVideoTime,
+      executingPercentage,
+      completedFlag,
+    };
+
+    if (completedFlag) {
+      partialPlan.status = 'completed';
+    }
+    await planRepo.update({
+      filterByTk: planId,
+      values: partialPlan,
+    });
+
+    await next();
+  };
+}
+
+export function tkGrowFansPlanReport() {
   return async (ctx: Context, next: () => any) => {
     const data = ctx.request.body as any;
-    const { accountId, searchTermId, videoTime, followUser, likeVideo, noMoreVideo } = data as ITKDailyTaskReportData;
+    const { planId, planDetailId, searchTermId, accountId, videoTime, followUser, likeVideo, noMoreVideo } =
+      data as IGrowFansPlanReportData;
+    console.log(`---------[ tkGrowFansPlanReport ]---------`);
+    console.log(`data:`, data);
     const currentTime = dayjs();
     const currentTimeStr = currentTime.format('YYYY-MM-DD');
-    const taskRepo = ctx.db.getRepository('tk_grow_fans_task');
-    let task = await taskRepo.findOne({
+    const logRepo = ctx.db.getRepository('tk_grow_fans_plan_log');
+    const planDetailRepo = ctx.db.getRepository('tk_grow_fans_plan_detail');
+
+    let log = await logRepo.findOne({
       filter: {
         date: currentTimeStr,
-        accountId,
+        planId,
+        planDetailId,
         searchTermId,
+        accountId,
       },
     });
 
+    const planDetail = await planDetailRepo.findById(planDetailId);
+
     const videoTimeMinute = floor(videoTime / 60, 2);
-    if (!task) {
+    if (!log) {
       const tkAccountRepo = ctx.db.getRepository('tk_account');
       const tkAccount = await tkAccountRepo.findByTargetKey(accountId);
       const accountOwner = tkAccount.createdById;
-      task = await taskRepo.create({
+      log = await logRepo.create({
         values: {
           date: currentTimeStr,
+          planId,
+          planDetailId,
           accountId,
           searchTermId,
-          autoVideoTime: videoTimeMinute,
-          autoVideoCount: 1,
+          watchTime: videoTimeMinute,
+          watchCount: 1,
           followCount: followUser ? 1 : 0,
           likeCount: likeVideo ? 1 : 0,
           createdById: accountOwner,
@@ -58,17 +118,28 @@ export function tkDailyTaskReport() {
         context: changeCurrentUserContext(ctx, accountOwner),
       });
     } else {
-      await taskRepo.update({
-        filterByTk: task.id,
+      await logRepo.update({
+        filterByTk: log.id,
         values: {
-          autoVideoTime: task.autoVideoTime + videoTimeMinute,
-          autoVideoCount: task.autoVideoCount + 1,
-          likeCount: likeVideo ? task.likeCount + 1 : task.likeCount,
-          followCount: followUser ? task.followCount + 1 : task.followCount,
+          watchTime: log.watchTime + videoTimeMinute,
+          watchCount: log.watchCount + 1,
+          likeCount: likeVideo ? log.likeCount + 1 : log.likeCount,
+          followCount: followUser ? log.followCount + 1 : log.followCount,
           noMoreVideo,
         },
       });
     }
+
+    await planDetailRepo.update({
+      filterByTk: planDetailId,
+      values: {
+        watchTime: planDetail.watchTime + videoTimeMinute,
+        watchCount: planDetail.watchCount + 1,
+        likeCount: likeVideo ? planDetail.likeCount + 1 : planDetail.likeCount,
+        followCount: followUser ? planDetail.followCount + 1 : planDetail.followCount,
+        noMoreVideo,
+      },
+    });
 
     await next();
   };

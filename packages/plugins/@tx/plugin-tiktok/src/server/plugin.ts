@@ -4,8 +4,9 @@ import {
   makeDevicePayment,
   devicePaymentFeedback,
   tkAuthorize,
+  summaryGrowFansPlan,
   tkAuthorizeFeedback,
-  tkDailyTaskReport,
+  tkGrowFansPlanReport,
   tkRegisterAuthorize,
   tkUpdateRegisterUserInfo,
   tkUploadResource,
@@ -33,7 +34,8 @@ export class PluginTiktokServer extends Plugin {
     this.app.resourceManager.define({
       name: 'tiktok',
       actions: {
-        dailyTaskReport: tkDailyTaskReport(),
+        growFansPlanReport: tkGrowFansPlanReport(),
+        summaryGrowFansPlan: summaryGrowFansPlan(),
         authorize: tkAuthorize(),
         registerAuthorize: tkRegisterAuthorize(),
         updateRegisterUserInfo: tkUpdateRegisterUserInfo(),

@@ -76,7 +76,7 @@ export default observer(() => {
     <Router location={history.location} navigator={history}>
       <CustomRouterContextProvider>
         <SchemaComponentProvider scope={{ useCloseAction }} components={{ Output, Form, Action, Input, FormItem }}>
-          <SchemaComponent schema={schema} />
+          <SchemaComponent schema} />
         </SchemaComponentProvider>
       </CustomRouterContextProvider>
     </Router>
