@@ -22,7 +22,7 @@ WORKDIR /tmp
 COPY . /tmp
 
 # 自定义开发插件不参与编译,因为他们是通过插件上传来维护的
-RUN rm -f yarn.lock
+# RUN rm -f yarn.lock
 RUN rm -fR /tmp/packages/plugins/@tx
 RUN ls -al /tmp/packages/plugins/
 
