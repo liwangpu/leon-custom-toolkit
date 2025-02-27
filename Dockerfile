@@ -28,7 +28,7 @@ RUN rm -fR /tmp/packages/plugins/@tx
 RUN ls -al /tmp/packages/plugins/
 
 RUN npx npm-cli-login -u test -p test -e test@nocobase.com -r $VERDACCIO_URL
-
+RUN yarn config list
 RUN  yarn install && yarn build --no-dts
 
 SHELL ["/bin/bash", "-c"]
