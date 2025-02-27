@@ -21,7 +21,7 @@ ENV PLUGINS_DIRS=${PLUGINS_DIRS}
 WORKDIR /tmp
 COPY . /tmp
 
-# RUN yarn config set registry https://registry.npmmirror.com/
+RUN yarn config set registry https://registry.npmmirror.com/
 # 自定义开发插件不参与编译,因为他们是通过插件上传来维护的
 RUN rm -f .yarnrc
 RUN rm -fR /tmp/packages/plugins/@tx
