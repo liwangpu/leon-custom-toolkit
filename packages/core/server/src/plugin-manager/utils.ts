@@ -141,7 +141,7 @@ export async function download(url: string, destination: string, options: AxiosR
   response.data.pipe(writer);
 
   return new Promise((resolve, reject) => {
-    writer.on('finish', resolve);
+    writer.on('finish', resolve as any);
     writer.on('error', reject);
   });
 }

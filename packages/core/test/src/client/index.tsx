@@ -19,7 +19,7 @@ function customRender(ui: React.ReactElement, options = {}) {
     // wrap provider(s) here if needed
     wrapper: ({ children }) => children,
     ...options,
-  });
+  } as any);
 }
 
 export async function waitForApp() {
