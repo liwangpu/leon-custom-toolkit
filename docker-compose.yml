@@ -6,13 +6,11 @@ networks:
 
 services:
   astrolabe-app:
-    image: registry.cn-shanghai.aliyuncs.com/leon-pu/astrolabe:1.0
+    image: registry.cn-shanghai.aliyuncs.com/leon-pu/astrolabe:1.5
     build:
       context: .
       dockerfile: Dockerfile
     container_name: astrolabe_app_c
-    depends_on:
-      - verdaccio
     networks:
       - tk-pro-net
     environment:
@@ -23,9 +21,9 @@ services:
       # - DB_DATABASE=tiktok
       # - DB_USER=postgres
       # - DB_PASSWORD=Leon.pu199139!
-      - DB_HOST=host.docker.internal
-      - DB_PORT=5432
-      - DB_DATABASE=tiktok8
+      - DB_HOST=106.55.173.188
+      - DB_PORT=9201
+      - DB_DATABASE=tiktok
       - DB_USER=postgres
       - DB_PASSWORD=Leon.pu199139!
       - DB_TIMEZONE=+08:00
@@ -39,17 +37,17 @@ services:
     init: true
     restart: always
 
-  verdaccio:
-    image: verdaccio/verdaccio
-    container_name: verdaccio_c
-    environment:
-      VERDACCIO_PORT: 10104
-    ports:
-      - '10104:10104'
-    # volumes:
-    #   - ./verdaccio/conf:/verdaccio/conf
-    #   - ./verdaccio/storage:/verdaccio/storage
-    #   - ./verdaccio/plugins:/verdaccio/plugins
-    networks:
-      - tk-pro-net
-    restart: always
+  # verdaccio:
+  #   image: verdaccio/verdaccio
+  #   container_name: verdaccio_c
+  #   environment:
+  #     VERDACCIO_PORT: 10104
+  #   ports:
+  #     - '10104:10104'
+  #   # volumes:
+  #   #   - ./verdaccio/conf:/verdaccio/conf
+  #   #   - ./verdaccio/storage:/verdaccio/storage
+  #   #   - ./verdaccio/plugins:/verdaccio/plugins
+  #   networks:
+  #     - tk-pro-net
+  #   restart: always

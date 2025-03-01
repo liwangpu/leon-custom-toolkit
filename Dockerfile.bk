@@ -1,6 +1,6 @@
-FROM node:20-bookworm as builder
-ARG VERDACCIO_URL=http://106.55.173.188:10104
-# ARG COMMIT_HASH
+FROM node:20.18.3 as builder
+ARG VERDACCIO_URL=http://127.0.0.1:10104/
+ARG COMMIT_HASH
 ARG APPEND_PRESET_LOCAL_PLUGINS
 ARG BEFORE_PACK_NOCOBASE="ls -l"
 ARG PLUGINS_DIRS
@@ -9,26 +9,23 @@ ENV PLUGINS_DIRS=${PLUGINS_DIRS}
 
 RUN apt-get update && apt-get install -y jq expect
 
-#RUN expect <<EOD
-#spawn npm adduser --registry $VERDACCIO_URL
-#expect {
-#  "Username:" {send "test\r"; exp_continue}
-#  "Password:" {send "test\r"; exp_continue}
-#  "Email: (this IS public)" {send "test@nocobase.com\r"; exp_continue}
-#}
-#EOD
+RUN expect <<EOD
+spawn npm login --registry $VERDACCIO_URL
+expect {
+  "Username:" {send "test\r"; exp_continue}
+  "Password:" {send "test\r"; exp_continue}
+  "Email: (this IS public)" {send "test@nocobase.com\r"; exp_continue}
+}
+EOD
 
 WORKDIR /tmp
 COPY . /tmp
 
-# RUN yarn config set registry https://registry.npmmirror.com/
 # 自定义开发插件不参与编译,因为他们是通过插件上传来维护的
-RUN rm -f .yarnrc
+# RUN rm -f yarn.lock
 RUN rm -fR /tmp/packages/plugins/@tx
 RUN ls -al /tmp/packages/plugins/
 
-RUN npx npm-cli-login -u test -p test -e test@nocobase.com -r $VERDACCIO_URL
-RUN yarn config list
 RUN  yarn install && yarn build --no-dts
 
 SHELL ["/bin/bash", "-c"]
@@ -63,17 +60,18 @@ RUN cd /app \
   && tar -zcf ./nocobase.tar.gz -C /app/my-nocobase-app .
 
 
-FROM node:20-bookworm-slim
+FROM node:20.18.3
 
 RUN apt-get update && apt-get install -y --no-install-recommends wget gnupg \
   && rm -rf /var/lib/apt/lists/*
 
-RUN sh -c 'echo "deb http://mirrors.ustc.edu.cn/postgresql/repos/apt bookworm-pgdg main" > /etc/apt/sources.list.d/pgdg.list'
-RUN wget --quiet -O - http://mirrors.ustc.edu.cn/postgresql/repos/apt/ACCC4CF8.asc | apt-key add -
+RUN sh -c 'echo "deb http://mirrors.aliyun.com/postgresql/repos/apt bookworm-pgdg main" > /etc/apt/sources.list.d/pgdg.list'
+RUN wget --quiet -O - http://mirrors.aliyun.com/postgresql/repos/apt/ACCC4CF8.asc | apt-key add -
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
   nginx \
   libaio1 \
+  postgresql-client-16 \
   postgresql-client-17 \
   libfreetype6 \
   fontconfig \
