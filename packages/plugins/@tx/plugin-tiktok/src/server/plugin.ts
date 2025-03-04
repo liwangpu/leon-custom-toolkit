@@ -9,13 +9,17 @@ import {
   tkGrowFansPlanReport,
   tkRegisterAuthorize,
   tkUpdateRegisterUserInfo,
-  tkUploadResource,
-  tkUploadResource1,
+  releaseResource,
+  syncAccountInfo,
+  syncAllAccountInfos,
 } from './actions';
-import { organizationResourceDBEvent, organizationResourceMiddeware } from './middlewares';
+import {
+  organizationResourceDBEvent,
+  organizationResourceMiddeware,
+  postingResourceReleaseMiddeware,
+} from './middlewares';
 import { TikTokAuth } from './tiktok-auth';
-import { isNil } from 'lodash';
-import { generateBrowserFingerprint } from './utils';
+import { afterAccountCreateOrUpdate, afterCreatePostingResourceRelease, calculateVideoDuration } from './hooks';
 
 export class PluginTiktokServer extends Plugin {
   async afterAdd() {}
@@ -40,8 +44,9 @@ export class PluginTiktokServer extends Plugin {
         registerAuthorize: tkRegisterAuthorize(),
         updateRegisterUserInfo: tkUpdateRegisterUserInfo(),
         authorizeFeedback: tkAuthorizeFeedback(),
-        uploadTKResource: tkUploadResource(),
-        uploadTKResource1: tkUploadResource1(),
+        releaseResource: releaseResource(),
+        syncAccountInfo: syncAccountInfo(),
+        syncAllAccountInfos: syncAllAccountInfos(),
       },
     });
     this.app.acl.allow('tiktok', '*', 'loggedIn');
@@ -49,6 +54,9 @@ export class PluginTiktokServer extends Plugin {
     this.app.acl.allow('tiktok', 'registerAuthorize', 'public');
     this.app.acl.allow('tiktok', 'updateRegisterUserInfo', 'public');
     this.app.acl.allow('tiktok', 'authorizeFeedback', 'public');
+    this.app.acl.allow('tiktok', 'releaseResource', 'public');
+    this.app.acl.allow('tiktok', 'syncAccountInfo', 'public');
+    this.app.acl.allow('tiktok', 'syncAllAccountInfos', 'public');
 
     this.app.resourceManager.define({
       name: 'payment',
@@ -59,25 +67,45 @@ export class PluginTiktokServer extends Plugin {
     });
     this.app.acl.allow('payment', '*', 'public');
 
+    this.app.authManager.registerTypes('TikTok', {
+      auth: TikTokAuth,
+    });
+
+    // hooks
+    this.db.on('tk_account.beforeSave', afterAccountCreateOrUpdate({ db: this.db }));
+    this.db.on('tk_posting_resource.beforeSave', calculateVideoDuration({ db: this.db }));
+    // this.db.on('tk_posting_resource_release.afterCreate', afterCreatePostingResourceRelease({ db: this.db }));
+    this.db.on('tk_posting_resource_release.afterCreate', afterCreatePostingResourceRelease({ db: this.db }));
     this.app.on('afterStart', () => {
       // 给resource filter加上organizationId字段过滤
       this.app.acl.use(organizationResourceMiddeware(this));
+      this.app.acl.use(postingResourceReleaseMiddeware(this));
       // 监听db事件,填写organizationId字段信息
       organizationResourceDBEvent({ db: this.db });
     });
 
-    this.app.authManager.registerTypes('TikTok', {
-      auth: TikTokAuth,
-    });
-    const appendFingerprint = async (account, options) => {
-      if (isNil(account.LanguageId) || !isNil(account.fingerprint)) return;
-      const languageRep = this.db.getRepository('tk_language');
-      const lang = await languageRep.findById(account.LanguageId);
-      if (isNil(lang.language)) return;
-      account.fingerprint = generateBrowserFingerprint({ language: lang.language });
-    };
-    this.db.on('tk_account.beforeUpdate', appendFingerprint);
-    this.db.on('tk_account.beforeCreate', appendFingerprint);
+    // this.app.use(async (ctx, next) => {
+    //   ctx.body = ctx.body || [];
+    //   // ctx.body.push(1);
+    //   const { resourceName, actionName } = ctx.action;
+    //   if (resourceName !== 'tk_posting_resource_release' || actionName !== 'create') return;
+    //   console.log(`---------[ title ]---------`);
+    //   console.log(`---------[ title ]---------`);
+    //   console.log(`ctx.request:`, ctx.request);
+    //   console.log(` ctx.request.body:`, ctx.request.body);
+    //   // console.log(`resourceName:`, resourceName);
+    //   // console.log(`actionName:`, actionName);
+    //   console.log(`body:`, ctx.body);
+    //   // ctx.request.body = null;
+    //   // (ctx.request.body as any).accounts = [];
+    //   // ctx.body.dataValues.accounts = [];
+    //   // ctx.body.accounts = [];
+
+    //   console.log(`after:`, ctx.body);
+    //   await next();
+
+    //   // ctx.body.push(2);
+    // });
   }
 
   async install() {}

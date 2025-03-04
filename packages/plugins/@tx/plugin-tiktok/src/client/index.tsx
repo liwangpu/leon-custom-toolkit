@@ -14,6 +14,8 @@ import {
   subscribeGrowPlanStop,
   subscribeGrowFansPlanStatusChange,
   subscribeOpenWindow,
+  subscribeTKAuthorize,
+  subscribeTKAuthorizeSandbox,
 } from './subscriptions';
 
 export class PluginTiktokClient extends Plugin {
@@ -57,6 +59,8 @@ export class PluginTiktokClient extends Plugin {
     subscribeGrowPlanStart.subscribe();
     subscribeGrowPlanStop.subscribe();
     subscribeOpenWindow.subscribe();
+    subscribeTKAuthorize.subscribe();
+    subscribeTKAuthorizeSandbox.subscribe();
     subscribeGrowFansPlanStatusChange.subscribe();
   }
 }

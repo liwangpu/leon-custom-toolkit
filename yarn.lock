@@ -21586,6 +21586,11 @@ node-sql-parser@^4.18.0:
   dependencies:
     big-integer "^1.6.48"
 
+node-video-lib@^2.3.1:
+  version "2.3.1"
+  resolved "https://registry.npmmirror.com/node-video-lib/-/node-video-lib-2.3.1.tgz#96bb4adc8e7965fcaa08f945c38f4e99256a54f4"
+  integrity sha512-Pr2nQgzoGvhQLAKq3cdZ8EKOZVjE47LBxyqrZslSpcmROLUd972ASPQFsICTebsVwCRR7+vLB9CIrt8Ep0doEw==
+
 node-xlsx@^0.16.1:
   version "0.16.2"
   resolved "https://registry.npmmirror.com/node-xlsx/-/node-xlsx-0.16.2.tgz#40f580187eae0e032cac96e958e97cb6ceca09f6"

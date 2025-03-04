@@ -141,6 +141,75 @@ export const subscribeOpenWindow = (() => {
   };
 })();
 
+/**
+ * tk授权
+ */
+export const subscribeTKAuthorize = (() => {
+  const topic = '@tx/plugin-tiktok:tk-authorize';
+  return {
+    subscribe() {
+      MessageCenter.subscribe({
+        key: 'tk-authorize',
+        topic,
+        async fn(props) {
+          const { data: account } = props;
+          if (!isElectionEnv) {
+            message.info(`该功能需要在客户端环境下才生效!`);
+            return;
+          }
+
+          // console.log(`account:`, account);
+          // return;
+          MessageCenter.publish({
+            topic: MessageTopic.authorize,
+            data: {
+              account,
+            },
+            channel: 'main',
+            source: 'renderer',
+          });
+        },
+      });
+    },
+    unSubscribe() {
+      MessageCenter.unSubscribe(topic);
+    },
+  };
+})();
+
+export const subscribeTKAuthorizeSandbox = (() => {
+  const topic = '@tx/plugin-tiktok:tk-authorize-sandbox';
+  return {
+    subscribe() {
+      MessageCenter.subscribe({
+        key: 'tk-authorize-temp',
+        topic,
+        async fn(props) {
+          const { data: account } = props;
+          if (!isElectionEnv) {
+            message.info(`该功能需要在客户端环境下才生效!`);
+            return;
+          }
+
+          // console.log(`account:`, account);
+          // return;
+          MessageCenter.publish({
+            topic: MessageTopic.authorizeSandbox,
+            data: {
+              account,
+            },
+            channel: 'main',
+            source: 'renderer',
+          });
+        },
+      });
+    },
+    unSubscribe() {
+      MessageCenter.unSubscribe(topic);
+    },
+  };
+})();
+
 export const subscribeGrowFansPlanStatusChange = (() => {
   return {
     subscribe() {

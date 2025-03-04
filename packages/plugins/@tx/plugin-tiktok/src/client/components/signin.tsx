@@ -2,9 +2,11 @@ import React, { memo } from 'react';
 import { Button } from 'antd';
 import { Authenticator } from '@nocobase/plugin-auth/client';
 import { WechatFilled } from '@ant-design/icons';
-import { TIKTOK_API_URL } from '../../common';
 import tiktokSignIn from '../images/tiktok-signIn.png';
 import { createStyles } from '@nocobase/client';
+import { getTiktokAPIBaseUrl } from '../../common';
+
+const TIKTOK_API_URL = getTiktokAPIBaseUrl();
 
 const useStyles = createStyles(({ css }) => {
   return {

@@ -40,56 +40,20 @@ export const TKAuthorizeFeedback: React.FC = observer((props) => {
     navigate('/');
   });
   useEffect(() => {
+    console.log(`---------[ tk-authorize-feedback work ]---------`);
     if (type === 'backToHome') {
       const token = searchParams.get('token');
       localStorage.setItem('NOCOBASE_TOKEN', token);
-      let _countdown = countdown;
-      const it = setInterval(() => {
-        if (_countdown === 0) {
-          handleBackToHome();
-          return clearInterval(it);
-        }
-        _countdown--;
-        setCountdown(_countdown);
-      }, 1000);
+      // let _countdown = countdown;
+      // const it = setInterval(() => {
+      //   if (_countdown === 0) {
+      //     handleBackToHome();
+      //     return clearInterval(it);
+      //   }
+      //   _countdown--;
+      //   setCountdown(_countdown);
+      // }, 1000);
     }
-    // const _type = searchParams.get('type');
-    // setType(_type);
-    // (async () => {
-    //   const _type = searchParams.get('type');
-    //   setType(_type);
-    //   // const state = searchParams.get('state');
-    //   // const error = searchParams.get('error');
-    //   // const errorDescription = searchParams.get('error_description');
-    //   // if (isNil(code)) return;
-    //   // if (!isNil(error)) {
-    //   //   setError(error);
-    //   //   setErrorDescription(errorDescription);
-    //   // }
-    //   // const {
-    //   //   data: { data },
-    //   // } = await apiClient.request({
-    //   //   url: 'tiktok:authorizeFeedback',
-    //   //   method: 'POST',
-    //   //   data: {
-    //   //     code,
-    //   //     state,
-    //   //     error,
-    //   //     errorDescription,
-    //   //   },
-    //   // });
-    //   // setCode(code);
-    //   // console.log(`data:`, data);
-    //   // if (!isNil(data?.registerUserId)) {
-    //   //   // localStorage.setItem('NOCOBASE_TOKEN', data.token);
-    //   //   await apiClient.auth.signIn({
-    //   //     account: data.registerUserName,
-    //   //     password: data.registerUserPassword,
-    //   //   });
-    //   //   navigate('/');
-    //   // }
-    //   // console.log(`authorizeFeedback res data:`, data);
-    // })();
   }, []);
 
   const renderParamsTip = () => {

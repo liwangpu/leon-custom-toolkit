@@ -15,5 +15,6 @@ export enum MessageTopic {
   afterStartGrowFansPlan = 'afterStartGrowFansPlan',
   stopGrowFansPlan = 'stopGrowFansPlan',
   afterStopGrowFansPlan = 'afterStopGrowFansPlan',
-  // tkCloseWindow = 'tkCloseWindow',
+  authorize = 'authorize',
+  authorizeSandbox = 'authorizeSandbox',
 }

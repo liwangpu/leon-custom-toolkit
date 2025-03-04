@@ -4,8 +4,6 @@ import { uid } from '@nocobase/utils';
 import { isNil } from 'lodash';
 import dayjs from 'dayjs';
 
-const env = process.env;
-
 const alipaySdk = (() => {
   let instance: AlipaySdk;
 
