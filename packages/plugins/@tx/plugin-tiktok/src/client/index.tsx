@@ -16,6 +16,9 @@ import {
   subscribeOpenWindow,
   subscribeTKAuthorize,
   subscribeTKAuthorizeSandbox,
+  subscribeCopyAttachmentResourceUrl,
+  subscribeWatchTKVideo,
+  subscribeViewInfluencer,
 } from './subscriptions';
 
 export class PluginTiktokClient extends Plugin {
@@ -62,6 +65,9 @@ export class PluginTiktokClient extends Plugin {
     subscribeTKAuthorize.subscribe();
     subscribeTKAuthorizeSandbox.subscribe();
     subscribeGrowFansPlanStatusChange.subscribe();
+    subscribeCopyAttachmentResourceUrl.subscribe();
+    subscribeWatchTKVideo.subscribe();
+    subscribeViewInfluencer.subscribe();
   }
 }
 

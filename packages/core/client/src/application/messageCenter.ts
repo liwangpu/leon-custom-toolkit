@@ -8,7 +8,7 @@ export interface IMessage {
   [key: string]: any;
 }
 
-// @泰香自定义消息订阅
+// @泰香: 自定义消息订阅
 export interface IMessageCenter {
   message$: Observable<IMessage>;
   subscribe(props: { channel?: string; topic: string; key: string; fn: (params: IMessage) => void }): Subscription;

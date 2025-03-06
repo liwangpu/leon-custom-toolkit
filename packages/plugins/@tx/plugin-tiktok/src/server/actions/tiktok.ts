@@ -303,7 +303,7 @@ export function tkUpdateRegisterUserInfo() {
       },
     });
 
-    // console.log(`token:`, token);
+    console.log(`token:`, token);
     console.log(`token:`, token.access_token);
 
     const user = await getTKUserInfo({ token: token.access_token });
@@ -404,9 +404,18 @@ export function tkAuthorizeFeedback() {
       },
     });
 
+    const res = await getTKUserInfo({ token: data.access_token });
+
+    const latestSyncTime = dayjs().format('YYYY-MM-DD HHmmss');
     await accountRep.update({
       filterByTk: accountId,
       values: {
+        followerCount: res.follower_count,
+        followingCount: res.following_count,
+        videoCount: res.video_count,
+        likesCount: res.likes_count,
+        username: res.username,
+        latestSyncTime,
         tokenId: tokenRecord.id,
       },
     });

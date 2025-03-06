@@ -33,6 +33,10 @@ export class UrlFieldInterface extends CollectionFieldInterface {
       label: 'Preview',
       value: 'Input.Preview',
     },
+    {
+      label: 'Avatar',
+      value: 'Input.Avatar',
+    },
   ];
   availableTypes = ['string', 'text'];
   schemaInitialize(schema: ISchema, { block }) {}

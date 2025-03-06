@@ -15,6 +15,8 @@ export enum MessageTopic {
   afterStartGrowFansPlan = 'afterStartGrowFansPlan',
   stopGrowFansPlan = 'stopGrowFansPlan',
   afterStopGrowFansPlan = 'afterStopGrowFansPlan',
+  watchTKVideo = 'watchTKVideo',
+  viewInfluencer = 'viewInfluencer',
   authorize = 'authorize',
   authorizeSandbox = 'authorizeSandbox',
 }

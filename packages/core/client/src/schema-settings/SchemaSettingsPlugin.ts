@@ -58,7 +58,10 @@ import { fileManagerComponentFieldSettings } from '../modules/fields/component/F
 import { previewComponentFieldSettings } from '../modules/fields/component/FileManager/previewComponentFieldSettings';
 import { uploadAttachmentComponentFieldSettings } from '../modules/fields/component/FileManager/uploadAttachmentComponentFieldSettings';
 import { inputJSONSettings } from '../modules/fields/component/Input.JSON/inputJSONSettings';
-import { inputPreviewComponentFieldSettings } from '../modules/fields/component/Input.Preview/settings';
+import {
+  inputPreviewComponentFieldSettings,
+  inputAvatarComponentFieldSettings,
+} from '../modules/fields/component/Input.Preview/settings';
 import { inputTextAreaSettings } from '../modules/fields/component/Input.TextArea/inputTextAreaSettings';
 import { inputURLSettings } from '../modules/fields/component/Input.URL/inputURLSettings';
 import { inputComponentSettings } from '../modules/fields/component/Input/inputComponentSettings';
@@ -145,6 +148,7 @@ export class SchemaSettingsPlugin extends Plugin {
     this.schemaSettingsManager.add(tagComponentFieldSettings);
     this.schemaSettingsManager.add(cascadeSelectComponentFieldSettings);
     this.schemaSettingsManager.add(inputPreviewComponentFieldSettings);
+    this.schemaSettingsManager.add(inputAvatarComponentFieldSettings);
     // this.schemaSettingsManager.add(inputURLComponentFieldSettings);
     this.schemaSettingsManager.add(uploadAttachmentComponentFieldSettings);
     this.schemaSettingsManager.add(previewComponentFieldSettings);

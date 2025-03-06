@@ -14,9 +14,16 @@ import {
   syncAllAccountInfos,
 } from './actions';
 import {
+  EchoTikAPI,
+  hotSellMiddeware,
+  newsBurstMiddeware,
   organizationResourceDBEvent,
   organizationResourceMiddeware,
   postingResourceReleaseMiddeware,
+  topFollowerMiddeware,
+  topHashTagMiddeware,
+  topSoldMiddeware,
+  topVideoMiddeware,
 } from './middlewares';
 import { TikTokAuth } from './tiktok-auth';
 import { afterAccountCreateOrUpdate, afterCreatePostingResourceRelease, calculateVideoDuration } from './hooks';
@@ -71,6 +78,8 @@ export class PluginTiktokServer extends Plugin {
       auth: TikTokAuth,
     });
 
+    EchoTikAPI.startup({ plugin: this });
+
     // hooks
     this.db.on('tk_account.beforeSave', afterAccountCreateOrUpdate({ db: this.db }));
     this.db.on('tk_posting_resource.beforeSave', calculateVideoDuration({ db: this.db }));
@@ -80,6 +89,12 @@ export class PluginTiktokServer extends Plugin {
       // 给resource filter加上organizationId字段过滤
       this.app.acl.use(organizationResourceMiddeware(this));
       this.app.acl.use(postingResourceReleaseMiddeware(this));
+      this.app.acl.use(topHashTagMiddeware(this));
+      this.app.acl.use(topVideoMiddeware(this));
+      this.app.acl.use(topFollowerMiddeware(this));
+      this.app.acl.use(topSoldMiddeware(this));
+      this.app.acl.use(hotSellMiddeware(this));
+      this.app.acl.use(newsBurstMiddeware(this));
       // 监听db事件,填写organizationId字段信息
       organizationResourceDBEvent({ db: this.db });
     });

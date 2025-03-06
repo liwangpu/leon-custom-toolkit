@@ -1,8 +1,9 @@
 import { MessageCenter } from '@nocobase/client';
 import { MessageTopic } from '../enums';
 import { message } from 'antd';
-import { isNil } from 'lodash';
+import { isArray, isNil } from 'lodash';
 import { filter } from 'rxjs';
+import copy from 'copy-to-clipboard';
 
 const isElectionEnv = typeof window['electron'] !== 'undefined';
 
@@ -47,7 +48,7 @@ export const subscribeGrowPlanStart = (() => {
             message.info(`当前计划没有设置任何热搜词配置,请先设置再进行启动!`);
             return;
           }
-
+          message.info(`环境监测中,即将启动,请稍等!`);
           MessageCenter.publish({
             topic: MessageTopic.startGrowFansPlan,
             data: {
@@ -92,7 +93,7 @@ export const subscribeGrowPlanStop = (() => {
             },
           });
           const { accountId } = plan;
-
+          message.info(`即将停止,请稍等!`);
           MessageCenter.publish({
             topic: MessageTopic.stopGrowFansPlan,
             data: {
@@ -124,10 +125,81 @@ export const subscribeOpenWindow = (() => {
             message.info(`该功能需要在客户端环境下才生效!`);
             return;
           }
+          message.info(`环境监测中,即将打开,请稍等!`);
           MessageCenter.publish({
             topic: MessageTopic.openTKWindow,
             data: {
               account,
+            },
+            channel: 'main',
+            source: 'renderer',
+          });
+        },
+      });
+    },
+    unSubscribe() {
+      MessageCenter.unSubscribe(topic);
+    },
+  };
+})();
+
+export const subscribeWatchTKVideo = (() => {
+  const topic = '@tx/plugin-tiktok:watch-tk-video';
+  return {
+    subscribe() {
+      MessageCenter.subscribe({
+        key: 'open-watch-tk-video-window',
+        topic,
+        async fn(props) {
+          const { data } = props;
+          const { row } = data;
+          if (!isElectionEnv) {
+            message.info(`该功能需要在客户端环境下才生效!`);
+            return;
+          }
+          message.info(`即将打开,请稍等!`);
+          MessageCenter.publish({
+            topic: MessageTopic.watchTKVideo,
+            data: {
+              video: {
+                url: row.video_url,
+              },
+            },
+            channel: 'main',
+            source: 'renderer',
+          });
+        },
+      });
+    },
+    unSubscribe() {
+      MessageCenter.unSubscribe(topic);
+    },
+  };
+})();
+
+export const subscribeViewInfluencer = (() => {
+  const topic = '@tx/plugin-tiktok:view-tk-influencer';
+  return {
+    subscribe() {
+      MessageCenter.subscribe({
+        key: 'view-tk-influencer-handler',
+        topic,
+        async fn(props) {
+          const { data } = props;
+          const { row } = data;
+          if (!isElectionEnv) {
+            message.info(`该功能需要在客户端环境下才生效!`);
+            return;
+          }
+          message.info(`即将打开,请稍等!`);
+          MessageCenter.publish({
+            topic: MessageTopic.viewInfluencer,
+            data: {
+              influencer: {
+                unique_id: row.unique_id,
+                influencer_id: row.influencer_id,
+                avatar_url: row.avatar_url,
+              },
             },
             channel: 'main',
             source: 'renderer',
@@ -158,8 +230,7 @@ export const subscribeTKAuthorize = (() => {
             return;
           }
 
-          // console.log(`account:`, account);
-          // return;
+          message.info(`环境监测中,即将打开,请稍等!`);
           MessageCenter.publish({
             topic: MessageTopic.authorize,
             data: {
@@ -191,8 +262,7 @@ export const subscribeTKAuthorizeSandbox = (() => {
             return;
           }
 
-          // console.log(`account:`, account);
-          // return;
+          message.info(`环境监测中,即将打开,请稍等!`);
           MessageCenter.publish({
             topic: MessageTopic.authorizeSandbox,
             data: {
@@ -201,6 +271,47 @@ export const subscribeTKAuthorizeSandbox = (() => {
             channel: 'main',
             source: 'renderer',
           });
+        },
+      });
+    },
+    unSubscribe() {
+      MessageCenter.unSubscribe(topic);
+    },
+  };
+})();
+
+export const subscribeCopyAttachmentResourceUrl = (() => {
+  const topic = 'attachment_resource_url_copy';
+  return {
+    subscribe() {
+      MessageCenter.subscribe({
+        key: 'attachment_resource_url_copy_handler',
+        topic,
+        async fn(props) {
+          const { data, apiClient } = props;
+          const { id } = data;
+
+          const {
+            data: { data: resource },
+          } = await apiClient.request({
+            url: `attachment_resource:get`,
+            method: 'GET',
+            params: {
+              filterByTk: id,
+              appends: ['attachment'],
+            },
+          });
+
+          const attachments: Array<any> = resource.attachment;
+          if (isNil(attachments) || !isArray(attachments) || !attachments.length) {
+            message.info(`没有上传附件信息!`);
+            return;
+          }
+          const origin = window.location.origin;
+          const { url } = attachments[0];
+
+          const fullUrl = `${origin}${url}`;
+          copy(fullUrl);
         },
       });
     },

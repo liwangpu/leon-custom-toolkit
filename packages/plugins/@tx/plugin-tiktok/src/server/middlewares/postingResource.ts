@@ -59,10 +59,9 @@ export function postingResourceReleaseMiddeware(plugin: Plugin) {
           accounts: [acc],
         };
 
-        const r = await releaseRep.create({
+        releaseRep.create({
           values: data,
         });
-        // releaseRecordIds.push(r.id);
       }
     }
     ctx.action.mergeParams({

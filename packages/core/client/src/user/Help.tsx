@@ -31,7 +31,7 @@ const SettingsMenu: React.FC<{
   const isSimplifiedChinese = data?.data?.lang === 'zh-CN';
 
   const items = [
-    // @泰香定制图标
+    // @泰香: 定制图标
     {
       key: 'taixiang',
       disabled: true,

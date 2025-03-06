@@ -53,6 +53,7 @@ export const Input: ComposedInput = Object.assign(
     JSON: connect(Json, mapReadPretty(ReadPretty.JSON)),
     ReadPretty: ReadPretty.Input,
     Preview: ReadPretty.Preview,
+    Avatar: ReadPretty.Avatar,
   } as unknown as ComposedInput,
 );
 

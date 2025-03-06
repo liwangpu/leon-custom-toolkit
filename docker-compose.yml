@@ -7,7 +7,7 @@ networks:
 services:
   astrolabe-app:
     container_name: astrolabe_app_c
-    image: registry.cn-shanghai.aliyuncs.com/leon-pu/astrolabe:1.5
+    image: registry.cn-shanghai.aliyuncs.com/leon-pu/astrolabe:1.5.1
     build:
       context: .
       dockerfile: Dockerfile

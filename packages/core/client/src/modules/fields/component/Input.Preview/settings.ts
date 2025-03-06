@@ -81,7 +81,38 @@ const objectFit = createSettingsItem({
   defaultValue: 'cover',
 });
 
+const getAvatarSizeOptions = (t: (key: string) => any) => [
+  { value: 'small', label: t('Small') },
+  { value: 'middle', label: t('Middle') },
+  { value: 'large', label: t('Large') },
+  { value: 'oversized', label: t('Oversized') },
+];
+
+const avatarSize = createSettingsItem({
+  name: 'avatarSize',
+  title: '头像大小',
+  options: getAvatarSizeOptions,
+  defaultValue: 'small',
+});
+
+const getAvatarshapeOptions = (t: (key: string) => any) => [
+  { value: 'circle', label: t('Circle') },
+  { value: 'square', label: t('Square') },
+];
+
+const avatarShape = createSettingsItem({
+  name: 'avatarShape',
+  title: '头像的形状',
+  options: getAvatarshapeOptions,
+  defaultValue: 'cover',
+});
+
 export const inputPreviewComponentFieldSettings = new SchemaSettings({
   name: 'fieldSettings:component:Input.Preview',
   items: [size, objectFit],
+});
+
+export const inputAvatarComponentFieldSettings = new SchemaSettings({
+  name: 'fieldSettings:component:Input.Avatar',
+  items: [avatarSize, avatarShape],
 });

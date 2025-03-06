@@ -613,8 +613,9 @@ export const useCustomizeUpdateActionProps = () => {
   const { modal } = App.useApp();
   const variables = useVariables();
   const localVariables = useLocalVariables({ currentForm: form });
-  const { name, getField } = useCollection_deprecated();
+  const { name, getField, filterTargetKey } = useCollection_deprecated();
   const { setVisible } = useActionContext();
+  const actionCtx = useCollection_deprecated();
 
   const refresh = getDataBlockRequest()?.refresh;
   useEffect(() => {
@@ -644,6 +645,7 @@ export const useCustomizeUpdateActionProps = () => {
         skipValidator,
         triggerWorkflows,
       } = actionSchema?.['x-action-settings'] ?? {};
+
       // @泰香: 优化原功能,加个判断是否刷新数据
       const hasUpdateProperties = Object.keys(originalAssignedValues).length > 0;
       const { manualClose, redirecting, redirectTo, successMessage, actionAfterSuccess, publishMessage, messageTopic } =
@@ -693,9 +695,16 @@ export const useCustomizeUpdateActionProps = () => {
       if (hasUpdateProperties && !(resource instanceof TableFieldResource)) {
         __parent?.service?.refresh?.();
       }
-      // @泰香定制事件发布
+      // @泰香: 定制事件发布
       if (publishMessage && !isNil(messageTopic)) {
-        MessageCenter.publish({ topic: messageTopic, data: { id: filterByTk }, apiClient, callBack });
+        // @泰香: 获取表格更新事件当前行数据: 注意,不是所有组件都支持,这里后面需要完善和改进
+        const rs = getDataBlockRequest();
+        let row: any;
+        if (rs?.data?.data) {
+          const ds: Array<any> = rs.data.data;
+          row = ds.find((d) => d[filterTargetKey] === filterByTk);
+        }
+        MessageCenter.publish({ topic: messageTopic, data: { id: filterByTk, row }, apiClient, callBack });
       }
       if (!successMessage) {
         return;
