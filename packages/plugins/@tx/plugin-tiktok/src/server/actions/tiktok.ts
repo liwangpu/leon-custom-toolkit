@@ -1,7 +1,7 @@
 import { Context } from '@nocobase/actions';
 import dayjs from 'dayjs';
 import { floor, isArray, isNil } from 'lodash';
-import { changeCurrentUserContext, getExtension } from '../utils';
+import { changeCurrentUserContext, getExtension, TK_FEEDBACK_PAGE } from '../utils';
 import queryString from 'query-string';
 import axios from 'axios';
 import { getTiktokAPIBaseUrl } from '../../common';
@@ -22,54 +22,6 @@ interface IGrowFansPlanReportData {
   followUser?: boolean;
   likeVideo?: boolean;
   noMoreVideo?: boolean;
-}
-
-export function summaryGrowFansPlan() {
-  return async (ctx: Context, next: () => any) => {
-    const { planId } = ctx.query as any;
-    const planRepo = ctx.db.getRepository('tk_grow_fans_plan');
-
-    const plan = await planRepo.findOne({
-      filterByTk: planId,
-      appends: ['searchTermDetail'],
-    });
-
-    const planDetails: Array<any> = plan.searchTermDetail || [];
-    let totalSerchTermCount = 0;
-    let totalVideoCount = 0;
-    let watchVideoCount = 0;
-    let watchVideoTime = 0;
-    for (const detail of planDetails) {
-      totalSerchTermCount++;
-      totalVideoCount += detail.watchGoal;
-      watchVideoCount += detail.watchCount;
-      watchVideoTime += detail.watchTime;
-    }
-    let executingPercentage = totalVideoCount > 0 ? floor(watchVideoCount / totalVideoCount, 2) : 0;
-    if (executingPercentage > 1) {
-      executingPercentage = 1;
-    }
-    const completedFlag = executingPercentage >= 1;
-
-    const partialPlan: { [key: string]: any } = {
-      totalSerchTermCount,
-      totalVideoCount,
-      watchVideoCount,
-      watchVideoTime,
-      executingPercentage,
-      completedFlag,
-    };
-
-    if (completedFlag) {
-      partialPlan.status = 'completed';
-    }
-    await planRepo.update({
-      filterByTk: planId,
-      values: partialPlan,
-    });
-
-    await next();
-  };
 }
 
 export function tkGrowFansPlanReport() {
@@ -481,6 +433,16 @@ export function tkAuthorizeFeedback() {
   };
 }
 
+export function tkMockAuthorizeFeedback() {
+  return async (ctx: Context, next: () => any) => {
+    ctx.set({
+      'Content-Type': 'text/html; charset=UTF-8',
+    });
+    ctx.withoutDataWrapping = true;
+    ctx.body = TK_FEEDBACK_PAGE;
+  };
+}
+
 export function tkAuthorizeFeedback_1() {
   const persistingCodes = new Set<string>();
   return async (ctx: Context, next: () => any) => {
@@ -621,10 +583,12 @@ function checkIsSupportVideo(extension: string) {
 export function releaseResource() {
   // 附件切片 1024*1024是MB,当前切片用500kb
   const CHUNK_UNIT_SIZE = (1024 * 1024) / 2;
+  const publishingSet = new Set<number>();
   return async (ctx: Context, next: () => any) => {
     const { id } = (ctx.query as any) || {};
 
-    if (isNil(id)) return;
+    if (isNil(id) || publishingSet.has(id)) return;
+    publishingSet.add(id);
 
     const currentUserId = ctx.state.currentUser?.id;
     // console.log(`---------[ currentUser ]---------`);
@@ -693,6 +657,7 @@ export function releaseResource() {
       const contentRange = `bytes 0-${videoSize - 1}/${videoSize}`;
 
       try {
+        process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
         const {
           data: {
             data: { publish_id, upload_url },
@@ -715,9 +680,7 @@ export function releaseResource() {
             },
           },
         );
-        console.log(`---------[ 请求信息 ]---------`);
-        console.log(`publish_id:`, publish_id);
-        console.log(`upload_url:`, upload_url);
+
         const fileContent = await promises.readFile(filePath);
 
         const res = await axios.request({
@@ -738,12 +701,14 @@ export function releaseResource() {
           filterByTk: id,
           values: {
             status: 'uploadSuccessful',
+            errorMessage: null,
           },
         });
       } catch (error) {
         console.log(`---------[ upload error ]---------`);
         const { status, statusText } = error?.response || {};
         const errorMessage = `状态:${status};详细信息:${statusText}`;
+        console.log(`response:`, error);
         console.log(`errorMessage:`, errorMessage);
         await releaseRep.update({
           filterByTk: id,
@@ -754,7 +719,7 @@ export function releaseResource() {
         });
       }
     };
-
+    publishingSet.delete(id);
     await releaseToAccount(firstAccount.id);
     // await Promise.all(accounts.map((acc) => releaseToAccount(acc.id)));
   };

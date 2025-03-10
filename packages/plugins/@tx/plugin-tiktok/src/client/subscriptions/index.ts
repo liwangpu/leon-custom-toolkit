@@ -161,9 +161,7 @@ export const subscribeWatchTKVideo = (() => {
           MessageCenter.publish({
             topic: MessageTopic.watchTKVideo,
             data: {
-              video: {
-                url: row.video_url,
-              },
+              video: row,
             },
             channel: 'main',
             source: 'renderer',
@@ -204,6 +202,54 @@ export const subscribeViewInfluencer = (() => {
             channel: 'main',
             source: 'renderer',
           });
+        },
+      });
+    },
+    unSubscribe() {
+      MessageCenter.unSubscribe(topic);
+    },
+  };
+})();
+
+export const subscribePublishResource = (() => {
+  const topic = '@tx/plugin-tiktok:publish-video-resource';
+  return {
+    subscribe() {
+      MessageCenter.subscribe({
+        key: 'publish-video-resource-handler',
+        topic,
+        async fn(props) {
+          const { data, apiClient } = props;
+          const { id } = data;
+          console.log(`---------[ title ]---------`);
+          console.log(`props:`, props);
+          const {
+            data: { data: res },
+          } = await apiClient.request({
+            url: 'tiktok:releaseResource',
+            method: 'GET',
+            params: {
+              id,
+            },
+          });
+
+          // if (!isElectionEnv) {
+          //   message.info(`该功能需要在客户端环境下才生效!`);
+          //   return;
+          // }
+          // message.info(`即将打开,请稍等!`);
+          // MessageCenter.publish({
+          //   topic: MessageTopic.viewInfluencer,
+          //   data: {
+          //     influencer: {
+          //       unique_id: row.unique_id,
+          //       influencer_id: row.influencer_id,
+          //       avatar_url: row.avatar_url,
+          //     },
+          //   },
+          //   channel: 'main',
+          //   source: 'renderer',
+          // });
         },
       });
     },

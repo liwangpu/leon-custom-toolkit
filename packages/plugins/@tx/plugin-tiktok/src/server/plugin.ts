@@ -4,7 +4,6 @@ import {
   makeDevicePayment,
   devicePaymentFeedback,
   tkAuthorize,
-  summaryGrowFansPlan,
   tkAuthorizeFeedback,
   tkGrowFansPlanReport,
   tkRegisterAuthorize,
@@ -12,6 +11,7 @@ import {
   releaseResource,
   syncAccountInfo,
   syncAllAccountInfos,
+  tkMockAuthorizeFeedback,
 } from './actions';
 import {
   EchoTikAPI,
@@ -20,6 +20,7 @@ import {
   organizationResourceDBEvent,
   organizationResourceMiddeware,
   postingResourceReleaseMiddeware,
+  searchTermDetailMiddeware,
   topFollowerMiddeware,
   topHashTagMiddeware,
   topSoldMiddeware,
@@ -46,11 +47,11 @@ export class PluginTiktokServer extends Plugin {
       name: 'tiktok',
       actions: {
         growFansPlanReport: tkGrowFansPlanReport(),
-        summaryGrowFansPlan: summaryGrowFansPlan(),
         authorize: tkAuthorize(),
         registerAuthorize: tkRegisterAuthorize(),
         updateRegisterUserInfo: tkUpdateRegisterUserInfo(),
-        authorizeFeedback: tkAuthorizeFeedback(),
+        // authorizeFeedback: tkAuthorizeFeedback(),
+        authorizeFeedback: tkMockAuthorizeFeedback(),
         releaseResource: releaseResource(),
         syncAccountInfo: syncAccountInfo(),
         syncAllAccountInfos: syncAllAccountInfos(),
@@ -95,32 +96,11 @@ export class PluginTiktokServer extends Plugin {
       this.app.acl.use(topSoldMiddeware(this));
       this.app.acl.use(hotSellMiddeware(this));
       this.app.acl.use(newsBurstMiddeware(this));
+      // 养号计划关键词新增/编辑和删除触发养号计划更新
+      this.app.acl.use(searchTermDetailMiddeware(this));
       // 监听db事件,填写organizationId字段信息
       organizationResourceDBEvent({ db: this.db });
     });
-
-    // this.app.use(async (ctx, next) => {
-    //   ctx.body = ctx.body || [];
-    //   // ctx.body.push(1);
-    //   const { resourceName, actionName } = ctx.action;
-    //   if (resourceName !== 'tk_posting_resource_release' || actionName !== 'create') return;
-    //   console.log(`---------[ title ]---------`);
-    //   console.log(`---------[ title ]---------`);
-    //   console.log(`ctx.request:`, ctx.request);
-    //   console.log(` ctx.request.body:`, ctx.request.body);
-    //   // console.log(`resourceName:`, resourceName);
-    //   // console.log(`actionName:`, actionName);
-    //   console.log(`body:`, ctx.body);
-    //   // ctx.request.body = null;
-    //   // (ctx.request.body as any).accounts = [];
-    //   // ctx.body.dataValues.accounts = [];
-    //   // ctx.body.accounts = [];
-
-    //   console.log(`after:`, ctx.body);
-    //   await next();
-
-    //   // ctx.body.push(2);
-    // });
   }
 
   async install() {}

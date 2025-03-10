@@ -19,6 +19,7 @@ import {
   subscribeCopyAttachmentResourceUrl,
   subscribeWatchTKVideo,
   subscribeViewInfluencer,
+  subscribePublishResource,
 } from './subscriptions';
 
 export class PluginTiktokClient extends Plugin {
@@ -68,6 +69,7 @@ export class PluginTiktokClient extends Plugin {
     subscribeCopyAttachmentResourceUrl.subscribe();
     subscribeWatchTKVideo.subscribe();
     subscribeViewInfluencer.subscribe();
+    subscribePublishResource.subscribe();
   }
 }
 
