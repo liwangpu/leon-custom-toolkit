@@ -1,6 +1,7 @@
 import { isNil } from 'lodash';
 import { Plugin } from '@nocobase/server';
-import { EchoTikAPI, getUserInfo } from './common';
+import { getUserInfo } from './common';
+import { EchoTikAPI } from '../dataCenter';
 
 export function topHashTagMiddeware(plugin: Plugin) {
   return async (ctx: any, next: () => Promise<any>) => {
@@ -350,7 +351,7 @@ export function newsBurstMiddeware(plugin: Plugin) {
     }
     // console.log(`searchMap:`, searchMap);
 
-    const { data: ds, meta } = await EchoTikAPI.requestNewBurstist({
+    const { data: ds, meta } = await EchoTikAPI.requestNewBurstList({
       time_range: searchMap.get('time_range'),
       country: searchMap.get('country'),
       productCategory: searchMap.get('productCategory'),
@@ -370,6 +371,63 @@ export function newsBurstMiddeware(plugin: Plugin) {
         page,
         pageSize,
       },
+    };
+  };
+}
+
+export function influencerMiddeware(plugin: Plugin) {
+  return async (ctx: any, next: () => Promise<any>) => {
+    const { resourceName, actionName } = getUserInfo({
+      ctx,
+    });
+
+    if (!(resourceName === 'influencers' && actionName === 'list')) return await next();
+    // params 格式是 {filterByTk:number;resourceName:string;actionName:string;values:any;filter:any}
+    const params = ctx.action.params;
+    const { filter, page, pageSize } = params;
+    const $and = filter['$and'];
+
+    // if (isNil($and)) {
+    //   ctx.body = {
+    //     data: [],
+    //   };
+    //   return;
+    // }
+    console.log(`---------[ title ]---------`);
+    console.log(`---------[ title ]---------`);
+    console.log(`params:`, params);
+    console.log(`$and:`, $and);
+    // const searchMap = new Map<string, any>();
+    // for (const it of $and) {
+    //   const propeties = Object.keys(it);
+
+    //   for (const propety of propeties) {
+    //     const kv = it[propety];
+    //     switch (propety) {
+    //       case 'time_range':
+    //         searchMap.set(propety, kv['$dateOn']);
+    //         break;
+    //       case 'country':
+    //         searchMap.set(propety, kv['id']['$eq']);
+    //         break;
+    //       case 'productCategory':
+    //         searchMap.set(propety, kv['categoryId']['$eq']);
+    //         break;
+    //       default:
+    //         break;
+    //     }
+    //   }
+    // }
+    const { data: ds, meta } = await EchoTikAPI.requestInfluencerList({
+      // country: searchMap.get('country'),
+      // productCategory: searchMap.get('productCategory'),
+      page,
+      pageSize,
+    });
+    ctx.withoutDataWrapping = true;
+    ctx.body = {
+      data: ds,
+      meta,
     };
   };
 }

@@ -1,4 +1,5 @@
 import { Context } from '@nocobase/actions';
+import { isNil } from 'lodash';
 
 export function getSubcription() {
   return async (ctx: Context, next: () => any) => {
@@ -39,5 +40,64 @@ export function getSubcription() {
     s.push(null); // indicates end of the stream
     ctx.body = s;
     await next();
+  };
+}
+
+export function doTranslate() {
+  return async (ctx: Context, next: () => any) => {
+    const collectionRepo = ctx.db.getRepository('collections');
+    const fieldRepo = ctx.db.getRepository('fields');
+    const cols = await collectionRepo.find({
+      filter: {},
+    });
+
+    const localeJson: { [key: string]: any } = {};
+    const collectionNames = [];
+    for (const col of cols) {
+      const title: string = col.title;
+      if (title.includes('{{')) {
+        continue;
+      }
+      collectionNames.push(title);
+      const key = col.key || col.id;
+      const trTitle = `{{t("${title}",{ns:"@tx/plugin-tiktok"})}}`;
+      localeJson[title] = title;
+      await collectionRepo.update({
+        filter: {
+          key,
+        },
+        values: {
+          title: trTitle,
+        },
+      });
+    }
+    const fields: Array<any> = await fieldRepo.find({
+      filter: {},
+    });
+    for (const f of fields) {
+      let options = f.options;
+      if (isNil(options)) continue;
+      let uiSchema = options.uiSchema;
+      if (isNil(uiSchema)) continue;
+      const title: string = uiSchema.title;
+      if (title.includes('{{')) continue;
+
+      const trTitle = `{{t("${title}",{ns:"@tx/plugin-tiktok"})}}`;
+      uiSchema = { ...uiSchema, title: trTitle };
+      options = { ...options, uiSchema };
+      localeJson[title] = title;
+      await fieldRepo.update({
+        filter: {
+          key: f.key,
+        },
+        values: {
+          options,
+        },
+      });
+    }
+
+    ctx.body = {
+      localeJson,
+    };
   };
 }

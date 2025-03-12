@@ -4,18 +4,20 @@ import {
   makeDevicePayment,
   devicePaymentFeedback,
   tkAuthorize,
-  tkAuthorizeFeedback,
   tkGrowFansPlanReport,
   tkRegisterAuthorize,
-  tkUpdateRegisterUserInfo,
+  // tkUpdateRegisterUserInfo,
   releaseResource,
   syncAccountInfo,
   syncAllAccountInfos,
-  tkMockAuthorizeFeedback,
+  // tkMockAuthorizeFeedback,
+  doTranslate,
+  tkAuthorizeFeedback,
+  mockPublishVideoToCurrentUserToAccount,
 } from './actions';
 import {
-  EchoTikAPI,
   hotSellMiddeware,
+  influencerMiddeware,
   newsBurstMiddeware,
   organizationResourceDBEvent,
   organizationResourceMiddeware,
@@ -28,6 +30,7 @@ import {
 } from './middlewares';
 import { TikTokAuth } from './tiktok-auth';
 import { afterAccountCreateOrUpdate, afterCreatePostingResourceRelease, calculateVideoDuration } from './hooks';
+import { EchoTikAPI, TiktokDataCenter } from './dataCenter';
 
 export class PluginTiktokServer extends Plugin {
   async afterAdd() {}
@@ -39,6 +42,7 @@ export class PluginTiktokServer extends Plugin {
       name: 'proxySubscription',
       actions: {
         subscribe: getSubcription(),
+        doTranslate: doTranslate(),
       },
     });
     this.app.acl.allow('proxySubscription', '*', 'public');
@@ -49,12 +53,13 @@ export class PluginTiktokServer extends Plugin {
         growFansPlanReport: tkGrowFansPlanReport(),
         authorize: tkAuthorize(),
         registerAuthorize: tkRegisterAuthorize(),
-        updateRegisterUserInfo: tkUpdateRegisterUserInfo(),
-        // authorizeFeedback: tkAuthorizeFeedback(),
-        authorizeFeedback: tkMockAuthorizeFeedback(),
+        // updateRegisterUserInfo: tkUpdateRegisterUserInfo(),
+        authorizeFeedback: tkAuthorizeFeedback(),
+        // authorizeFeedback: tkMockAuthorizeFeedback(),
         releaseResource: releaseResource(),
         syncAccountInfo: syncAccountInfo(),
         syncAllAccountInfos: syncAllAccountInfos(),
+        mockPublishVideoToCurrentUserToAccount: mockPublishVideoToCurrentUserToAccount(),
       },
     });
     this.app.acl.allow('tiktok', '*', 'loggedIn');
@@ -80,6 +85,7 @@ export class PluginTiktokServer extends Plugin {
     });
 
     EchoTikAPI.startup({ plugin: this });
+    TiktokDataCenter.startup({ plugin: this });
 
     // hooks
     this.db.on('tk_account.beforeSave', afterAccountCreateOrUpdate({ db: this.db }));
@@ -96,6 +102,8 @@ export class PluginTiktokServer extends Plugin {
       this.app.acl.use(topSoldMiddeware(this));
       this.app.acl.use(hotSellMiddeware(this));
       this.app.acl.use(newsBurstMiddeware(this));
+      this.app.acl.use(influencerMiddeware(this));
+      // this.app.acl.use(accountVideoMiddeware(this));
       // 养号计划关键词新增/编辑和删除触发养号计划更新
       this.app.acl.use(searchTermDetailMiddeware(this));
       // 监听db事件,填写organizationId字段信息

@@ -20,6 +20,8 @@ import {
   subscribeWatchTKVideo,
   subscribeViewInfluencer,
   subscribePublishResource,
+  subscribeWatchUserVideo,
+  subscribePublishResourceToCurrentUser,
 } from './subscriptions';
 
 export class PluginTiktokClient extends Plugin {
@@ -68,8 +70,10 @@ export class PluginTiktokClient extends Plugin {
     subscribeGrowFansPlanStatusChange.subscribe();
     subscribeCopyAttachmentResourceUrl.subscribe();
     subscribeWatchTKVideo.subscribe();
+    subscribeWatchUserVideo.subscribe();
     subscribeViewInfluencer.subscribe();
     subscribePublishResource.subscribe();
+    subscribePublishResourceToCurrentUser.subscribe();
   }
 }
 

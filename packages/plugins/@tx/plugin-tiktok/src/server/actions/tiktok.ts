@@ -1,17 +1,13 @@
 import { Context } from '@nocobase/actions';
 import dayjs from 'dayjs';
-import { floor, isArray, isNil } from 'lodash';
-import { changeCurrentUserContext, getExtension, TK_FEEDBACK_PAGE } from '../utils';
-import queryString from 'query-string';
+import { floor, isArray, isNil, snakeCase } from 'lodash';
+import { changeCurrentUserContext, getExtension } from '../utils';
 import axios from 'axios';
-import { getTiktokAPIBaseUrl } from '../../common';
 import path from 'path';
 import { promises } from 'fs';
 import { ITKToken } from '../../interfaces';
-
-const TIKTOK_API_URL = getTiktokAPIBaseUrl();
-
-process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
+import { TiktokDataCenter } from '../dataCenter';
+import { getUserInfo } from '../middlewares';
 
 interface IGrowFansPlanReportData {
   planId: number;
@@ -99,482 +95,50 @@ export function tkGrowFansPlanReport() {
   };
 }
 
-interface IAuthorizationInfo {
-  accountId?: number;
-  userId?: number;
-}
-
-const authorizationMapping = new Map<string, IAuthorizationInfo>();
-
 export function tkRegisterAuthorize() {
-  const baseUrl = 'https://www.tiktok.com/v2/auth/authorize';
-  const queryParams = {
-    client_key: 'sbaw4lzoqtmuncf23w',
-    scope: 'user.info.basic,user.info.profile,user.info.stats,video.list,video.upload,video.publish',
-    response_type: 'code',
-    redirect_uri: `${TIKTOK_API_URL}/api/tiktok:authorizeFeedback`,
-    // state: 'v8riw1vurx',
-  };
-
-  return async (ctx: Context, next: () => any) => {
-    const authorizationRep = ctx.db.getRepository('tk_authorization');
-
-    // const userRep = ctx.db.getRepository('users');
-    // const user = await userRep.create({
-    //   values: {
-    //     nickname: 'user',
-    //     username: faker.internet.userName(),
-    //     // phone: faker.phone.imei(),
-    //     // email: faker.internet.email(),
-    //     appLang: 'en-US',
-    //     password: '123456',
-    //     roles: [
-    //       {
-    //         name: 'tkAppRegisterDemoUser',
-    //       },
-    //     ],
-    //   },
-    // });
-
-    // const state = Math.random().toString(36).substring(2);
-    // await authorizationRep.create({
-    //   values: {
-    //     state,
-    //     // registerUserId: user.id,
-    //   },
-    // });
-    // const info: IAuthorizationInfo = { userId: user.id };
-    // authorizationMapping.set(state, info);
-    // const url = queryString.stringifyUrl({
-    //   url: baseUrl,
-    //   query: {
-    //     ...queryParams,
-    //     state,
-    //   },
-    // });
-
-    console.log(`---------[ redirect ]---------`);
-    console.log(`---------[ redirect ]---------`);
-    console.log(`---------[ redirect ]---------`);
-    // console.log(`url:`, url);
-    // ctx.redirect(url);
-  };
-}
-
-// export function tkRegisterAuthorize() {
-//   const baseUrl = 'https://www.tiktok.com/v2/auth/authorize';
-//   const queryParams = {
-//     client_key: 'sbaw4lzoqtmuncf23w',
-//     scope: 'user.info.basic,user.info.profile,user.info.stats,video.list,video.upload,video.publish',
-//     response_type: 'code',
-//     redirect_uri: `${TIKTOK_API_URL}/api/tiktok:authorizeFeedback`,
-//     // state: 'v8riw1vurx',
-//   };
-
-//   return async (ctx: Context, next: () => any) => {
-//     const authorizationRep = ctx.db.getRepository('tk_authorization');
-
-//     const userRep = ctx.db.getRepository('users');
-//     const user = await userRep.create({
-//       values: {
-//         nickname: 'user',
-//         username: faker.internet.userName(),
-//         // phone: faker.phone.imei(),
-//         // email: faker.internet.email(),
-//         appLang: 'en-US',
-//         password: '123456',
-//         roles: [
-//           {
-//             name: 'tkAppRegisterDemoUser',
-//           },
-//         ],
-//       },
-//     });
-
-//     const state = Math.random().toString(36).substring(2);
-//     await authorizationRep.create({
-//       values: {
-//         state,
-//         registerUserId: user.id,
-//       },
-//     });
-//     const info: IAuthorizationInfo = { userId: user.id };
-//     authorizationMapping.set(state, info);
-//     const url = queryString.stringifyUrl({
-//       url: baseUrl,
-//       query: {
-//         ...queryParams,
-//         state,
-//       },
-//     });
-
-//     console.log(`---------[ redirect ]---------`);
-//     console.log(`---------[ redirect ]---------`);
-//     console.log(`---------[ redirect ]---------`);
-//     console.log(`url:`, url);
-//     ctx.redirect(url);
-//   };
-// }
-
-async function getTKUserInfo(props: { token: string }): Promise<{
-  open_id: string;
-  union_id: string;
-  username: string;
-  display_name: string;
-  follower_count: number;
-  following_count: number;
-  likes_count: number;
-  video_count: number;
-}> {
-  const { token } = props;
-  const {
-    data: {
-      data: { user },
-    },
-  } = await axios.get('https://open.tiktokapis.com/v2/user/info/', {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-    params: {
-      fields:
-        'open_id,union_id,avatar_url,display_name,username,follower_count,following_count,likes_count,video_count',
-    },
-  });
-  return user;
-}
-
-export function tkUpdateRegisterUserInfo() {
-  return async (ctx: Context, next: () => any) => {
-    const { userId } = (ctx.query as any) || {};
-
-    console.log(`userId:`, userId);
-    const tokenRep = ctx.db.getRepository('tk_token');
-    const token = await tokenRep.findOne({
-      filter: {
-        registerUserId: userId,
-      },
-    });
-
-    console.log(`token:`, token);
-    console.log(`token:`, token.access_token);
-
-    const user = await getTKUserInfo({ token: token.access_token });
-
-    const { username, display_name } = user;
-
-    console.log(`user:`, user);
-  };
-}
-
-export function tkAuthorize() {
-  const baseUrl = 'https://www.tiktok.com/v2/auth/authorize';
-  const queryParams = {
-    client_key: 'sbaw4lzoqtmuncf23w',
-    scope: 'user.info.basic,user.info.profile,user.info.stats,video.list,video.upload,video.publish',
-    response_type: 'code',
-    redirect_uri: `${TIKTOK_API_URL}/api/tiktok:authorizeFeedback`,
-    // state: 'v8riw1vurx',
-  };
-  return async (ctx: Context, next: () => any) => {
-    const { accountId } = (ctx.request.query as any) || {};
-
-    const authorizationRep = ctx.db.getRepository('tk_authorization');
-
-    const state = Math.random().toString(36).substring(2);
-    await authorizationRep.create({
-      values: {
-        state,
-        tk_account_id: accountId,
-      },
-    });
-    const info: IAuthorizationInfo = { accountId };
-    authorizationMapping.set(state, info);
-    const url = queryString.stringifyUrl({
-      url: baseUrl,
-      query: {
-        ...queryParams,
-        state,
-      },
-    });
-    ctx.redirect(url);
-  };
-}
-
-export function tkAuthorizeFeedback() {
   const appPort = process.env['APP_PORT'] ? parseInt(process.env['APP_PORT']) : 13000;
   const serverBaseUrl = `http://127.0.0.1:${appPort}/api`;
   const singInUrl = `${serverBaseUrl}/auth:signIn`;
   return async (ctx: Context, next: () => any) => {
-    const { code, state, error, errorDescription } = (ctx.query as any) || {};
+    // tk注册演示用户,需要设置一个对应的tk account id
+    const tkRegisterMapToAccountId = 79;
 
-    if (isNil(code) || isNil(state)) return;
-
-    const authorizationRep = ctx.db.getRepository('tk_authorization');
-    const accountRep = ctx.db.getRepository('tk_account');
-    const authorization = await authorizationRep.findOne({
-      filter: {
-        state,
+    const {
+      data: {
+        data: { token },
+      },
+    } = await axios.request({
+      url: singInUrl,
+      method: 'POST',
+      data: {
+        account: 'tkRegister',
+        password: '123456',
       },
     });
-
-    if (!isNil(authorization.tokenId)) return;
-
-    const params = new URLSearchParams();
-    params.append('code', code);
-    params.append('client_key', 'sbaw4lzoqtmuncf23w');
-    params.append('client_secret', 'WM4ScBYDkntf3E99EBM3J386He0AB1Gt');
-    params.append('grant_type', 'authorization_code');
-    params.append('redirect_uri', `${TIKTOK_API_URL}/api/tiktok:authorizeFeedback`);
-
-    const { data } = await axios.post('https://open.tiktokapis.com/v2/oauth/token/', params, {
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
+    console.log(`---------[ tkRegisterAuthorize ]---------`);
+    console.log(`tokenRes:`, token);
+    await TiktokDataCenter.requestToken({
+      ctx,
+      next,
+      accountId: tkRegisterMapToAccountId,
+      feedbackRedirectParam: { isRegisterUser: true, token },
     });
-
-    if (data.error) return;
-
-    const tokenRep = ctx.db.getRepository('tk_token');
-
-    const accountId = authorization.tk_account_id;
-
-    const tokenRecord = await tokenRep.create({
-      values: {
-        ...data,
-        accountId,
-        registerUserId: authorization.registerUserId,
-      },
-    });
-
-    await authorizationRep.update({
-      filterByTk: authorization.id,
-      values: {
-        code,
-        error,
-        errorDescription,
-        tokenId: tokenRecord.id,
-      },
-    });
-
-    const res = await getTKUserInfo({ token: data.access_token });
-
-    const latestSyncTime = dayjs().format('YYYY-MM-DD HHmmss');
-    await accountRep.update({
-      filterByTk: accountId,
-      values: {
-        followerCount: res.follower_count,
-        followingCount: res.following_count,
-        videoCount: res.video_count,
-        likesCount: res.likes_count,
-        username: res.username,
-        latestSyncTime,
-        tokenId: tokenRecord.id,
-      },
-    });
-
-    // if (!isNil(authorization.registerUserId)) {
-    //   const user = await getTKUserInfo({ token: tokenRecord.access_token });
-    //   const feedbackUrl = `${TIKTOK_API_URL}/tk-authorize-feedback`;
-    //   const userRep = ctx.db.getRepository('users');
-    //   await userRep.update({
-    //     values: {
-    //       nickname: user.display_name,
-    //       username: user.username,
-    //     },
-    //     filter: {
-    //       id: authorization.registerUserId,
-    //     },
-    //   });
-
-    //   const {
-    //     data: { data: tokenRes },
-    //   } = await axios.request({
-    //     url: singInUrl,
-    //     method: 'POST',
-    //     data: {
-    //       account: user.username,
-    //       password: '123456',
-    //     },
-    //   });
-
-    //   ctx.redirect(
-    //     queryString.stringifyUrl({
-    //       url: feedbackUrl,
-    //       query: {
-    //         type: 'backToHome',
-    //         token: tokenRes.token,
-    //       },
-    //     }),
-    //   );
-    // }
-
-    // const {
-    //   data: { data: tokenRes },
-    // } = await axios.request({
-    //   url: singInUrl,
-    //   method: 'POST',
-    //   data: {
-    //     account: user.username,
-    //     password: '123456',
-    //   },
-    // });
-
-    const feedbackUrl = `${TIKTOK_API_URL}/tk-authorize-feedback`;
-
-    ctx.redirect(
-      queryString.stringifyUrl({
-        url: feedbackUrl,
-        query: {
-          type: 'backToHome',
-          // token: tokenRes.token,
-        },
-      }),
-    );
   };
 }
 
-export function tkMockAuthorizeFeedback() {
+export function tkAuthorize() {
   return async (ctx: Context, next: () => any) => {
-    ctx.set({
-      'Content-Type': 'text/html; charset=UTF-8',
-    });
-    ctx.withoutDataWrapping = true;
-    ctx.body = TK_FEEDBACK_PAGE;
+    const { accountId } = (ctx.request.query as any) || {};
+
+    await TiktokDataCenter.requestToken({ ctx, next, accountId });
   };
 }
 
-export function tkAuthorizeFeedback_1() {
-  const persistingCodes = new Set<string>();
-  return async (ctx: Context, next: () => any) => {
-    const { code, state, error, errorDescription } = (ctx.request.body as any) || {};
-
-    if (isNil(code) || isNil(state) || persistingCodes.has(code)) return;
-    persistingCodes.add(code);
-    const authorizationRep = ctx.db.getRepository('tk_authorization');
-    const authorization = await authorizationRep.findOne({
-      filter: {
-        state,
-      },
-    });
-    // 因为授权页面会刷新两次,所以如果是第二次请求,那么就不用更新了
-    if (
-      !isNil(authorization.tokenId) ||
-      (authorization.code === code &&
-        authorization.error === error &&
-        authorization.errorDescription === errorDescription)
-    )
-      return;
-    const info = authorizationMapping.get(state);
-
-    const params = new URLSearchParams();
-    params.append('code', code);
-    params.append('client_key', 'sbaw4lzoqtmuncf23w');
-    params.append('client_secret', 'WM4ScBYDkntf3E99EBM3J386He0AB1Gt');
-    params.append('grant_type', 'authorization_code');
-    params.append('redirect_uri', `${TIKTOK_API_URL}/tk-authorize`);
-
-    const { data } = await axios.post('https://open.tiktokapis.com/v2/oauth/token/', params, {
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-    });
-    if (data.error) return;
-
-    console.log(`---------[ tkAuthorizeFeedback ]---------`);
-    console.log(`data:`, data);
-
-    const tokenRep = ctx.db.getRepository('tk_token');
-
-    const tokenRecord = await tokenRep.create({
-      values: {
-        ...data,
-        accountId: info.accountId,
-        registerUserId: info.userId,
-      },
-    });
-
-    await authorizationRep.update({
-      filterByTk: authorization.id,
-      values: {
-        code,
-        error,
-        errorDescription,
-        tokenId: tokenRecord.id,
-      },
-    });
-
-    const user = await getTKUserInfo({ token: tokenRecord.access_token });
-    if (!isNil(authorization.registerUserId)) {
-      const userRep = ctx.db.getRepository('users');
-      await userRep.update({
-        values: {
-          nickname: user.display_name,
-          username: user.username,
-        },
-        filterByTk: authorization.registerUserId,
-      });
-    }
-
-    // if (!isNil(authorization.tk_account_id)) {
-    // }
-
-    persistingCodes.delete(code);
-
-    ctx.body = {
-      accountId: info.accountId,
-      registerUserId: info.userId,
-      registerUserName: user.username,
-      registerUserPassword: '123456',
-    };
+export function tkAuthorizeFeedback() {
+  return (ctx: Context, next: () => any) => {
+    return TiktokDataCenter.tokenFeedback({ ctx, next });
   };
 }
-
-const getToken = async (props: { ctx: Context; accountId?: number; registerUserId?: number }) => {
-  const { ctx, accountId, registerUserId } = props;
-  if (isNil(accountId) && isNil(registerUserId)) return null;
-  const tokenRep = ctx.db.getRepository('tk_token');
-
-  const $or = [];
-
-  if (!isNil(accountId)) {
-    $or.push({ accountId });
-  }
-
-  if (!isNil(registerUserId)) {
-    $or.push({ registerUserId });
-  }
-
-  const record = await tokenRep.findOne({
-    filter: { $or },
-  });
-  if (isNil(record)) return null;
-
-  const updatedAt = dayjs(record.updatedAt);
-  const tokenExpiresIn = updatedAt.add(record.expires_in, 's');
-  const currentTime = dayjs();
-  if (tokenExpiresIn.isAfter(currentTime)) return record.access_token;
-  console.log(`---------[ refresh token ]---------`);
-  const params = new URLSearchParams();
-  params.append('client_key', 'sbaw4lzoqtmuncf23w');
-  params.append('client_secret', 'WM4ScBYDkntf3E99EBM3J386He0AB1Gt');
-  params.append('grant_type', 'refresh_token');
-  params.append('refresh_token', record.refresh_token);
-
-  const { data } = await axios.post('https://open.tiktokapis.com/v2/oauth/token/', params, {
-    headers: {
-      'Content-Type': 'application/x-www-form-urlencoded',
-    },
-  });
-
-  await tokenRep.update({
-    values: data,
-    filter: {
-      id: record.id,
-    },
-  });
-
-  return data.access_token;
-};
 
 function checkIsSupportVideo(extension: string) {
   return extension === 'mp4' || extension === 'mov' || extension === 'webm';
@@ -589,10 +153,6 @@ export function releaseResource() {
 
     if (isNil(id) || publishingSet.has(id)) return;
     publishingSet.add(id);
-
-    const currentUserId = ctx.state.currentUser?.id;
-    // console.log(`---------[ currentUser ]---------`);
-    // console.log(`currentUserId:`, currentUserId);
 
     const resourceRep = ctx.db.getRepository('tk_posting_resource');
     const releaseRep = ctx.db.getRepository('tk_posting_resource_release');
@@ -610,9 +170,10 @@ export function releaseResource() {
       filterByTk: releaseRecord.sourceResourceId,
     });
 
+    const content = `${releaseRecord.content} #${releaseRecord.title}`;
     const postInfo: { [key: string]: any } = {
       privacy_level: 'SELF_ONLY',
-      title: releaseRecord.title,
+      title: content,
       disable_duet: false,
       disable_comment: false,
       disable_stitch: false,
@@ -641,7 +202,7 @@ export function releaseResource() {
     // console.log(`firstAccount:`, firstAccount);
     const releaseToAccount = async (accountId: number) => {
       //
-      const token = await getToken({ ctx, accountId });
+      const token = await TiktokDataCenter.getToken({ ctx, accountId });
       console.log(`token:`, token);
       // const arr = Array.from({ length: chunkTotal }).map((_, idx) => {
       //   console.log(`it:`, idx);
@@ -728,47 +289,12 @@ export function releaseResource() {
 export function syncAccountInfo() {
   return async (ctx: Context, next: () => any) => {
     const { id: accountId } = (ctx.query as any) || {};
-    // console.log(`---------[ syncAccountInfo ]---------`);
-    // console.log(`---------[ syncAccountInfo ]---------`);
-    // console.log(`accountId:`, accountId);
-    const token = await getToken({ ctx, accountId });
-    // console.log(`token:`, token);
-    const res = await getTKUserInfo({ token });
-    const accountRep = ctx.db.getRepository('tk_account');
-    const latestSyncTime = dayjs().format('YYYY-MM-DD HHmmss');
-    await accountRep.update({
-      filterByTk: accountId,
-      values: {
-        followerCount: res.follower_count,
-        followingCount: res.following_count,
-        videoCount: res.video_count,
-        likesCount: res.likes_count,
-        username: res.username,
-        latestSyncTime,
-      },
-    });
-    ctx.body = {
-      ...res,
-    };
-    // const res = await getTKUserInfo(token);
+    return TiktokDataCenter.syncAccountInfo({ ctx, accountId });
   };
 }
 
 export function syncAllAccountInfos() {
   return async (ctx: Context, next: () => any) => {
-    // const { id: accountId } = (ctx.query as any) || {};
-    console.log(`---------[ refreshTKToken ]---------`);
-    console.log(`---------[ refreshTKToken ]---------`);
-    // console.log(`accountId:`, accountId);
-    // const token = await getToken({ ctx, accountId });
-    // console.log(`token:`, token);
-    // const res = await getTKUserInfo(token);
-
-    // ctx.body = {
-    //   ...res,
-    // };
-
-    const accountRep = ctx.db.getRepository('tk_account');
     const tokenRep = ctx.db.getRepository('tk_token');
     const tokenRecords: Array<ITKToken> = await tokenRep.find({
       filter: {
@@ -778,53 +304,64 @@ export function syncAllAccountInfos() {
       },
     });
 
-    const getToken = async (record: ITKToken) => {
-      const updatedAt = dayjs(record.updatedAt);
-      const tokenExpiresIn = updatedAt.add(Number(record.expires_in), 's');
-      const currentTime = dayjs();
-      if (tokenExpiresIn.isAfter(currentTime)) return record.access_token;
-      console.log(`---------[ refresh token ]---------`);
-      const params = new URLSearchParams();
-      params.append('client_key', 'sbaw4lzoqtmuncf23w');
-      params.append('client_secret', 'WM4ScBYDkntf3E99EBM3J386He0AB1Gt');
-      params.append('grant_type', 'refresh_token');
-      params.append('refresh_token', record.refresh_token);
-
-      const { data } = await axios.post('https://open.tiktokapis.com/v2/oauth/token/', params, {
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-        },
-      });
-
-      await tokenRep.update({
-        values: data,
-        filter: {
-          id: record.id,
-        },
-      });
-      return data.access_token;
-    };
-
     for (const record of tokenRecords) {
-      const token = await getToken(record);
-      const res = await getTKUserInfo({ token });
-      const accountRep = ctx.db.getRepository('tk_account');
-      const latestSyncTime = dayjs().format('YYYY-MM-DD HHmmss');
-      await accountRep.update({
-        filterByTk: record.accountId,
-        values: {
-          followerCount: res.follower_count,
-          followingCount: res.following_count,
-          videoCount: res.video_count,
-          likesCount: res.likes_count,
-          username: res.username,
-          latestSyncTime,
-        },
-      });
+      await TiktokDataCenter.syncAccountInfo({ ctx, accountId: record.accountId });
     }
 
     ctx.body = {
       tokenRecords,
+    };
+  };
+}
+
+export function mockPublishVideoToCurrentUserToAccount() {
+  return async (ctx: Context, next: () => any) => {
+    const { id: sourceResourceId } = (ctx.query as any) || {};
+    console.log(`---------[ mockPublishVideoToCurrentUserToAccount ]---------`);
+    console.log(`sourceResourceId:`, sourceResourceId);
+    const { organizationId, userId } = getUserInfo({
+      ctx,
+    });
+    const resourceRep = ctx.db.getRepository('tk_posting_resource');
+    const releaseRep = ctx.db.getRepository('tk_posting_resource_release');
+    const resource = await resourceRep.findOne({
+      filterByTk: sourceResourceId,
+      appends: ['attachment'],
+    });
+    const configSettingRep = ctx.db.getRepository('configSetting');
+    const setting = await configSettingRep.findByTargetKey('tiktokAppRegisterConfig');
+    const { accountId } = setting.value;
+    console.log(`accountId:`, accountId);
+    console.log(`resource.attachment:`, resource.attachment);
+    const data = {
+      title: resource.title,
+      content: resource.content,
+      duration: resource.duration,
+      attachment: resource.attachment,
+      accounts: [
+        {
+          id: accountId,
+        },
+      ],
+      organizationId,
+    };
+
+    // console.log(`resource:`, resource);
+    console.log(`data:`, data);
+
+    await releaseRep.create({
+      values: data,
+    });
+    // const data = {
+    //   ...values,
+    //   id: null,
+    //   organizationId,
+    //   attachment: attachment.dataValues,
+    //   accounts: [acc],
+    // };
+
+    ctx.body = {
+      // tokenRecords,
     };
   };
 }

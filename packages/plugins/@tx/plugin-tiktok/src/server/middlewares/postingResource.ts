@@ -45,7 +45,6 @@ export function postingResourceReleaseMiddeware(plugin: Plugin) {
       values: mergeParamsValues,
     });
 
-    const releaseRecordIds: Array<number> = [];
     if (isArray(accounts) && accounts.length > 1) {
       const firstAccount = accounts[0];
       mergeParamsValues.accounts = [firstAccount];

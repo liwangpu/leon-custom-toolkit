@@ -175,6 +175,40 @@ export const subscribeWatchTKVideo = (() => {
   };
 })();
 
+export const subscribeWatchUserVideo = (() => {
+  const topic = '@tx/plugin-tiktok:view-user-video';
+  return {
+    subscribe() {
+      MessageCenter.subscribe({
+        key: 'view-tk-user-video-handler',
+        topic,
+        async fn(props) {
+          const { data } = props;
+          const { row } = data;
+          if (!isElectionEnv) {
+            message.info(`该功能需要在客户端环境下才生效!`);
+            return;
+          }
+          message.info(`即将打开,请稍等!`);
+          MessageCenter.publish({
+            topic: MessageTopic.watchTKVideo,
+            data: {
+              video: {
+                video_id: row.id,
+              },
+            },
+            channel: 'main',
+            source: 'renderer',
+          });
+        },
+      });
+    },
+    unSubscribe() {
+      MessageCenter.unSubscribe(topic);
+    },
+  };
+})();
+
 export const subscribeViewInfluencer = (() => {
   const topic = '@tx/plugin-tiktok:view-tk-influencer';
   return {
@@ -423,6 +457,58 @@ export const subscribeGrowFansPlanStatusChange = (() => {
     },
     unSubscribe() {
       //
+    },
+  };
+})();
+
+/**
+ *  把视频发布到当前用户对应的tk账号
+ */
+export const subscribePublishResourceToCurrentUser = (() => {
+  const topic = '@tx/plugin-tiktok:publish-video-to-current-user';
+  return {
+    subscribe() {
+      MessageCenter.subscribe({
+        key: 'publish-video-to-current-user-handler',
+        topic,
+        async fn(props) {
+          const { data, apiClient } = props;
+          const { id, row } = data;
+          console.log(`---------[ subscribePublishResourceToCurrentUser ]---------`);
+          console.log(`props:`, props);
+          console.log(`data:`, data);
+          console.log(`row:`, row);
+          // if (!isElectionEnv) {
+          //   message.info(`该功能需要在客户端环境下才生效!`);
+          //   return;
+          // }
+          // message.info(`即将打开,请稍等!`);
+          // MessageCenter.publish({
+          //   topic: MessageTopic.viewInfluencer,
+          //   data: {
+          //     influencer: {
+          //       unique_id: row.unique_id,
+          //       influencer_id: row.influencer_id,
+          //       avatar_url: row.avatar_url,
+          //     },
+          //   },
+          //   channel: 'main',
+          //   source: 'renderer',
+          // });
+          const {
+            data: { data: plan },
+          } = await apiClient.request({
+            url: 'tiktok:mockPublishVideoToCurrentUserToAccount',
+            method: 'GET',
+            params: {
+              id,
+            },
+          });
+        },
+      });
+    },
+    unSubscribe() {
+      MessageCenter.unSubscribe(topic);
     },
   };
 })();
