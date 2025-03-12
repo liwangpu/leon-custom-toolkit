@@ -101,7 +101,9 @@ export function tkRegisterAuthorize() {
   const singInUrl = `${serverBaseUrl}/auth:signIn`;
   return async (ctx: Context, next: () => any) => {
     // tk注册演示用户,需要设置一个对应的tk account id
-    const tkRegisterMapToAccountId = 79;
+    const configSettingRep = ctx.db.getRepository('configSetting');
+    const setting = await configSettingRep.findByTargetKey('tiktokAppRegisterConfig');
+    const { accountId } = setting.value;
 
     const {
       data: {
@@ -120,7 +122,7 @@ export function tkRegisterAuthorize() {
     await TiktokDataCenter.requestToken({
       ctx,
       next,
-      accountId: tkRegisterMapToAccountId,
+      accountId,
       feedbackRedirectParam: { isRegisterUser: true, token },
     });
   };
