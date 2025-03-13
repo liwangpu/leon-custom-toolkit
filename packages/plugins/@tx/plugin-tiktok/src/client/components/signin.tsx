@@ -7,7 +7,6 @@ import { createStyles } from '@nocobase/client';
 import { getTiktokAPIBaseUrl } from '../../common';
 
 const TIKTOK_API_URL = getTiktokAPIBaseUrl();
-
 const useStyles = createStyles(({ css }) => {
   return {
     tkSignInImg: css`

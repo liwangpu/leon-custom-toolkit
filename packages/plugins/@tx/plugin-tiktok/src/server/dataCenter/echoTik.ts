@@ -1,8 +1,7 @@
-import { isNil, pick } from 'lodash';
-import { Context } from '@nocobase/actions';
-import axios from 'axios';
+import axios, { AxiosInstance } from 'axios';
 import { Plugin } from '@nocobase/server';
 import dayjs from 'dayjs';
+import { isNil } from 'lodash';
 
 export const EchoTikAPI = (() => {
   let plugin: Plugin;
@@ -10,15 +9,36 @@ export const EchoTikAPI = (() => {
   const echoTipAPIBase = `https://echotik.live/api/v1/data`;
   process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 
+  const getAxiosInstance = (() => {
+    let _axiosInstance: AxiosInstance;
+    const baseURL = `https://echotik.live/api/v1/data`;
+
+    return async () => {
+      if (!isNil(_axiosInstance)) return _axiosInstance;
+      const token = await getToken();
+      _axiosInstance = axios.create({
+        baseURL,
+        // timeout单位ms
+        timeout: 1000 * 60 * 3,
+        headers: {
+          Authorization: token,
+        },
+      });
+      return _axiosInstance;
+    };
+  })();
+
   const startup = (props: { plugin: Plugin }) => {
     plugin = props.plugin;
   };
 
   const genMeta = (props: { page: number; pageSize: number; resData: any }) => {
-    const { resData } = props;
+    const { resData, pageSize, page } = props;
     const { total, last_page } = resData.meta;
 
     const meta = {
+      page,
+      pageSize,
       count: total,
       totalPage: last_page,
     };
@@ -32,6 +52,23 @@ export const EchoTikAPI = (() => {
     if (!country) return null;
     return country.region;
   };
+
+  const getCountryByKey = (() => {
+    let map: Map<string, any>;
+    return async (key: string) => {
+      if (isNil(map)) {
+        const { db } = plugin;
+        map = new Map<string, any>();
+        const countryRep = db.getRepository('country');
+        const records: Array<any> = await countryRep.find({});
+        for (const r of records) {
+          const v = r.dataValues;
+          map.set(v.region, v);
+        }
+      }
+      return map.get(key);
+    };
+  })();
 
   const getToken = async () => {
     const { db } = plugin;
@@ -378,6 +415,51 @@ export const EchoTikAPI = (() => {
     };
   };
 
+  const requestInfluencerDetail = async (props: { influencerId: string }) => {
+    const { influencerId } = props;
+    const instance = await getAxiosInstance();
+    const {
+      data: { data, msg, code },
+    } = (await instance.request({
+      url: `/influencers/${influencerId}`,
+    })) as any;
+
+    const { id: countryKey } = data.region || {};
+    let country;
+    if (!isNil(countryKey)) {
+      country = await getCountryByKey(countryKey);
+    }
+    // console.log(`data:`, data);
+    return {
+      ...data,
+      video_count: data.videos_count,
+      follower_count: data.followers_count,
+      view_count: data.views,
+      country,
+    };
+  };
+
+  const requestInfluencerVideoList = async (props: { influencerId: string; page: number; pageSize: number }) => {
+    const { influencerId, page, pageSize } = props;
+    // https://echotik.live/api/v1/data/influencers/127905465618821121/videos?page=1&per_page=12&is_sale=&sort=desc&order=publish_time
+    const url = `${echoTipAPIBase}/influencers`;
+    const instance = await getAxiosInstance();
+    const { data: res } = (await instance.request({
+      url: `/influencers/${influencerId}/videos`,
+      params: {
+        page,
+        per_page: pageSize,
+        order: 'publish_time',
+      },
+    })) as any;
+    const meta = genMeta({ resData: res, page, pageSize });
+
+    return {
+      data: res.data as Array<any>,
+      meta,
+    };
+  };
+
   return {
     startup,
     requestTopHashTagList,
@@ -387,5 +469,7 @@ export const EchoTikAPI = (() => {
     requestHotSellList,
     requestNewBurstList,
     requestInfluencerList,
+    requestInfluencerDetail,
+    requestInfluencerVideoList,
   };
 })();

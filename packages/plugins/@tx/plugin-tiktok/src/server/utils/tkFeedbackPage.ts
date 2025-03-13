@@ -167,16 +167,21 @@ const TK_REGISTER_AUTHORIZE_PAGE = `
         var backToHomeFn = () => {
           window.location.href = "/";
         };
+
+        var setButtonCountDownTitle = (time) => {
+          btnCloseDom.innerHTML =
+            "Redirect to home page or automatically redirect after " +
+            time +
+            " seconds";
+        };
+        setButtonCountDownTitle(countdown);
         var it = setInterval(() => {
           countdown--;
           if (countdown === 0) {
             backToHomeFn();
             return clearInterval(it);
           }
-          btnCloseDom.innerHTML =
-            "Redirect to home page or automatically redirect after " +
-            countdown +
-            " seconds";
+          setButtonCountDownTitle(countdown);
         }, 1000);
 
         btnCloseDom.addEventListener("click", backToHomeFn);
@@ -188,7 +193,7 @@ const TK_REGISTER_AUTHORIZE_PAGE = `
       <div class="page-header"></div>
       <div class="page-content">
         <div class="message-box">
-          <p class="message-info">tiktok authorize success!</p>
+          <p class="message-info">Tiktok Authorize Success!</p>
           <button id="btn-close"></button>
         </div>
       </div>

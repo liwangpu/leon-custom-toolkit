@@ -73,7 +73,6 @@ export function afterCreatePostingResourceRelease(props: { db: Database }) {
     //       },
     //     });
     //     const restAccounts = accounts.slice(1);
-    //     console.log(`---------[ title ]---------`);
     //     console.log(`restAccounts:`, restAccounts);
     //     for (const acc of restAccounts) {
     //       const data = {

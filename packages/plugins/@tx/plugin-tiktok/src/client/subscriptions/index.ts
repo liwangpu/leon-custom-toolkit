@@ -7,7 +7,23 @@ import copy from 'copy-to-clipboard';
 
 const isElectionEnv = typeof window['electron'] !== 'undefined';
 
-export const subscribeGrowPlanStart = (() => {
+export const subscribeEvents = () => {
+  subscribeGrowPlanStart.subscribe();
+  subscribeGrowPlanStop.subscribe();
+  subscribeOpenWindow.subscribe();
+  subscribeTKAuthorize.subscribe();
+  subscribeTKAuthorizeSandbox.subscribe();
+  subscribeGrowFansPlanStatusChange.subscribe();
+  subscribeCopyAttachmentResourceUrl.subscribe();
+  subscribeWatchTKVideo.subscribe();
+  subscribeWatchUserVideo.subscribe();
+  subscribeViewInfluencer.subscribe();
+  subscribePublishResource.subscribe();
+  subscribePublishResourceToCurrentUser.subscribe();
+  subscribeWatchInfluencerVideo.subscribe();
+};
+
+const subscribeGrowPlanStart = (() => {
   const topic = '@tx/plugin-tiktok:grow-plan-start';
   return {
     subscribe() {
@@ -68,7 +84,7 @@ export const subscribeGrowPlanStart = (() => {
   };
 })();
 
-export const subscribeGrowPlanStop = (() => {
+const subscribeGrowPlanStop = (() => {
   const topic = '@tx/plugin-tiktok:grow-plan-stop';
   return {
     subscribe() {
@@ -112,7 +128,7 @@ export const subscribeGrowPlanStop = (() => {
   };
 })();
 
-export const subscribeOpenWindow = (() => {
+const subscribeOpenWindow = (() => {
   const topic = '@tx/plugin-tiktok:open-window';
   return {
     subscribe() {
@@ -143,7 +159,7 @@ export const subscribeOpenWindow = (() => {
   };
 })();
 
-export const subscribeWatchTKVideo = (() => {
+const subscribeWatchTKVideo = (() => {
   const topic = '@tx/plugin-tiktok:watch-tk-video';
   return {
     subscribe() {
@@ -175,7 +191,7 @@ export const subscribeWatchTKVideo = (() => {
   };
 })();
 
-export const subscribeWatchUserVideo = (() => {
+const subscribeWatchUserVideo = (() => {
   const topic = '@tx/plugin-tiktok:view-user-video';
   return {
     subscribe() {
@@ -209,7 +225,7 @@ export const subscribeWatchUserVideo = (() => {
   };
 })();
 
-export const subscribeViewInfluencer = (() => {
+const subscribeViewInfluencer = (() => {
   const topic = '@tx/plugin-tiktok:view-tk-influencer';
   return {
     subscribe() {
@@ -245,7 +261,7 @@ export const subscribeViewInfluencer = (() => {
   };
 })();
 
-export const subscribePublishResource = (() => {
+const subscribePublishResource = (() => {
   const topic = '@tx/plugin-tiktok:publish-video-resource';
   return {
     subscribe() {
@@ -255,7 +271,6 @@ export const subscribePublishResource = (() => {
         async fn(props) {
           const { data, apiClient } = props;
           const { id } = data;
-          console.log(`---------[ title ]---------`);
           console.log(`props:`, props);
           const {
             data: { data: res },
@@ -266,24 +281,6 @@ export const subscribePublishResource = (() => {
               id,
             },
           });
-
-          // if (!isElectionEnv) {
-          //   message.info(`该功能需要在客户端环境下才生效!`);
-          //   return;
-          // }
-          // message.info(`即将打开,请稍等!`);
-          // MessageCenter.publish({
-          //   topic: MessageTopic.viewInfluencer,
-          //   data: {
-          //     influencer: {
-          //       unique_id: row.unique_id,
-          //       influencer_id: row.influencer_id,
-          //       avatar_url: row.avatar_url,
-          //     },
-          //   },
-          //   channel: 'main',
-          //   source: 'renderer',
-          // });
         },
       });
     },
@@ -296,7 +293,7 @@ export const subscribePublishResource = (() => {
 /**
  * tk授权
  */
-export const subscribeTKAuthorize = (() => {
+const subscribeTKAuthorize = (() => {
   const topic = '@tx/plugin-tiktok:tk-authorize';
   return {
     subscribe() {
@@ -328,7 +325,7 @@ export const subscribeTKAuthorize = (() => {
   };
 })();
 
-export const subscribeTKAuthorizeSandbox = (() => {
+const subscribeTKAuthorizeSandbox = (() => {
   const topic = '@tx/plugin-tiktok:tk-authorize-sandbox';
   return {
     subscribe() {
@@ -360,7 +357,7 @@ export const subscribeTKAuthorizeSandbox = (() => {
   };
 })();
 
-export const subscribeCopyAttachmentResourceUrl = (() => {
+const subscribeCopyAttachmentResourceUrl = (() => {
   const topic = 'attachment_resource_url_copy';
   return {
     subscribe() {
@@ -401,7 +398,7 @@ export const subscribeCopyAttachmentResourceUrl = (() => {
   };
 })();
 
-export const subscribeGrowFansPlanStatusChange = (() => {
+const subscribeGrowFansPlanStatusChange = (() => {
   return {
     subscribe() {
       MessageCenter.message$
@@ -464,7 +461,7 @@ export const subscribeGrowFansPlanStatusChange = (() => {
 /**
  *  把视频发布到当前用户对应的tk账号
  */
-export const subscribePublishResourceToCurrentUser = (() => {
+const subscribePublishResourceToCurrentUser = (() => {
   const topic = '@tx/plugin-tiktok:publish-video-to-current-user';
   return {
     subscribe() {
@@ -503,6 +500,38 @@ export const subscribePublishResourceToCurrentUser = (() => {
             params: {
               id,
             },
+          });
+        },
+      });
+    },
+    unSubscribe() {
+      MessageCenter.unSubscribe(topic);
+    },
+  };
+})();
+
+const subscribeWatchInfluencerVideo = (() => {
+  const topic = '@tx/plugin-tiktok:watch-influencer-video';
+  return {
+    subscribe() {
+      MessageCenter.subscribe({
+        key: 'watch-influencer-video-window',
+        topic,
+        async fn(props) {
+          const { data } = props;
+          const { row } = data;
+          if (!isElectionEnv) {
+            message.info(`该功能需要在客户端环境下才生效!`);
+            return;
+          }
+          message.info(`即将打开,请稍等!`);
+          MessageCenter.publish({
+            topic: MessageTopic.watchTKVideo,
+            data: {
+              video: row,
+            },
+            channel: 'main',
+            source: 'renderer',
           });
         },
       });

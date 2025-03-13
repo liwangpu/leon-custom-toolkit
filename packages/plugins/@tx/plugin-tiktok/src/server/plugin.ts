@@ -17,7 +17,7 @@ import {
 } from './actions';
 import {
   hotSellMiddeware,
-  influencerMiddeware,
+  implementMiddlewares,
   newsBurstMiddeware,
   organizationResourceDBEvent,
   organizationResourceMiddeware,
@@ -102,8 +102,8 @@ export class PluginTiktokServer extends Plugin {
       this.app.acl.use(topSoldMiddeware(this));
       this.app.acl.use(hotSellMiddeware(this));
       this.app.acl.use(newsBurstMiddeware(this));
-      this.app.acl.use(influencerMiddeware(this));
       // this.app.acl.use(accountVideoMiddeware(this));
+      implementMiddlewares(this);
       // 养号计划关键词新增/编辑和删除触发养号计划更新
       this.app.acl.use(searchTermDetailMiddeware(this));
       // 监听db事件,填写organizationId字段信息

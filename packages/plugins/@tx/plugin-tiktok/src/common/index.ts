@@ -3,8 +3,11 @@ const PROD_API_BASE_URL = 'https://astrolabe.taixiang-tech.com';
 const DEV_API_BASE_URL = 'https://astrolabe-dev.taixiang-tech.com';
 
 export function isDevEnv() {
-  // return process.env.APP_ENV === 'development';
-  return false;
+  const noProcess = typeof process === 'undefined';
+  if (noProcess) {
+    return true;
+  }
+  return process.env?.APP_ENV === 'development';
 }
 
 export function getTiktokAPIBaseUrl() {

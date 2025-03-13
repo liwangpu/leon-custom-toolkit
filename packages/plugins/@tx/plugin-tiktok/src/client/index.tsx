@@ -5,24 +5,11 @@ import {
   createCopySubscribeActionInitializerItem,
   useCopyProxySubscribeActionProps,
 } from './actions';
-import { Payment, TikTokSignIn, TKAuthorizeFeedback } from './components';
+import { Payment, TikTokSignIn } from './components';
 import { CopyProxySubscribeActionName } from './consts';
 import { PaymentInitializerItem } from './Initializer';
 import { PaymentSettings } from './settings';
-import {
-  subscribeGrowPlanStart,
-  subscribeGrowPlanStop,
-  subscribeGrowFansPlanStatusChange,
-  subscribeOpenWindow,
-  subscribeTKAuthorize,
-  subscribeTKAuthorizeSandbox,
-  subscribeCopyAttachmentResourceUrl,
-  subscribeWatchTKVideo,
-  subscribeViewInfluencer,
-  subscribePublishResource,
-  subscribeWatchUserVideo,
-  subscribePublishResourceToCurrentUser,
-} from './subscriptions';
+import { subscribeEvents } from './subscriptions';
 
 export class PluginTiktokClient extends Plugin {
   async load() {
@@ -51,10 +38,10 @@ export class PluginTiktokClient extends Plugin {
       path: 'payment',
       Component: Payment,
     });
-    this.app.router.add('tk_authorize_feedback', {
-      path: 'tk-authorize-feedback',
-      Component: TKAuthorizeFeedback,
-    });
+    // this.app.router.add('tk_authorize_feedback', {
+    //   path: 'tk-authorize-feedback',
+    //   Component: TKAuthorizeFeedback,
+    // });
     const auth = this.app.pm.get(AuthPlugin);
     auth.registerType('TikTok', {
       components: {
@@ -62,18 +49,7 @@ export class PluginTiktokClient extends Plugin {
       },
     });
 
-    subscribeGrowPlanStart.subscribe();
-    subscribeGrowPlanStop.subscribe();
-    subscribeOpenWindow.subscribe();
-    subscribeTKAuthorize.subscribe();
-    subscribeTKAuthorizeSandbox.subscribe();
-    subscribeGrowFansPlanStatusChange.subscribe();
-    subscribeCopyAttachmentResourceUrl.subscribe();
-    subscribeWatchTKVideo.subscribe();
-    subscribeWatchUserVideo.subscribe();
-    subscribeViewInfluencer.subscribe();
-    subscribePublishResource.subscribe();
-    subscribePublishResourceToCurrentUser.subscribe();
+    subscribeEvents();
   }
 }
 

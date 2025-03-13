@@ -1,8 +1,6 @@
 import { isNil, pick } from 'lodash';
 import { Context } from '@nocobase/actions';
 import axios from 'axios';
-import { Plugin } from '@nocobase/server';
-import dayjs from 'dayjs';
 
 /**
  * 获取当前用户信息
@@ -17,7 +15,7 @@ export function getUserInfo(props: { ctx: any }) {
   }
   const { organizationId, roles } = currentUser || { roles: [], organizationId: null };
   // const rolesSet = new Set(roles.map((r) => r.name));
-  const isRootOrAdmin = currentRole === 'root' || currentRole === 'admin';
+  const isRootOrAdmin = currentRole === 'root' || currentRole === 'admin' || currentRole === 'tkAppRegisterDemoUser';
   const isOrganizationAdminUser = currentRole === 'organizationAdmin';
   const isOrganizationUser = currentRole === 'organizationAdmin';
   const { resourceName, actionName } = ctx.action;
