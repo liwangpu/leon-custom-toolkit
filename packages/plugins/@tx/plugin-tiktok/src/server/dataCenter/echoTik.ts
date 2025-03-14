@@ -1,8 +1,9 @@
 import axios, { AxiosInstance } from 'axios';
 import { Plugin } from '@nocobase/server';
 import dayjs from 'dayjs';
-import { isNil } from 'lodash';
+import { isArray, isFunction, isNil } from 'lodash';
 
+type IEchoSort = 'asc' | 'desc';
 export const EchoTikAPI = (() => {
   let plugin: Plugin;
 
@@ -56,6 +57,7 @@ export const EchoTikAPI = (() => {
   const getCountryByKey = (() => {
     let map: Map<string, any>;
     return async (key: string) => {
+      if (isNil(key)) return;
       if (isNil(map)) {
         const { db } = plugin;
         map = new Map<string, any>();
@@ -70,12 +72,54 @@ export const EchoTikAPI = (() => {
     };
   })();
 
+  const getInfluencerCategoryByKey = (() => {
+    let map: Map<string, { id: string; name: string; name_slug: string }>;
+    return async (key: string) => {
+      if (isNil(key)) return;
+      if (isNil(map)) {
+        const { db } = plugin;
+        map = new Map();
+        const countryRep = db.getRepository('influencer_category');
+        const records: Array<any> = await countryRep.find({});
+        for (const r of records) {
+          const v = r.dataValues;
+          map.set(v.key, v);
+        }
+      }
+      return map.get(key);
+    };
+  })();
+
   const getToken = async () => {
     const { db } = plugin;
     const configSettingRep = db.getRepository('configSetting');
     const setting = await configSettingRep.findByTargetKey('echoTikToken');
     const { value } = setting.value;
     return value;
+  };
+
+  /**
+   * 解析noco查询中间件参数中的排序转换成echo排序参数
+   * @param params params
+   */
+  const transferNocoSortToEchoSort = (params: { sort?: string[] }) => {
+    const { sort: sortArr } = params;
+    let order: string;
+    let sort: 'asc' | 'desc';
+    if (isArray(sortArr)) {
+      let first: string = sortArr[0];
+      if (first[0] === '-') {
+        first = first.slice(1);
+        sort = 'desc';
+      } else {
+        sort = 'asc';
+      }
+      order = first;
+    }
+    return {
+      order,
+      sort,
+    };
   };
 
   const getTimeRange = (timeType: string) => {
@@ -439,17 +483,23 @@ export const EchoTikAPI = (() => {
     };
   };
 
-  const requestInfluencerVideoList = async (props: { influencerId: string; page: number; pageSize: number }) => {
-    const { influencerId, page, pageSize } = props;
+  const requestInfluencerVideoList = async (props: {
+    influencerId: string;
+    page: number;
+    pageSize: number;
+    order?: string;
+    sort?: IEchoSort;
+  }) => {
+    const { influencerId, page, pageSize, order, sort } = props;
     // https://echotik.live/api/v1/data/influencers/127905465618821121/videos?page=1&per_page=12&is_sale=&sort=desc&order=publish_time
-    const url = `${echoTipAPIBase}/influencers`;
     const instance = await getAxiosInstance();
     const { data: res } = (await instance.request({
       url: `/influencers/${influencerId}/videos`,
       params: {
         page,
         per_page: pageSize,
-        order: 'publish_time',
+        order: order || 'publish_time',
+        sort,
       },
     })) as any;
     const meta = genMeta({ resData: res, page, pageSize });
@@ -460,8 +510,58 @@ export const EchoTikAPI = (() => {
     };
   };
 
+  const requestInfluencerLiveList = async (props: { influencerId: string; page: number; pageSize: number }) => {
+    const { influencerId, page, pageSize } = props;
+    // https://echotik.live/api/v1/data/influencers/21609287/lives?page=1&per_page=10&sort=asc&order=viewers_count
+    const instance = await getAxiosInstance();
+    const { data: res } = (await instance.request({
+      url: `/influencers/${influencerId}/lives`,
+      params: {
+        page,
+        per_page: pageSize,
+        order: 'viewers_count',
+      },
+    })) as any;
+    const meta = genMeta({ resData: res, page, pageSize });
+
+    return {
+      data: res.data as Array<any>,
+      meta,
+    };
+  };
+
+  const requestInfluencerProductList = async (props: {
+    influencerId: string;
+    page: number;
+    pageSize: number;
+    order?: string;
+    sort?: IEchoSort;
+    transfer?: (data: { [key: string]: any }) => { [key: string]: any };
+  }) => {
+    const { influencerId, page, pageSize, order, sort, transfer } = props;
+    // https://echotik.live/api/v1/data/influencers/21609287/products?order=avg_price&sort=desc&page=1&per_page=10&product_categories=601352
+    const instance = await getAxiosInstance();
+    const { data: res } = (await instance.request({
+      url: `/influencers/${influencerId}/products`,
+      params: {
+        page,
+        per_page: pageSize,
+        order: order || 'avg_price',
+        sort,
+      },
+    })) as any;
+    const meta = genMeta({ resData: res, page, pageSize });
+    const datas = res.data as Array<any>;
+    return {
+      data: isFunction(transfer) ? datas.map((d) => transfer(d)) : datas,
+      meta,
+    };
+  };
+
   return {
     startup,
+    transferNocoSortToEchoSort,
+    getInfluencerCategoryByKey,
     requestTopHashTagList,
     requestTopVideoList,
     requestTopFollowerList,
@@ -471,5 +571,7 @@ export const EchoTikAPI = (() => {
     requestInfluencerList,
     requestInfluencerDetail,
     requestInfluencerVideoList,
+    requestInfluencerLiveList,
+    requestInfluencerProductList,
   };
 })();
