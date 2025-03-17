@@ -1,7 +1,8 @@
 import axios, { AxiosInstance } from 'axios';
 import { Plugin } from '@nocobase/server';
 import dayjs from 'dayjs';
-import { isArray, isFunction, isNil } from 'lodash';
+import { isArray, isFunction, isNil, isNumber } from 'lodash';
+import { formatEnglishNumber } from '../utils';
 
 type IEchoSort = 'asc' | 'desc';
 export const EchoTikAPI = (() => {
@@ -23,6 +24,7 @@ export const EchoTikAPI = (() => {
         timeout: 1000 * 60 * 3,
         headers: {
           Authorization: token,
+          'x-lang': 'zh-CN',
         },
       });
       return _axiosInstance;
@@ -429,23 +431,42 @@ export const EchoTikAPI = (() => {
   const requestInfluencerList = async (props: {
     page: number;
     pageSize: number;
+    keyword?: string;
     country?: number;
+    salesFlag?: boolean;
+    isLive?: boolean;
     productCategory?: string;
+    followersCount?: string;
+    diggCount?: string;
   }) => {
-    const { country, productCategory, page, pageSize } = props;
+    const { keyword, country, salesFlag, isLive, productCategory, followersCount, diggCount, page, pageSize } = props;
     // const url=`https://echotik.live/api/v1/data/influencers?page=1&per_page=&influencer_categories=&product_categories=&show_case=&is_email=&order=follower_30d_count&sort=desc&keyword=`;
     const url = `${echoTipAPIBase}/influencers`;
-    const token = await getToken();
     const region = await getCountryRegion(country);
-    const params: any = {
+
+    const instance = await getAxiosInstance();
+
+    const params: Record<string, any> = {
       page,
       per_page: pageSize,
+      product_categories: productCategory,
+      keyword,
+      influencer_categories: undefined,
+      followers_count: followersCount,
+      likes_count: diggCount,
     };
-    const { data: res } = await axios.request({
+    if (salesFlag) {
+      params['sales_flag'] = 1;
+    }
+    if (isLive) {
+      params['is_live'] = 1;
+    }
+    // console.log(`region:`, region);
+
+    const { data: res } = await instance.request({
       url,
       method: 'GET',
       headers: {
-        Authorization: token,
         'x-region': region,
       },
       params,
@@ -558,6 +579,171 @@ export const EchoTikAPI = (() => {
     };
   };
 
+  const formatEnNumberFormat = (arr: Array<{ value: number }>) => {
+    if (!(isArray(arr) && arr.length > 0)) return arr;
+    return arr.map((d) => {
+      let v = d.value;
+      if (isNumber(v)) {
+        v = formatEnglishNumber(v) as any;
+      }
+      return {
+        ...d,
+        value: v,
+      };
+    });
+  };
+
+  const requestInfluencerTrend = async (props: { influencerId: string; dateRange: number }) => {
+    const { influencerId, dateRange } = props;
+    // https://echotik.live/api/v1/data/influencers/21609287/products?order=avg_price&sort=desc&page=1&per_page=10&product_categories=601352
+    const instance = await getAxiosInstance();
+    const data: Record<string, any> = {};
+
+    const url = `/influencers/${influencerId}/analysis`;
+
+    const requestBasicOverview = async () => {
+      const { data: res } = (await instance.request({
+        url,
+        params: {
+          tag: 'basic.overview',
+          dateRange,
+        },
+      })) as any;
+
+      const ds: Array<any> = res.data;
+      data['basic.overview'] = formatEnNumberFormat(ds);
+    };
+
+    const requestSaleOverview = async () => {
+      const { data: res } = (await instance.request({
+        url,
+        params: {
+          tag: 'basic.sale.overview',
+          dateRange,
+        },
+      })) as any;
+
+      const ds: Array<any> = res.data?.basic?.video;
+      data['basic.sale.overview'] = formatEnNumberFormat(ds);
+    };
+
+    const requestVideoOverview = async () => {
+      const { data: res } = (await instance.request({
+        url,
+        params: {
+          tag: 'basic.video.overview',
+          dateRange,
+        },
+      })) as any;
+
+      const record: Record<string, any> = res.data;
+      data['basic.video.overview'] = record;
+    };
+
+    const requestLiveOverview = async () => {
+      const { data: res } = (await instance.request({
+        url,
+        params: {
+          tag: 'basic.live.overview',
+          dateRange,
+        },
+      })) as any;
+
+      const record: Record<string, any> = res.data;
+      data['basic.live.overview'] = record;
+    };
+
+    await Promise.all([requestBasicOverview(), requestSaleOverview(), requestVideoOverview(), requestLiveOverview()]);
+
+    return {
+      data,
+    };
+  };
+
+  const requestInfluencerVideoTrend = async (props: { influencerId: string; dateRange: number }) => {
+    const { influencerId, dateRange } = props;
+    // https://echotik.live/api/v1/data/influencers/7026015251758613509/analysis?tag=video.overview&dateRange=90
+    const instance = await getAxiosInstance();
+    const data: Record<string, any> = {};
+
+    const url = `/influencers/${influencerId}/analysis`;
+
+    const requestBasicOverview = async () => {
+      const { data: res } = (await instance.request({
+        url,
+        params: {
+          tag: 'video.overview',
+          dateRange,
+        },
+      })) as any;
+
+      const ds: Array<any> = res.data;
+      data['video.overview'] = formatEnNumberFormat(ds);
+    };
+
+    await Promise.all([requestBasicOverview()]);
+
+    return {
+      data,
+    };
+  };
+
+  const requestInfluencerLiveTrend = async (props: { influencerId: string; dateRange: number }) => {
+    const { influencerId, dateRange } = props;
+    // https://echotik.live/api/v1/data/influencers/7026015251758613509/analysis?tag=live.overview&dateRange=90
+    const instance = await getAxiosInstance();
+    const data: Record<string, any> = {};
+
+    const url = `/influencers/${influencerId}/analysis`;
+
+    const requestBasicOverview = async () => {
+      const { data: res } = (await instance.request({
+        url,
+        params: {
+          tag: 'live.overview',
+          dateRange,
+        },
+      })) as any;
+
+      const ds: Array<any> = res.data;
+      data['live.overview'] = formatEnNumberFormat(ds);
+    };
+
+    await Promise.all([requestBasicOverview()]);
+
+    return {
+      data,
+    };
+  };
+
+  const requestInfluencerSalesTrend = async (props: { influencerId: string; dateRange: number }) => {
+    const { influencerId, dateRange } = props;
+    // https://echotik.live/api/v1/data/influencers/7026015251758613509/analysis?tag=live.overview&dateRange=90
+    const instance = await getAxiosInstance();
+    const data: Record<string, any> = {};
+
+    const url = `/influencers/${influencerId}/analysis`;
+
+    const requestBasicOverview = async () => {
+      const { data: res } = (await instance.request({
+        url,
+        params: {
+          tag: 'sales.overview',
+          dateRange,
+        },
+      })) as any;
+
+      const ds: Array<any> = res.data;
+      data['sales.overview'] = formatEnNumberFormat(ds);
+    };
+
+    await Promise.all([requestBasicOverview()]);
+
+    return {
+      data,
+    };
+  };
+
   return {
     startup,
     transferNocoSortToEchoSort,
@@ -573,5 +759,9 @@ export const EchoTikAPI = (() => {
     requestInfluencerVideoList,
     requestInfluencerLiveList,
     requestInfluencerProductList,
+    requestInfluencerTrend,
+    requestInfluencerVideoTrend,
+    requestInfluencerLiveTrend,
+    requestInfluencerSalesTrend,
   };
 })();

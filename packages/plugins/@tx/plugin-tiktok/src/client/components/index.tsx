@@ -1,3 +1,20 @@
-// export * from './authorizeFeedback';
-export * from './signin';
-export * from './payment';
+import { Plugin } from '@nocobase/client';
+import { registerPaymentComponent } from './Payment';
+import { registerSignComponent } from './Signin';
+import { registerInfluencerOverviewComponent } from './InfluencerOverview';
+import { registerTestComponent } from './test';
+import { registerTest2Component } from './test2';
+import { registerInfluencerVideoOverviewComponent } from './InfluencerVideoOverview';
+import { registerInfluencerLiveOverviewComponent } from './InfluencerLiveOverview';
+import { registerInfluencerSalesOverviewComponent } from './InfluencerSalesOverview';
+
+export const registerComponents = (props: { plugin: Plugin }) => {
+  registerPaymentComponent(props);
+  registerSignComponent(props);
+  registerInfluencerOverviewComponent(props);
+  registerInfluencerVideoOverviewComponent(props);
+  registerInfluencerLiveOverviewComponent(props);
+  registerInfluencerSalesOverviewComponent(props);
+  registerTestComponent(props);
+  registerTest2Component(props);
+};

@@ -41,3 +41,4 @@ export function getVideoDuration(filePath: string): Promise<number> {
 }
 
 export * from './tkFeedbackPage';
+export * from './common';

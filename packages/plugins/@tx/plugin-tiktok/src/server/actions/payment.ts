@@ -3,6 +3,21 @@ import { AlipaySdk } from 'alipay-sdk';
 import { uid } from '@nocobase/utils';
 import { isNil } from 'lodash';
 import dayjs from 'dayjs';
+import { Plugin } from '@nocobase/server';
+
+export const registerPaymentActions = (props: { plugin: Plugin }) => {
+  const { plugin } = props;
+  const { app } = plugin;
+
+  app.resourceManager.define({
+    name: 'payment',
+    actions: {
+      makeDevicePayment: makeDevicePayment(),
+      devicePaymentFeedback: devicePaymentFeedback(),
+    },
+  });
+  app.acl.allow('payment', '*', 'public');
+};
 
 const alipaySdk = (() => {
   let instance: AlipaySdk;
@@ -41,7 +56,7 @@ const alipaySdk = (() => {
   };
 })();
 
-export function makeDevicePayment() {
+function makeDevicePayment() {
   return async (ctx: Context, next: () => any) => {
     const { paymentType, paymentKey } = (ctx.query as any) || {};
     // // 这个留着,可以拿来检测sdk key对不对
@@ -98,7 +113,7 @@ export function makeDevicePayment() {
   };
 }
 
-export function devicePaymentFeedback() {
+function devicePaymentFeedback() {
   const EXPIRED_MONTHS = {
     one_month: 1,
     three_months: 3,

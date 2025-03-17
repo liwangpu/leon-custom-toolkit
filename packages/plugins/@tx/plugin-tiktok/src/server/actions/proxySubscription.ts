@@ -1,7 +1,22 @@
 import { Context } from '@nocobase/actions';
 import { isNil } from 'lodash';
+import { Plugin } from '@nocobase/server';
 
-export function getSubcription() {
+export const registerProxySubscriptionActions = (props: { plugin: Plugin }) => {
+  const { plugin } = props;
+  const { app } = plugin;
+
+  app.resourceManager.define({
+    name: 'proxySubscription',
+    actions: {
+      subscribe: getSubcription(),
+      doTranslate: doTranslate(),
+    },
+  });
+  app.acl.allow('proxySubscription', '*', 'public');
+};
+
+function getSubcription() {
   return async (ctx: Context, next: () => any) => {
     const { noid } = ctx.request.query as any;
 
@@ -43,7 +58,7 @@ export function getSubcription() {
   };
 }
 
-export function doTranslate() {
+function doTranslate() {
   return async (ctx: Context, next: () => any) => {
     const collectionRepo = ctx.db.getRepository('collections');
     const fieldRepo = ctx.db.getRepository('fields');

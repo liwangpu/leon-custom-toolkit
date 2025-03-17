@@ -1,10 +1,22 @@
 import React, { memo } from 'react';
-import { Button } from 'antd';
 import { Authenticator } from '@nocobase/plugin-auth/client';
-import { WechatFilled } from '@ant-design/icons';
 import tiktokSignIn from '../images/tiktok-signIn.png';
 import { createStyles } from '@nocobase/client';
 import { getTiktokAPIBaseUrl } from '../../common';
+import AuthPlugin from '@nocobase/plugin-auth/client';
+import { Plugin } from '@nocobase/client';
+
+export const registerSignComponent = (props: { plugin: Plugin }) => {
+  const { plugin } = props;
+  const { app } = plugin;
+
+  const auth = app.pm.get(AuthPlugin);
+  auth.registerType('TikTok', {
+    components: {
+      SignInButton: TikTokSignIn,
+    },
+  });
+};
 
 const TIKTOK_API_URL = getTiktokAPIBaseUrl();
 const useStyles = createStyles(({ css }) => {

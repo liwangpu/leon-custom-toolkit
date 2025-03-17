@@ -1,5 +1,0 @@
-export const CopyProxySubscribeActionName = 'CopyProxySubscribeAction';
-export const CopyProxySubscribeActionNameLowercase = CopyProxySubscribeActionName.toLowerCase();
-
-export const PaymentName = 'Payment';
-export const PaymentNameLowercase = PaymentName.toLowerCase();

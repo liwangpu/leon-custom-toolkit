@@ -1,6 +1,6 @@
 import { Context } from '@nocobase/actions';
 import dayjs from 'dayjs';
-import { floor, isArray, isNil, snakeCase } from 'lodash';
+import { floor, isArray, isNil } from 'lodash';
 import { changeCurrentUserContext, getExtension } from '../utils';
 import axios from 'axios';
 import path from 'path';
@@ -8,6 +8,41 @@ import { promises } from 'fs';
 import { ITKToken } from '../../interfaces';
 import { TiktokDataCenter } from '../dataCenter';
 import { getUserInfo } from '../middlewares';
+import { Plugin } from '@nocobase/server';
+import { TikTokAuth } from '../tiktok-auth';
+
+export const registerTiktokActions = (props: { plugin: Plugin }) => {
+  const { plugin } = props;
+  const { app } = plugin;
+
+  app.resourceManager.define({
+    name: 'tiktok',
+    actions: {
+      growFansPlanReport: tkGrowFansPlanReport(),
+      authorize: tkAuthorize(),
+      registerAuthorize: tkRegisterAuthorize(),
+      // updateRegisterUserInfo: tkUpdateRegisterUserInfo(),
+      authorizeFeedback: tkAuthorizeFeedback(),
+      // authorizeFeedback: tkMockAuthorizeFeedback(),
+      releaseResource: releaseResource(),
+      syncAccountInfo: syncAccountInfo(),
+      syncAllAccountInfos: syncAllAccountInfos(),
+      mockPublishVideoToCurrentUserToAccount: mockPublishVideoToCurrentUserToAccount(),
+    },
+  });
+  app.acl.allow('tiktok', '*', 'loggedIn');
+  app.acl.allow('tiktok', 'authorize', 'public');
+  app.acl.allow('tiktok', 'registerAuthorize', 'public');
+  app.acl.allow('tiktok', 'updateRegisterUserInfo', 'public');
+  app.acl.allow('tiktok', 'authorizeFeedback', 'public');
+  app.acl.allow('tiktok', 'releaseResource', 'public');
+  app.acl.allow('tiktok', 'syncAccountInfo', 'public');
+  app.acl.allow('tiktok', 'syncAllAccountInfos', 'public');
+
+  app.authManager.registerTypes('TikTok', {
+    auth: TikTokAuth,
+  });
+};
 
 interface IGrowFansPlanReportData {
   planId: number;
@@ -20,13 +55,11 @@ interface IGrowFansPlanReportData {
   noMoreVideo?: boolean;
 }
 
-export function tkGrowFansPlanReport() {
+function tkGrowFansPlanReport() {
   return async (ctx: Context, next: () => any) => {
     const data = ctx.request.body as any;
     const { planId, planDetailId, searchTermId, accountId, videoTime, followUser, likeVideo, noMoreVideo } =
       data as IGrowFansPlanReportData;
-    console.log(`---------[ tkGrowFansPlanReport ]---------`);
-    console.log(`data:`, data);
     const currentTime = dayjs();
     const currentTimeStr = currentTime.format('YYYY-MM-DD');
     const logRepo = ctx.db.getRepository('tk_grow_fans_plan_log');
@@ -95,7 +128,7 @@ export function tkGrowFansPlanReport() {
   };
 }
 
-export function tkRegisterAuthorize() {
+function tkRegisterAuthorize() {
   const appPort = process.env['APP_PORT'] ? parseInt(process.env['APP_PORT']) : 13000;
   const serverBaseUrl = `http://127.0.0.1:${appPort}/api`;
   const singInUrl = `${serverBaseUrl}/auth:signIn`;
@@ -128,7 +161,7 @@ export function tkRegisterAuthorize() {
   };
 }
 
-export function tkAuthorize() {
+function tkAuthorize() {
   return async (ctx: Context, next: () => any) => {
     const { accountId } = (ctx.request.query as any) || {};
 
@@ -136,7 +169,7 @@ export function tkAuthorize() {
   };
 }
 
-export function tkAuthorizeFeedback() {
+function tkAuthorizeFeedback() {
   return (ctx: Context, next: () => any) => {
     return TiktokDataCenter.tokenFeedback({ ctx, next });
   };
@@ -146,7 +179,7 @@ function checkIsSupportVideo(extension: string) {
   return extension === 'mp4' || extension === 'mov' || extension === 'webm';
 }
 
-export function releaseResource() {
+function releaseResource() {
   // 附件切片 1024*1024是MB,当前切片用500kb
   const CHUNK_UNIT_SIZE = (1024 * 1024) / 2;
   const publishingSet = new Set<number>();
@@ -288,14 +321,14 @@ export function releaseResource() {
   };
 }
 
-export function syncAccountInfo() {
+function syncAccountInfo() {
   return async (ctx: Context, next: () => any) => {
     const { id: accountId } = (ctx.query as any) || {};
     return TiktokDataCenter.syncAccountInfo({ ctx, accountId });
   };
 }
 
-export function syncAllAccountInfos() {
+function syncAllAccountInfos() {
   return async (ctx: Context, next: () => any) => {
     const tokenRep = ctx.db.getRepository('tk_token');
     const tokenRecords: Array<ITKToken> = await tokenRep.find({
@@ -316,7 +349,7 @@ export function syncAllAccountInfos() {
   };
 }
 
-export function mockPublishVideoToCurrentUserToAccount() {
+function mockPublishVideoToCurrentUserToAccount() {
   return async (ctx: Context, next: () => any) => {
     const { id: sourceResourceId } = (ctx.query as any) || {};
     console.log(`---------[ mockPublishVideoToCurrentUserToAccount ]---------`);

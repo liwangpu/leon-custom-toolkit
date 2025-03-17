@@ -1,12 +1,3 @@
-/**
- * This file is part of the NocoBase (R) project.
- * Copyright (c) 2020-2024 NocoBase Co., Ltd.
- * Authors: NocoBase Team.
- *
- * This project is dual-licensed under AGPL-3.0 and NocoBase Commercial License.
- * For more information, please refer to: https://www.nocobase.com/agreement.
- */
-
 import {
   ISchema,
   SchemaInitializerItemType,
@@ -15,11 +6,28 @@ import {
   useSchemaInitializer,
 } from '@nocobase/client';
 import { useT } from '../locale';
-import { CopyProxySubscribeActionName, CopyProxySubscribeActionNameLowercase } from '../consts';
 import { message } from 'antd';
 import copy from 'copy-to-clipboard';
+import { Plugin } from '@nocobase/client';
 
-export function useCopyProxySubscribeActionProps() {
+const CopyProxySubscribeActionName = 'CopyProxySubscribeAction';
+const CopyProxySubscribeActionNameLowercase = CopyProxySubscribeActionName.toLowerCase();
+
+export const registerProxySubscriptionAction = (props: { plugin: Plugin }) => {
+  const { plugin } = props;
+  const { app } = plugin;
+
+  app.addScopes({ useCopyProxySubscribeActionProps });
+  // 注册组件相关
+  app.schemaInitializerManager.addItem(
+    'table:configureItemActions',
+    CopyProxySubscribeActionName,
+    createCopySubscribeActionInitializerItem(),
+  );
+  app.schemaSettingsManager.add(copySubscribeActionSettings);
+};
+
+function useCopyProxySubscribeActionProps() {
   const record = useCollectionRecordData();
   const t = useT();
   return {
@@ -33,7 +41,7 @@ export function useCopyProxySubscribeActionProps() {
   };
 }
 
-export const createCopySubscribeActionSchema = (): ISchema => {
+const createCopySubscribeActionSchema = (): ISchema => {
   return {
     type: 'void',
     'x-component': 'Action.Link',
@@ -42,7 +50,7 @@ export const createCopySubscribeActionSchema = (): ISchema => {
   };
 };
 
-export const createCopySubscribeActionInitializerItem = (): SchemaInitializerItemType => ({
+const createCopySubscribeActionInitializerItem = (): SchemaInitializerItemType => ({
   type: 'item',
   name: CopyProxySubscribeActionNameLowercase,
   useComponentProps() {
@@ -57,7 +65,7 @@ export const createCopySubscribeActionInitializerItem = (): SchemaInitializerIte
   },
 });
 
-export const copySubscribeActionSettings = new SchemaSettings({
+const copySubscribeActionSettings = new SchemaSettings({
   name: `actionSettings:${CopyProxySubscribeActionNameLowercase}`,
   items: [
     {
