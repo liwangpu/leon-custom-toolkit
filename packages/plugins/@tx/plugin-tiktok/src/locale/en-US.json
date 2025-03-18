@@ -202,5 +202,8 @@
   "观看数": "View Count",
   "评论数": "Comment Count",
   "分享数": "Share Count",
-  "发布日期": "Publish Count"
+  "发布日期": "Publish Count",
+  "发布中": "Uploading",
+  "发布成功": "Upload Successful",
+  "发布失败": "Upload Error"
 }

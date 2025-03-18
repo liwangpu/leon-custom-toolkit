@@ -3,6 +3,7 @@ const PROD_API_BASE_URL = 'https://astrolabe.taixiang-tech.com';
 const DEV_API_BASE_URL = 'https://astrolabe-dev.taixiang-tech.com';
 
 export function isDevEnv() {
+  return true;
   const noProcess = typeof process === 'undefined';
   if (noProcess) {
     return true;

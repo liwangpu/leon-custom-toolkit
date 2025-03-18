@@ -229,9 +229,10 @@ export const TiktokDataCenter = (() => {
     if (info.isRegisterUser) {
       page = generateRegisterAuthorizePage(info.token);
     }
-
-    ctx.body = page;
+    // const tkUserInfo = await syncAccountInfo({ ctx, accountId });
     syncAccountInfo({ ctx, accountId });
+    ctx.body = page;
+
     next();
   };
 
@@ -323,6 +324,8 @@ export const TiktokDataCenter = (() => {
         latestSyncTime,
       },
     });
+
+    return res;
   };
 
   const getVideoList = async (props: { ctx: Context; accountId: number; page: number; pageSize: number }) => {

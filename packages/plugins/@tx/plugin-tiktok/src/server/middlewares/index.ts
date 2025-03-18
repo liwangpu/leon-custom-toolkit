@@ -11,6 +11,7 @@ import {
 } from './echoTikAPI';
 import { searchTermDetailMiddeware } from './searchTermDetail';
 import { implementInfluencerMiddleware } from './influencer';
+import { implementProductMiddleware } from './product';
 
 export * from './common';
 
@@ -29,6 +30,7 @@ export const implementMiddlewares = (props: { plugin: Plugin }) => {
     app.acl.use(newsBurstMiddeware(plugin));
     // app.acl.use(accountVideoMiddeware(plugin));
     implementInfluencerMiddleware(plugin);
+    implementProductMiddleware(plugin);
     // 养号计划关键词新增/编辑和删除触发养号计划更新
     app.acl.use(searchTermDetailMiddeware(plugin));
     // 监听db事件,填写organizationId字段信息

@@ -461,7 +461,6 @@ export const EchoTikAPI = (() => {
     if (isLive) {
       params['is_live'] = 1;
     }
-    // console.log(`region:`, region);
 
     const { data: res } = await instance.request({
       url,
@@ -744,6 +743,119 @@ export const EchoTikAPI = (() => {
     };
   };
 
+  const requestProductList = async (props: {
+    page: number;
+    pageSize: number;
+    keyword?: string;
+    country?: number;
+    salesFlag?: boolean;
+    isLive?: boolean;
+    productCategory?: string;
+    followersCount?: string;
+    diggCount?: string;
+    transfer?: (data: { [key: string]: any }) => { [key: string]: any };
+  }) => {
+    const {
+      keyword,
+      country,
+      salesFlag,
+      isLive,
+      productCategory,
+      followersCount,
+      diggCount,
+      page,
+      pageSize,
+      transfer,
+    } = props;
+    // const url=`https://echotik.live/api/v1/data/products?page=1&per_page=&price=&commission_rate=&related_influencers=&videos_count=&views_count=&dateRange=&order=total_sale_nd_cnt&sort=desc&keyword=`;
+    const url = `${echoTipAPIBase}/products`;
+    const region = await getCountryRegion(country);
+
+    const instance = await getAxiosInstance();
+
+    const params: Record<string, any> = {
+      page,
+      per_page: pageSize,
+      product_categories: productCategory,
+      keyword,
+      // influencer_categories: undefined,
+      // followers_count: followersCount,
+      // likes_count: diggCount,
+    };
+    // if (salesFlag) {
+    //   params['sales_flag'] = 1;
+    // }
+    // if (isLive) {
+    //   params['is_live'] = 1;
+    // }
+
+    const { data: res } = await instance.request({
+      url,
+      method: 'GET',
+      headers: {
+        'x-region': region,
+      },
+      params,
+    });
+
+    const meta = genMeta({ resData: res, page, pageSize });
+
+    const datas = res.data as Array<any>;
+    return {
+      data: isFunction(transfer) ? datas.map((d) => transfer(d)) : datas,
+      meta,
+    };
+  };
+
+  const requestProductDetail = async (props: {
+    id: string;
+    transfer?: (data: { [key: string]: any }) => { [key: string]: any };
+  }) => {
+    const { id, transfer } = props;
+    const instance = await getAxiosInstance();
+    const {
+      data: { data, msg, code },
+    } = (await instance.request({
+      url: `/products/${id}`,
+    })) as any;
+
+    const { id: countryKey } = data.region || {};
+    let country;
+    if (!isNil(countryKey)) {
+      country = await getCountryByKey(countryKey);
+    }
+
+    return isFunction(transfer) ? transfer(data) : data;
+  };
+
+  const requestProductTrend = async (props: { id: string; dateRange: number }) => {
+    const { id, dateRange } = props;
+    // https://echotik.live/api/v1/data/products/1730294730237252435/analysis?tag=basic.overview&dateRange=30&start_time=&end_time=
+    const instance = await getAxiosInstance();
+    const data: Record<string, any> = {};
+
+    const url = `/products/${id}/analysis`;
+
+    const requestBasicOverview = async () => {
+      const { data: res } = (await instance.request({
+        url,
+        params: {
+          tag: 'basic.overview',
+          dateRange,
+        },
+      })) as any;
+
+      const ds: Array<any> = res.data;
+      data['basic.overview'] = formatEnNumberFormat(ds);
+    };
+
+    await Promise.all([requestBasicOverview()]);
+
+    return {
+      data,
+    };
+  };
+
   return {
     startup,
     transferNocoSortToEchoSort,
@@ -763,5 +875,8 @@ export const EchoTikAPI = (() => {
     requestInfluencerVideoTrend,
     requestInfluencerLiveTrend,
     requestInfluencerSalesTrend,
+    requestProductList,
+    requestProductDetail,
+    requestProductTrend,
   };
 })();
