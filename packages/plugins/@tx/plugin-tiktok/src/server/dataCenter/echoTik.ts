@@ -1025,6 +1025,7 @@ export const EchoTikAPI = (() => {
       data,
     };
   };
+
   const requestProductVideoTrend = async (props: { id: string; dateRange: number }) => {
     const { id, dateRange } = props;
     // https://echotik.live/api/v1/data/products/1729562343719538908/analysis?tag=video.overview&dateRange=30&start_time=&end_time=
@@ -1211,6 +1212,290 @@ export const EchoTikAPI = (() => {
     };
   };
 
+  const requestIndependentInfluencerVideoList = async (props: {
+    page: number;
+    pageSize: number;
+    searchCondition?: Map<string, any>;
+    order?: string;
+    sort?: IEchoSort;
+    transfer?: (data: { [key: string]: any }) => { [key: string]: any };
+  }) => {
+    const { page, pageSize, searchCondition, order, sort, transfer } = props;
+    // https://echotik.live/api/v1/data/videos?page=1&per_page=10&influencer_categories=&time_range=90&sort=desc&order=digg_count
+    const url = `${echoTipAPIBase}/videos`;
+
+    let region: string;
+
+    const instance = await getAxiosInstance();
+
+    const params: Record<string, any> = {
+      page,
+      per_page: pageSize,
+      order: order,
+      sort,
+    };
+
+    const { conditionCheck, countryConditionCheck } = searchConditionJudgement(searchCondition);
+
+    await conditionCheck({
+      field: 'keyword',
+      cb({ value }) {
+        params['keyword'] = value;
+      },
+    });
+
+    await countryConditionCheck({
+      field: 'country',
+      cb({ value }) {
+        region = value;
+      },
+    });
+
+    await conditionCheck({
+      field: 'influencerCategory',
+      cb({ value }) {
+        params['influencer_categories'] = value;
+      },
+    });
+
+    await conditionCheck({
+      field: 'searchConditionViewCount',
+      cb({ value }) {
+        params['views_count'] = value;
+      },
+    });
+
+    await conditionCheck({
+      field: 'searchConditionLikeCount',
+      cb({ value }) {
+        params['likes_count'] = value;
+      },
+    });
+
+    await conditionCheck({
+      field: 'searchConditionCommentCount',
+      cb({ value }) {
+        params['comments_count'] = value;
+      },
+    });
+
+    await conditionCheck({
+      field: 'searchConditionShareCount',
+      cb({ value }) {
+        params['shares_count'] = value;
+      },
+    });
+
+    await conditionCheck({
+      field: 'searchConditionDuration',
+      cb({ value }) {
+        params['duration'] = value;
+      },
+    });
+
+    await conditionCheck({
+      field: 'searchConditionTimeRange',
+      cb({ value }) {
+        params['time_range'] = value;
+      },
+    });
+
+    await conditionCheck({
+      field: 'searchConditionTimeRange',
+      cb({ value }) {
+        params['time_range'] = value;
+      },
+    });
+
+    await conditionCheck({
+      field: 'searchConditionSales',
+      cb({ value }) {
+        params['is_sale'] = value === true ? 1 : 0;
+      },
+    });
+
+    await conditionCheck({
+      field: 'searchConditionTimeIsLatest',
+      cb({ value }) {
+        params['is_latest'] = value === true ? 1 : 0;
+      },
+    });
+
+    const { data: res } = await instance.request({
+      url,
+      method: 'GET',
+      headers: {
+        'x-region': region,
+      },
+      params,
+    });
+
+    const meta = genMeta({ resData: res, page, pageSize });
+
+    const datas = res.data as Array<any>;
+    return {
+      data: isFunction(transfer) ? datas.map((d) => transfer(d)) : datas,
+      meta,
+    };
+  };
+
+  const requestIndependentInfluencerVideoDetail = async (props: {
+    id: string;
+    transfer?: (data: { [key: string]: any }) => { [key: string]: any };
+  }) => {
+    const { id, transfer } = props;
+    const instance = await getAxiosInstance();
+    const {
+      data: { data, msg, code },
+    } = (await instance.request({
+      url: `/videos/${id}`,
+    })) as any;
+
+    return isFunction(transfer) ? transfer(data) : data;
+  };
+
+  const requestIndependentLiveList = async (props: {
+    page: number;
+    pageSize: number;
+    searchCondition?: Map<string, any>;
+    order?: string;
+    sort?: IEchoSort;
+    transfer?: (data: { [key: string]: any }) => { [key: string]: any };
+  }) => {
+    const { page, pageSize, order, sort, searchCondition, transfer } = props;
+    // https://echotik.live/api/v1/data/videos?page=1&per_page=10&influencer_categories=&time_range=90&sort=desc&order=digg_count
+    const url = `${echoTipAPIBase}/lives`;
+
+    let region: string;
+
+    const instance = await getAxiosInstance();
+
+    const params: Record<string, any> = {
+      page,
+      per_page: pageSize,
+      order,
+      sort,
+    };
+
+    const { conditionCheck, countryConditionCheck } = searchConditionJudgement(searchCondition);
+
+    await conditionCheck({
+      field: 'keyword',
+      cb({ value }) {
+        params['keyword'] = value;
+      },
+    });
+
+    await countryConditionCheck({
+      field: 'country',
+      cb({ value }) {
+        region = value;
+      },
+    });
+
+    await conditionCheck({
+      field: 'category',
+      cb({ value }) {
+        params['product_categories'] = value;
+      },
+    });
+
+    await conditionCheck({
+      field: 'influencerCategory',
+      cb({ value }) {
+        params['influencer_categories'] = value;
+      },
+    });
+
+    await conditionCheck({
+      field: 'searchConditionFollowerCount',
+      cb({ value }) {
+        params['followers_count'] = value;
+      },
+    });
+
+    await conditionCheck({
+      field: 'searchConditionSales',
+      cb({ value }) {
+        params['sales'] = value;
+      },
+    });
+
+    await conditionCheck({
+      field: 'searchConditionIsSale',
+      cb({ value }) {
+        params['is_sale'] = value === true ? 1 : 0;
+      },
+    });
+
+    await conditionCheck({
+      field: 'searchConditionIsLiving',
+      cb({ value }) {
+        params['live_status'] = value === true ? 1 : 0;
+      },
+    });
+
+    const { data: res } = await instance.request({
+      url,
+      method: 'GET',
+      headers: {
+        'x-region': region,
+      },
+      params,
+    });
+
+    const meta = genMeta({ resData: res, page, pageSize });
+
+    const datas = res.data as Array<any>;
+    return {
+      data: isFunction(transfer) ? datas.map((d) => transfer(d)) : datas,
+      meta,
+    };
+  };
+
+  const requestIndependentLiveDetail = async (props: {
+    id: string;
+    transfer?: (data: { [key: string]: any }) => { [key: string]: any };
+  }) => {
+    const { id, transfer } = props;
+    const instance = await getAxiosInstance();
+    // https://echotik.live/api/v1/data/lives/7482222612275628846/analysis?tag=basic.overview
+    const {
+      data: { data, msg, code },
+    } = (await instance.request({
+      url: `/lives/${id}`,
+    })) as any;
+
+    return isFunction(transfer) ? transfer(data) : data;
+  };
+
+  const requestLiveTrend = async (props: { id: string }) => {
+    const { id } = props;
+    // https://echotik.live/api/v1/data/lives/7482222612275628846/analysis?tag=basic.overview
+    const instance = await getAxiosInstance();
+    const data: Record<string, any> = {};
+
+    const url = `/lives/${id}/analysis`;
+
+    const requestBasicOverview = async () => {
+      const { data: res } = (await instance.request({
+        url,
+        params: {
+          tag: 'basic.overview',
+        },
+      })) as any;
+
+      const ds: Array<any> = res.data;
+      data['basic.overview'] = formatEnNumberFormat(ds);
+    };
+
+    await Promise.all([requestBasicOverview()]);
+
+    return {
+      data,
+    };
+  };
+
   return {
     startup,
     transferNocoSortToEchoSort,
@@ -1239,5 +1524,10 @@ export const EchoTikAPI = (() => {
     requestProductSalesVideoList,
     requestProductLiveVideoList,
     requestProductCompetitorVideoList,
+    requestIndependentInfluencerVideoList,
+    requestIndependentInfluencerVideoDetail,
+    requestIndependentLiveList,
+    requestIndependentLiveDetail,
+    requestLiveTrend,
   };
 })();

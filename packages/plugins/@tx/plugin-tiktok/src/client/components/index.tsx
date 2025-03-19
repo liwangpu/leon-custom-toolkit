@@ -10,6 +10,7 @@ import { registerInfluencerSalesOverviewComponent } from './InfluencerSalesOverv
 import { registerProductOverviewComponent } from './ProductOverview';
 import { registerProductVideoOverviewComponent } from './ProductVideoOverview';
 import { registerProductLiveOverviewComponent } from './ProductLiveOverview';
+import { registerLiveOverviewComponent } from './LiveOverview';
 
 export const registerComponents = (props: { plugin: Plugin }) => {
   registerPaymentComponent(props);
@@ -21,6 +22,7 @@ export const registerComponents = (props: { plugin: Plugin }) => {
   registerProductOverviewComponent(props);
   registerProductVideoOverviewComponent(props);
   registerProductLiveOverviewComponent(props);
-  registerTestComponent(props);
-  registerTest2Component(props);
+  registerLiveOverviewComponent(props);
+  // registerTestComponent(props);
+  // registerTest2Component(props);
 };

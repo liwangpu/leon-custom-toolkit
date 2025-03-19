@@ -123,36 +123,13 @@ const influencerVideoListMiddeware = (plugin: Plugin) => {
       ctx,
     });
 
-    if (!(resourceName === 'influencer_video' && actionName === 'list')) return await next();
+    if (!(resourceName === 'influencers.videos' && actionName === 'list')) return await next();
     // params 格式是 {filterByTk:number;resourceName:string;actionName:string;values:any;filter:any}
     const params = ctx.action.params;
-    const { filter, page, pageSize, sort } = params;
-    const $and = filter['$and'];
-    if (isNil($and)) {
-      ctx.body = {
-        data: [],
-      };
-      return;
-    }
-
-    const searchMap = new Map<string, any>();
-    for (const it of $and) {
-      const propeties = Object.keys(it);
-
-      for (const propety of propeties) {
-        const kv = it[propety];
-        switch (propety) {
-          case 'influencerId':
-            searchMap.set(propety, kv['$eq']);
-            break;
-          default:
-            break;
-        }
-      }
-    }
+    const { associatedIndex: influencerId, page, pageSize, sort } = params;
 
     const { data: ds, meta } = await EchoTikAPI.requestInfluencerVideoList({
-      influencerId: searchMap.get('influencerId'),
+      influencerId,
       page,
       pageSize,
       ...EchoTikAPI.transferNocoSortToEchoSort({ sort }),
@@ -171,36 +148,13 @@ const influencerLiveListMiddeware = (plugin: Plugin) => {
       ctx,
     });
 
-    if (!(resourceName === 'influencer_live' && actionName === 'list')) return await next();
+    if (!(resourceName === 'influencers.lives' && actionName === 'list')) return await next();
     // params 格式是 {filterByTk:number;resourceName:string;actionName:string;values:any;filter:any}
     const params = ctx.action.params;
-    const { filter, page, pageSize } = params;
-    const $and = filter['$and'];
-    if (isNil($and)) {
-      ctx.body = {
-        data: [],
-      };
-      return;
-    }
-
-    const searchMap = new Map<string, any>();
-    for (const it of $and) {
-      const propeties = Object.keys(it);
-
-      for (const propety of propeties) {
-        const kv = it[propety];
-        switch (propety) {
-          case 'influencerId':
-            searchMap.set(propety, kv['$eq']);
-            break;
-          default:
-            break;
-        }
-      }
-    }
+    const { associatedIndex: influencerId, page, pageSize } = params;
 
     const { data: ds, meta } = await EchoTikAPI.requestInfluencerLiveList({
-      influencerId: searchMap.get('influencerId'),
+      influencerId,
       page,
       pageSize,
     });
@@ -218,36 +172,13 @@ const influencerProductListMiddeware = (plugin: Plugin) => {
       ctx,
     });
 
-    if (!(resourceName === 'influencer_product' && actionName === 'list')) return await next();
+    if (!(resourceName === 'influencers.products' && actionName === 'list')) return await next();
     // params 格式是 {filterByTk:number;resourceName:string;actionName:string;values:any;filter:any}
     const params = ctx.action.params;
-    const { filter, page, pageSize, sort } = params;
-    const $and = filter['$and'];
-    if (isNil($and)) {
-      ctx.body = {
-        data: [],
-      };
-      return;
-    }
-
-    const searchMap = new Map<string, any>();
-    for (const it of $and) {
-      const propeties = Object.keys(it);
-
-      for (const propety of propeties) {
-        const kv = it[propety];
-        switch (propety) {
-          case 'influencerId':
-            searchMap.set(propety, kv['$eq']);
-            break;
-          default:
-            break;
-        }
-      }
-    }
+    const { associatedIndex: influencerId, page, pageSize, sort } = params;
 
     const { data: ds, meta } = await EchoTikAPI.requestInfluencerProductList({
-      influencerId: searchMap.get('influencerId'),
+      influencerId,
       page,
       pageSize,
       ...EchoTikAPI.transferNocoSortToEchoSort({ sort }),

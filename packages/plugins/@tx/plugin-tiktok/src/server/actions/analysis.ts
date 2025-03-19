@@ -16,6 +16,7 @@ export const registerAnalysisActions = (props: { plugin: Plugin }) => {
       productTrend: getProductTrend(),
       productVideoTrend: getProductVideoTrend(),
       productLiveTrend: getProductLiveTrend(),
+      liveTrend: getLiveTrend(),
     },
   });
   app.acl.allow('analysis', '*', 'loggedIn');
@@ -91,6 +92,17 @@ const getProductLiveTrend = () => {
   return async (ctx: Context, next: () => any) => {
     const { id, dateRange } = ctx.request.query as any;
     const { data } = await EchoTikAPI.requestProductLiveTrend({ id, dateRange });
+    ctx.withoutDataWrapping = true;
+    ctx.body = {
+      data,
+    };
+  };
+};
+
+const getLiveTrend = () => {
+  return async (ctx: Context, next: () => any) => {
+    const { id } = ctx.request.query as any;
+    const { data } = await EchoTikAPI.requestLiveTrend({ id });
     ctx.withoutDataWrapping = true;
     ctx.body = {
       data,
