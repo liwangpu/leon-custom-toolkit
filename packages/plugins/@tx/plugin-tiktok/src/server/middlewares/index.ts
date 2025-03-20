@@ -14,6 +14,7 @@ import { implementInfluencerMiddleware } from './influencer';
 import { implementProductMiddleware } from './product';
 import { implementInfluencerVideoMiddleware } from './influencerVideo';
 import { implementLiveMiddleware } from './live';
+import { implementSellerMiddleware } from './seller';
 
 export * from './common';
 
@@ -35,6 +36,7 @@ export const implementMiddlewares = (props: { plugin: Plugin }) => {
     implementProductMiddleware(plugin);
     implementInfluencerVideoMiddleware(plugin);
     implementLiveMiddleware(plugin);
+    implementSellerMiddleware(plugin);
     // 养号计划关键词新增/编辑和删除触发养号计划更新
     app.acl.use(searchTermDetailMiddeware(plugin));
     // 监听db事件,填写organizationId字段信息

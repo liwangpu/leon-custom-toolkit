@@ -17,6 +17,9 @@ export const registerAnalysisActions = (props: { plugin: Plugin }) => {
       productVideoTrend: getProductVideoTrend(),
       productLiveTrend: getProductLiveTrend(),
       liveTrend: getLiveTrend(),
+      sellerTrend: getSellerTrend(),
+      sellerVideoTrend: getSellerVideoTrend(),
+      sellerLiveTrend: getSellerLiveTrend(),
     },
   });
   app.acl.allow('analysis', '*', 'loggedIn');
@@ -103,6 +106,39 @@ const getLiveTrend = () => {
   return async (ctx: Context, next: () => any) => {
     const { id } = ctx.request.query as any;
     const { data } = await EchoTikAPI.requestLiveTrend({ id });
+    ctx.withoutDataWrapping = true;
+    ctx.body = {
+      data,
+    };
+  };
+};
+
+const getSellerTrend = () => {
+  return async (ctx: Context, next: () => any) => {
+    const { id, dateRange } = ctx.request.query as any;
+    const { data } = await EchoTikAPI.requestSellerTrend({ id, dateRange });
+    ctx.withoutDataWrapping = true;
+    ctx.body = {
+      data,
+    };
+  };
+};
+
+const getSellerVideoTrend = () => {
+  return async (ctx: Context, next: () => any) => {
+    const { id, dateRange } = ctx.request.query as any;
+    const { data } = await EchoTikAPI.requestSellerVideoTrend({ id, dateRange });
+    ctx.withoutDataWrapping = true;
+    ctx.body = {
+      data,
+    };
+  };
+};
+
+const getSellerLiveTrend = () => {
+  return async (ctx: Context, next: () => any) => {
+    const { id, dateRange } = ctx.request.query as any;
+    const { data } = await EchoTikAPI.requestSellerLiveTrend({ id, dateRange });
     ctx.withoutDataWrapping = true;
     ctx.body = {
       data,

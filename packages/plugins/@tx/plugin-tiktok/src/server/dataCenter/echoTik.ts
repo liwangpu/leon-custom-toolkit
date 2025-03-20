@@ -1469,6 +1469,34 @@ export const EchoTikAPI = (() => {
     return isFunction(transfer) ? transfer(data) : data;
   };
 
+  const requestLiveDetailProductList = async (props: {
+    liveId: string;
+    page: number;
+    pageSize: number;
+    order?: string;
+    sort?: IEchoSort;
+    transfer?: (data: { [key: string]: any }) => { [key: string]: any };
+  }) => {
+    const { liveId, page, pageSize, order, sort, transfer } = props;
+    // https://echotik.live/api/v1/data/lives/7388435030240250656/products?page=1&per_page=10&order=price&sort=desc
+    const instance = await getAxiosInstance();
+    const { data: res } = (await instance.request({
+      url: `/lives/${liveId}/products`,
+      params: {
+        page,
+        per_page: pageSize,
+        order,
+        sort,
+      },
+    })) as any;
+    const meta = genMeta({ resData: res, page, pageSize });
+    const datas = res.data as Array<any>;
+    return {
+      data: isFunction(transfer) ? datas.map((d) => transfer(d)) : datas,
+      meta,
+    };
+  };
+
   const requestLiveTrend = async (props: { id: string }) => {
     const { id } = props;
     // https://echotik.live/api/v1/data/lives/7482222612275628846/analysis?tag=basic.overview
@@ -1496,6 +1524,345 @@ export const EchoTikAPI = (() => {
     };
   };
 
+  const requestIndependentSellerList = async (props: {
+    page: number;
+    pageSize: number;
+    searchCondition?: Map<string, any>;
+    order?: string;
+    sort?: IEchoSort;
+    transfer?: (data: { [key: string]: any }) => { [key: string]: any };
+  }) => {
+    const { page, pageSize, order, sort, searchCondition, transfer } = props;
+    // https://echotik.live/api/v1/data/sellers?page=1&per_page=10&product_categories=&product_categories_name_slug=&sales=&total_sale_cnt=&related_influencers=&gmv=&order=total_sale_nd_cnt&sort=desc&keyword=
+    const url = `${echoTipAPIBase}/sellers`;
+
+    let region: string;
+
+    const instance = await getAxiosInstance();
+
+    const params: Record<string, any> = {
+      page,
+      per_page: pageSize,
+      order,
+      sort,
+    };
+
+    const { conditionCheck, countryConditionCheck } = searchConditionJudgement(searchCondition);
+
+    await conditionCheck({
+      field: 'keyword',
+      cb({ value }) {
+        params['keyword'] = value;
+      },
+    });
+
+    await countryConditionCheck({
+      field: 'country',
+      cb({ value }) {
+        region = value;
+      },
+    });
+
+    await conditionCheck({
+      field: 'productCategory',
+      cb({ value }) {
+        params['product_categories'] = value;
+      },
+    });
+
+    await conditionCheck({
+      field: 'searchConditionLatest30Sales',
+      cb({ value }) {
+        params['sales'] = value;
+      },
+    });
+
+    await conditionCheck({
+      field: 'searchConditionTotalSales',
+      cb({ value }) {
+        params['total_sale_cnt'] = value;
+      },
+    });
+
+    await conditionCheck({
+      field: 'searchConditionSellerRating',
+      cb({ value }) {
+        params['seller_rating'] = value;
+      },
+    });
+
+    await conditionCheck({
+      field: 'searchConditionSellerType',
+      cb({ value }) {
+        params['seller_type'] = value;
+      },
+    });
+
+    await conditionCheck({
+      field: 'searchConditionSellerFlag',
+      cb({ value }) {
+        params['sales_flag'] = value;
+      },
+    });
+
+    await conditionCheck({
+      field: 'searchConditionSellerTrendFlag',
+      cb({ value }) {
+        params['sales_trend_flag'] = value;
+      },
+    });
+
+    await conditionCheck({
+      field: 'searchConditionIsSShop',
+      cb({ value }) {
+        params['is_s_shop'] = value;
+      },
+    });
+
+    await conditionCheck({
+      field: 'searchConditionGMV',
+      cb({ value }) {
+        params['gmv'] = value;
+      },
+    });
+
+    await conditionCheck({
+      field: 'searchConditionRelatedInfluencers',
+      cb({ value }) {
+        params['related_influencers'] = value;
+      },
+    });
+
+    const { data: res } = await instance.request({
+      url,
+      method: 'GET',
+      headers: {
+        'x-region': region,
+      },
+      params,
+    });
+
+    const meta = genMeta({ resData: res, page, pageSize });
+
+    const datas = res.data as Array<any>;
+    return {
+      data: isFunction(transfer) ? datas.map((d) => transfer(d)) : datas,
+      meta,
+    };
+  };
+
+  const requestIndependentSellerDetail = async (props: {
+    id: string;
+    transfer?: (data: { [key: string]: any }) => { [key: string]: any };
+  }) => {
+    const { id, transfer } = props;
+    const instance = await getAxiosInstance();
+    // https://echotik.live/api/v1/data/lives/7482222612275628846/analysis?tag=basic.overview
+    const {
+      data: { data, msg, code },
+    } = (await instance.request({
+      url: `/sellers/${id}`,
+    })) as any;
+
+    return isFunction(transfer) ? transfer(data) : data;
+  };
+
+  const requestSellerTrend = async (props: { id: string; dateRange: number }) => {
+    const { id, dateRange } = props;
+    // https://echotik.live/api/v1/data/sellers/7495794203056835079/analysis?tag=basic.overview&dateRange=30&start_time=&end_time=
+    const instance = await getAxiosInstance();
+    const data: Record<string, any> = {};
+
+    const url = `/sellers/${id}/analysis`;
+
+    const requestBasicOverview = async () => {
+      const { data: res } = (await instance.request({
+        url,
+        params: {
+          tag: 'basic.overview',
+          dateRange,
+        },
+      })) as any;
+
+      const ds: Array<any> = res.data;
+      data['basic.overview'] = formatEnNumberFormat(ds);
+    };
+
+    await Promise.all([requestBasicOverview()]);
+
+    return {
+      data,
+    };
+  };
+
+  const requestSellerVideoTrend = async (props: { id: string; dateRange: number }) => {
+    const { id, dateRange } = props;
+    // https://echotik.live/api/v1/data/sellers/7495794203056835079/analysis?tag=video.overview&dateRange=30&start_time=&end_time=
+    const instance = await getAxiosInstance();
+    const data: Record<string, any> = {};
+
+    const url = `/sellers/${id}/analysis`;
+
+    const requestBasicOverview = async () => {
+      const { data: res } = (await instance.request({
+        url,
+        params: {
+          tag: 'video.overview',
+          dateRange,
+        },
+      })) as any;
+
+      const ds: Array<any> = res.data;
+      data['video.overview'] = formatEnNumberFormat(ds);
+    };
+
+    await Promise.all([requestBasicOverview()]);
+
+    return {
+      data,
+    };
+  };
+
+  const requestSellerLiveTrend = async (props: { id: string; dateRange: number }) => {
+    const { id, dateRange } = props;
+    // https://echotik.live/api/v1/data/sellers/7495794203056835079/analysis?tag=video.overview&dateRange=30&start_time=&end_time=
+    const instance = await getAxiosInstance();
+    const data: Record<string, any> = {};
+
+    const url = `/sellers/${id}/analysis`;
+
+    const requestBasicOverview = async () => {
+      const { data: res } = (await instance.request({
+        url,
+        params: {
+          tag: 'live.overview',
+          dateRange,
+        },
+      })) as any;
+
+      const ds: Array<any> = res.data;
+      data['live.overview'] = formatEnNumberFormat(ds);
+    };
+
+    await Promise.all([requestBasicOverview()]);
+
+    return {
+      data,
+    };
+  };
+
+  const requestSellerProductList = async (props: {
+    sellerId: string;
+    page: number;
+    pageSize: number;
+    order?: string;
+    sort?: IEchoSort;
+    transfer?: (data: { [key: string]: any }) => { [key: string]: any };
+  }) => {
+    const { sellerId, page, pageSize, order, sort, transfer } = props;
+    // https://echotik.live/api/v1/data/sellers/7495794203056835079/products?page=1&per_page=10&sort=desc&order=total_sale_cnt&product_categories=
+    const instance = await getAxiosInstance();
+    const { data: res } = (await instance.request({
+      url: `/sellers/${sellerId}/products`,
+      params: {
+        page,
+        per_page: pageSize,
+        order,
+        sort,
+      },
+    })) as any;
+    const meta = genMeta({ resData: res, page, pageSize });
+    const datas = res.data as Array<any>;
+    return {
+      data: isFunction(transfer) ? datas.map((d) => transfer(d)) : datas,
+      meta,
+    };
+  };
+
+  const requestSellerInfluencerList = async (props: {
+    sellerId: string;
+    page: number;
+    pageSize: number;
+    order?: string;
+    sort?: IEchoSort;
+    transfer?: (data: { [key: string]: any }) => { [key: string]: any };
+  }) => {
+    const { sellerId, page, pageSize, order, sort, transfer } = props;
+    // https://echotik.live/api/v1/data/sellers/7495794203056835079/influencers?page=1&per_page=10&sort=desc&order=follower_count
+    const instance = await getAxiosInstance();
+    const { data: res } = (await instance.request({
+      url: `/sellers/${sellerId}/influencers`,
+      params: {
+        page,
+        per_page: pageSize,
+        order,
+        sort,
+      },
+    })) as any;
+    const meta = genMeta({ resData: res, page, pageSize });
+    const datas = res.data as Array<any>;
+    return {
+      data: isFunction(transfer) ? datas.map((d) => transfer(d)) : datas,
+      meta,
+    };
+  };
+
+  const requestSellerVideoList = async (props: {
+    sellerId: string;
+    page: number;
+    pageSize: number;
+    order?: string;
+    sort?: IEchoSort;
+    transfer?: (data: { [key: string]: any }) => { [key: string]: any };
+  }) => {
+    const { sellerId, page, pageSize, order, sort, transfer } = props;
+    // https://echotik.live/api/v1/data/sellers/7495794203056835079/videos?page=1&per_page=10&sort=desc&order=views_count
+    const instance = await getAxiosInstance();
+    const { data: res } = (await instance.request({
+      url: `/sellers/${sellerId}/videos`,
+      params: {
+        page,
+        per_page: pageSize,
+        order,
+        sort,
+      },
+    })) as any;
+    const meta = genMeta({ resData: res, page, pageSize });
+    const datas = res.data as Array<any>;
+    return {
+      data: isFunction(transfer) ? datas.map((d) => transfer(d)) : datas,
+      meta,
+    };
+  };
+
+  const requestSellerLiveList = async (props: {
+    sellerId: string;
+    page: number;
+    pageSize: number;
+    order?: string;
+    sort?: IEchoSort;
+    transfer?: (data: { [key: string]: any }) => { [key: string]: any };
+  }) => {
+    const { sellerId, page, pageSize, order, sort, transfer } = props;
+    // https://echotik.live/api/v1/data/sellers/7495794203056835079/lives?page=1&per_page=10&sort=desc&order=viewers_count
+    const instance = await getAxiosInstance();
+    const { data: res } = (await instance.request({
+      url: `/sellers/${sellerId}/lives`,
+      params: {
+        page,
+        per_page: pageSize,
+        order,
+        sort,
+      },
+    })) as any;
+    const meta = genMeta({ resData: res, page, pageSize });
+    const datas = res.data as Array<any>;
+    return {
+      data: isFunction(transfer) ? datas.map((d) => transfer(d)) : datas,
+      meta,
+    };
+  };
+
   return {
     startup,
     transferNocoSortToEchoSort,
@@ -1514,6 +1881,7 @@ export const EchoTikAPI = (() => {
     requestInfluencerTrend,
     requestInfluencerVideoTrend,
     requestInfluencerLiveTrend,
+    requestLiveDetailProductList,
     requestInfluencerSalesTrend,
     requestProductList,
     requestProductDetail,
@@ -1529,5 +1897,14 @@ export const EchoTikAPI = (() => {
     requestIndependentLiveList,
     requestIndependentLiveDetail,
     requestLiveTrend,
+    requestIndependentSellerList,
+    requestIndependentSellerDetail,
+    requestSellerTrend,
+    requestSellerVideoTrend,
+    requestSellerLiveTrend,
+    requestSellerProductList,
+    requestSellerInfluencerList,
+    requestSellerVideoList,
+    requestSellerLiveList,
   };
 })();

@@ -13,6 +13,7 @@ export const implementLiveMiddleware = (plugin: Plugin) => {
 
   acl.use(liveListMiddeware(plugin));
   acl.use(liveDetailMiddeware(plugin));
+  acl.use(liveDetailProductMiddeware(plugin));
 };
 
 const liveListMiddeware = (plugin: Plugin) => {
@@ -117,6 +118,31 @@ const liveDetailMiddeware = (plugin: Plugin) => {
     ctx.withoutDataWrapping = true;
     ctx.body = {
       data,
+    };
+  };
+};
+
+const liveDetailProductMiddeware = (plugin: Plugin) => {
+  return async (ctx: any, next: () => Promise<any>) => {
+    const { resourceName, actionName } = getUserInfo({
+      ctx,
+    });
+
+    if (!(resourceName === 'influencer_live.product' && actionName === 'list')) return await next();
+    // params 格式是 {filterByTk:number;resourceName:string;actionName:string;values:any;filter:any}
+    const params = ctx.action.params;
+    const { associatedIndex: liveId, page, pageSize, sort } = params;
+
+    const { data: ds, meta } = await EchoTikAPI.requestLiveDetailProductList({
+      liveId,
+      page,
+      pageSize,
+      ...EchoTikAPI.transferNocoSortToEchoSort({ sort }),
+    });
+    ctx.withoutDataWrapping = true;
+    ctx.body = {
+      data: ds,
+      meta,
     };
   };
 };

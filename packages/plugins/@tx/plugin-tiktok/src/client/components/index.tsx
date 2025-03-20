@@ -11,6 +11,9 @@ import { registerProductOverviewComponent } from './ProductOverview';
 import { registerProductVideoOverviewComponent } from './ProductVideoOverview';
 import { registerProductLiveOverviewComponent } from './ProductLiveOverview';
 import { registerLiveOverviewComponent } from './LiveOverview';
+import { registerSellerOverviewComponent } from './SellerOverview';
+import { registerSellerVideoOverviewComponent } from './SellerVideoOvervieiw';
+import { registerSellerLiveOverviewComponent } from './SellerLiveOverview';
 
 export const registerComponents = (props: { plugin: Plugin }) => {
   registerPaymentComponent(props);
@@ -23,6 +26,9 @@ export const registerComponents = (props: { plugin: Plugin }) => {
   registerProductVideoOverviewComponent(props);
   registerProductLiveOverviewComponent(props);
   registerLiveOverviewComponent(props);
+  registerSellerOverviewComponent(props);
+  registerSellerVideoOverviewComponent(props);
+  registerSellerLiveOverviewComponent(props);
   // registerTestComponent(props);
   // registerTest2Component(props);
 };
