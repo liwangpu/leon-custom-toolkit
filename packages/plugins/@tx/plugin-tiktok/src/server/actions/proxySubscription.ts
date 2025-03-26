@@ -11,12 +11,13 @@ export const registerProxySubscriptionActions = (props: { plugin: Plugin }) => {
     actions: {
       subscribe: getSubcription(),
       doTranslate: doTranslate(),
+      tokenTest: tokenTest(),
     },
   });
   app.acl.allow('proxySubscription', '*', 'public');
 };
 
-function getSubcription() {
+const getSubcription = () => {
   return async (ctx: Context, next: () => any) => {
     const { noid } = ctx.request.query as any;
 
@@ -56,9 +57,9 @@ function getSubcription() {
     ctx.body = s;
     await next();
   };
-}
+};
 
-function doTranslate() {
+const doTranslate = () => {
   return async (ctx: Context, next: () => any) => {
     const collectionRepo = ctx.db.getRepository('collections');
     const fieldRepo = ctx.db.getRepository('fields');
@@ -115,4 +116,16 @@ function doTranslate() {
       localeJson,
     };
   };
-}
+};
+
+const tokenTest = () => {
+  return async (ctx: Context, next: () => any) => {
+    // const collectionRepo = ctx.db.getRepository('collections');
+    // const fieldRepo = ctx.db.getRepository('fields');
+    console.log(`---------[ tokenTest ]---------`);
+    console.log(`ctx.request:`, ctx.request.ip);
+    ctx.body = {
+      // localeJson,
+    };
+  };
+};

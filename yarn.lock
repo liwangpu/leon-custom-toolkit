@@ -53,6 +53,17 @@
     "@alicloud/credentials" "^2"
     "@alicloud/tea-typescript" "^1.7.1"
 
+"@alicloud/openapi-client@0.4.1":
+  version "0.4.1"
+  resolved "https://registry.npmmirror.com/@alicloud/openapi-client/-/openapi-client-0.4.1.tgz#8e55a3bdfee17a00c2ec3d10feaf7bfd0eff7502"
+  integrity sha512-FNGQ9kmGi0AuNFX9yj7DDbMn8CB4TvihIIQ3ONNhLZF8Hj2asau7NiqVoftJX3F/JFq9qzJWeVbvboSM9Zq5kA==
+  dependencies:
+    "@alicloud/credentials" "^2"
+    "@alicloud/gateway-spi" "^0.0.8"
+    "@alicloud/openapi-util" "^0.2.7"
+    "@alicloud/tea-typescript" "^1.7.1"
+    "@alicloud/tea-util" "^1.4.0"
+
 "@alicloud/openapi-client@0.4.12", "@alicloud/openapi-client@^0.4.1":
   version "0.4.12"
   resolved "https://registry.npmmirror.com/@alicloud/openapi-client/-/openapi-client-0.4.12.tgz#7a4f00e71b025d8a487cfbeeb8aa6f63d70b2054"
@@ -65,7 +76,7 @@
     "@alicloud/tea-util" "^1.4.9"
     "@alicloud/tea-xml" "0.0.3"
 
-"@alicloud/openapi-util@^0.2.9":
+"@alicloud/openapi-util@^0.2.7", "@alicloud/openapi-util@^0.2.9":
   version "0.2.9"
   resolved "https://registry.npmmirror.com/@alicloud/openapi-util/-/openapi-util-0.2.9.tgz#2379cd81f993dcab32066a2b892ddcbdd266d51c"
   integrity sha512-GUEYtX3lDv+WaZoDFCb0h9aZ8+IlajnSAxSHjiITbNtjCpZbA/vfd7Z/ST9YaPoT34nGqDNKiQTjqpLhaKtYBw==
@@ -101,7 +112,7 @@
     "@alicloud/tea-typescript" "^1.5.1"
     kitx "^2.0.0"
 
-"@alicloud/tea-util@^1.3.0", "@alicloud/tea-util@^1.4.4", "@alicloud/tea-util@^1.4.9":
+"@alicloud/tea-util@^1.3.0", "@alicloud/tea-util@^1.4.0", "@alicloud/tea-util@^1.4.4", "@alicloud/tea-util@^1.4.9":
   version "1.4.10"
   resolved "https://registry.npmmirror.com/@alicloud/tea-util/-/tea-util-1.4.10.tgz#e0897810e6aa0aa5456c53d885b88ac658b07d81"
   integrity sha512-VEsXWP2dlJLvsY2THj+sH++zwxQRz3Y5BQ8EkfnFems36RkngQKYOLsoto5nR6ej1Gf6I+0IOgBXrkRdpNCQ1g==
@@ -21322,6 +21333,11 @@ nanoid@^3.3.6, nanoid@^3.3.8:
   version "3.3.8"
   resolved "https://registry.npmmirror.com/nanoid/-/nanoid-3.3.8.tgz#b1be3030bee36aaff18bacb375e5cce521684baf"
   integrity sha512-WNLf5Sd8oZxOm+TzppcYk8gVOgP+l58xNy58D0nbUnOxOWRWvlcCV4kUF7ltmI6PsrLl/BgKEyS4mqsGChFN0w==
+
+nanoid@^4.0.1:
+  version "4.0.2"
+  resolved "https://registry.npmmirror.com/nanoid/-/nanoid-4.0.2.tgz#140b3c5003959adbebf521c170f282c5e7f9fb9e"
+  integrity sha512-7ZtY5KTCNheRGfEFxnedV5zFiORN1+Y1N6zvPTnHQd8ENUvfaDBeuJDZb2bN/oXwXxu3qkTXDzy57W5vAmDTBw==
 
 nanomatch@^1.2.9:
   version "1.2.13"
