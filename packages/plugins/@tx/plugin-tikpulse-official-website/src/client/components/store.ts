@@ -1,6 +1,7 @@
 import { APIClient } from '@nocobase/client';
 import { action, flow, makeObservable, observable } from 'mobx';
 import { isNil } from 'lodash';
+import { createContext } from 'react';
 
 export class AppStore {
   public wechatServieQRCode: string;
@@ -41,3 +42,5 @@ export class AppStore {
     this.trialModaShow = show;
   }
 }
+
+export const AppStoreContext = createContext(null);

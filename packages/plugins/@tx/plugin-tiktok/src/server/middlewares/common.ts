@@ -14,6 +14,7 @@ export function getUserInfo(props: { ctx: any }) {
     return {};
   }
   const { organizationId, roles } = currentUser || { roles: [], organizationId: null };
+  // console.log(`currentUser:`, currentUser);
   // const rolesSet = new Set(roles.map((r) => r.name));
   const isRootOrAdmin = currentRole === 'root' || currentRole === 'admin' || currentRole === 'tkAppRegisterDemoUser';
   const isOrganizationAdminUser = currentRole === 'organizationAdmin';
@@ -37,6 +38,7 @@ export function serverRequest(props: { url: string; method?: string; ctx?: Conte
 
   const { url, method, data, params, ctx } = props;
   const headers = ctx ? pick(ctx.request.headers, commonHeader) : {};
+  console.log(`headers:`, headers);
   return axios.request({
     url: `${serverBaseUrl}/${url}`,
     method: method || 'POST',

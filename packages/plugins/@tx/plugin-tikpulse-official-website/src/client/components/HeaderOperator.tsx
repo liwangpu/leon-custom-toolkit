@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { createStyles, useAPIClient } from '@nocobase/client';
 import { observer } from 'mobx-react-lite';
-import { Button, Form, Input, InputNumber, Modal, Space, message } from 'antd';
+import { Button, Form, Input, Modal, Space, message } from 'antd';
 import CommonModalLayout from './CommonModalLayout';
 import { useNavigate } from 'react-router-dom';
 import { useEvent } from '../hooks';
@@ -38,7 +38,7 @@ const CountDownButton: React.FC<{ disabled?: boolean; onClick?: () => void }> = 
   );
 });
 
-const useStyles = createStyles(({ css }) => {
+const useStyles = createStyles(({ css, responsive }) => {
   return {
     operators: css`
       height: 100%;
@@ -58,6 +58,10 @@ const useStyles = createStyles(({ css }) => {
       border: none;
       border-radius: 6px;
       cursor: pointer;
+      ${responsive.sm} {
+        font-size: 13px;
+        padding: 4px 7px;
+      }
       &:hover {
         background-color: #273333;
       }

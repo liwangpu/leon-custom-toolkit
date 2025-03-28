@@ -4,13 +4,17 @@ import { observer } from 'mobx-react-lite';
 import classnames from 'classnames';
 import { AppStore } from './store';
 
-const useStyles = createStyles(({ css }) => {
+const useStyles = createStyles(({ css, responsive }) => {
   return {
     container: css`
       display: flex;
       flex-flow: row wrap;
       padding: 48px 100px;
       gap: 20px 140px;
+      ${responsive.sm} {
+        padding: 22px;
+        gap: 14px;
+      }
     `,
     cardInfo: css`
       //

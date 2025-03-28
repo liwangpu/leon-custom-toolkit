@@ -1,27 +1,28 @@
 import React, { useEffect, useMemo } from 'react';
-import { createStyles, useAPIClient } from '@nocobase/client';
+import { useAPIClient } from '@nocobase/client';
+import { createStyles, useResponsive } from 'antd-style';
 import { Plugin } from '@nocobase/client';
 import { observer } from 'mobx-react-lite';
-import ImgPageBackground from '../assets/images/page-back.png';
-// import ImgLogo from '../assets/images/logo.png';
 import ImgLogo from '../assets/images/logo-s.png';
 import classnames from 'classnames';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useEvent } from '../hooks';
 import HeaderOperator from './HeaderOperator';
 import FooterInfo from './FooterInfo';
-import { Button, ConfigProvider, Space } from 'antd';
-import { AppStore } from './store';
+import { ConfigProvider, Dropdown } from 'antd';
+import { AppStore, AppStoreContext } from './store';
 import DownloadPage from './DownloadPage';
 import IntroducePage from './IntroducePage';
 import PackagePage from './PackagePage';
+import { MenuOutlined } from '@ant-design/icons';
+import { PrimaryColor } from './common';
 
 // 下载链接
 // https://astrolabe-releaser.taixiang-tech.com/download/latest/windows_64
 
 interface INavItem {
   key: AppNameEnum;
-  title: string;
+  label: string;
   icon?: string;
   activedIcon?: string;
 }
@@ -36,8 +37,9 @@ export const registerHomePage = (props: { plugin: Plugin }) => {
   });
 };
 
-const useStyles = createStyles(({ css }) => {
+const useStyles = createStyles(({ css, responsive }) => {
   const headerHeight = 76;
+
   return {
     page: css`
       position: relative;
@@ -48,7 +50,6 @@ const useStyles = createStyles(({ css }) => {
       overflow-y: auto;
       overflow-x: hidden;
       background-color: #0d3333;
-      padding-top: ${headerHeight}px;
     `,
     pageHeader: css`
       position: fixed;
@@ -62,36 +63,57 @@ const useStyles = createStyles(({ css }) => {
       margin: auto;
       padding: 16px;
       background-color: #fff;
+      color: black;
       border-bottom-left-radius: 16px;
       border-bottom-right-radius: 16px;
       z-index: 100;
+
+      ${responsive.sm} {
+        height: 50px;
+        border-bottom-left-radius: 6px;
+        border-bottom-right-radius: 6px;
+      }
     `,
     pageContent: css`
       flex: 1;
       width: 100%;
       color: #fff;
+      padding: 50px 0;
+      padding: 140px 0 40px;
+      ${responsive.sm} {
+        padding: 70px 0 20px;
+      }
     `,
     pageFooter: css`
       display: flex;
       flex-flow: column;
       width: 100%;
-      /* height: 200px; */
       background: rgb(4, 4, 4);
       border-top-left-radius: 64px;
       border-top-right-radius: 64px;
       z-index: 100;
+      ${responsive.sm} {
+        border-top-left-radius: 16px;
+        border-top-right-radius: 16px;
+      }
     `,
     logoContainer: css`
       display: flex;
       align-items: center;
       font-size: 26px;
       font-weight: 600;
-      color: #026661;
+      color: ${PrimaryColor};
+      cursor: pointer;
     `,
     logo: css`
       width: 24px;
       height: 24px;
       margin-right: 6px;
+    `,
+    logoTitle: css`
+      ${responsive.sm} {
+        display: none;
+      }
     `,
     navs: css`
       display: flex;
@@ -99,16 +121,17 @@ const useStyles = createStyles(({ css }) => {
       flex: 1;
       font-size: 15px;
       font-weight: 700;
-      padding: 0 22px;
+      padding: 0 16px;
+      color: black;
     `,
     navItem: css`
       padding: 6px 16px;
       cursor: pointer;
       &.actived {
-        color: #026661;
+        color: ${PrimaryColor};
       }
       &:hover {
-        color: #026661;
+        color: ${PrimaryColor};
       }
       &:not(:last-of-type) {
         margin-right: 14px;
@@ -118,18 +141,55 @@ const useStyles = createStyles(({ css }) => {
   };
 });
 
+const theme = {
+  token: {
+    // Seed Token，影响范围大
+    colorPrimary: '#3f6600',
+    borderRadius: 2,
+
+    // 派生变量，影响范围小
+    colorBgContainer: '#f6ffed',
+  },
+};
+
 const HomePage: React.FC = observer((props) => {
   const { styles } = useStyles();
   const { appName: _appName } = useParams();
   const navigate = useNavigate();
   const apiClient = useAPIClient();
   const appStore = useMemo(() => new AppStore({ apiClient }), [apiClient]);
+  const { lg } = useResponsive();
+
   const appName: AppNameEnum = (_appName || AppNameEnum.introduce) as any;
+
   const handleNavigateTo = useEvent((appName: AppNameEnum) => {
     navigate(`/home/${appName}`);
   });
 
+  const handleNavigateToHome = useEvent(() => {
+    handleNavigateTo(AppNameEnum.introduce);
+  });
+
   const renderNavs = () => {
+    if (!lg) {
+      const navItems = NAV_ITEMS.map((it) => ({
+        key: it.key,
+        label: (
+          <div onClick={() => handleNavigateTo(it.key)}>
+            <img src={appName === it.key ? it.activedIcon : it.icon} />
+            <span>{it.label}</span>
+          </div>
+        ),
+      }));
+      return (
+        <Dropdown menu={{ items: navItems }} trigger={['click']}>
+          <a onClick={(e) => e.preventDefault()}>
+            <MenuOutlined />
+          </a>
+        </Dropdown>
+      );
+    }
+
     return NAV_ITEMS.map((it) => (
       <div
         className={classnames(styles.navItem, {
@@ -139,7 +199,7 @@ const HomePage: React.FC = observer((props) => {
         onClick={() => handleNavigateTo(it.key)}
       >
         {/* <img src={appName === it.key ? it.activedIcon : it.icon} /> */}
-        <span>{it.title}</span>
+        <span>{it.label}</span>
       </div>
     ));
   };
@@ -149,7 +209,7 @@ const HomePage: React.FC = observer((props) => {
       case AppNameEnum.softwareDownload:
         return <DownloadPage />;
       case AppNameEnum.introduce:
-        return <IntroducePage store={appStore} />;
+        return <IntroducePage />;
       case AppNameEnum.package:
         return <PackagePage />;
       default:
@@ -160,35 +220,35 @@ const HomePage: React.FC = observer((props) => {
   useEffect(() => {
     appStore.initialize();
     document.title = 'TIKPULSE';
+
+    let meta = document.querySelector<HTMLMetaElement>('meta[name="viewport"]');
+    if (!meta) {
+      meta = document.createElement('meta');
+      meta.name = 'viewport';
+    }
+    if (meta) {
+      meta.content = 'width=device-width, initial-scale=1, user-scalable=1';
+    }
   }, [appStore]);
 
   return (
-    <ConfigProvider
-      theme={{
-        token: {
-          // Seed Token，影响范围大
-          colorPrimary: '#3f6600',
-          borderRadius: 2,
-
-          // 派生变量，影响范围小
-          colorBgContainer: '#f6ffed',
-        },
-      }}
-    >
-      <div className={styles.page}>
-        <div className={styles.pageHeader}>
-          <div className={styles.logoContainer}>
-            <img className={styles.logo} src={ImgLogo} />
-            <div>TIKPULSE</div>
+    <ConfigProvider theme={theme}>
+      <AppStoreContext.Provider value={appStore}>
+        <div className={styles.page}>
+          <div className={styles.pageHeader}>
+            <div className={styles.logoContainer} onClick={handleNavigateToHome}>
+              <img className={styles.logo} src={ImgLogo} />
+              <div className={styles.logoTitle}>TIKPULSE</div>
+            </div>
+            <div className={styles.navs}>{renderNavs()}</div>
+            <HeaderOperator store={appStore} />
           </div>
-          <div className={styles.navs}>{renderNavs()}</div>
-          <HeaderOperator store={appStore} />
+          <div className={styles.pageContent}>{renderPage()}</div>
+          <div className={styles.pageFooter}>
+            <FooterInfo store={appStore} />
+          </div>
         </div>
-        <div className={styles.pageContent}>{renderPage()}</div>
-        <div className={styles.pageFooter}>
-          <FooterInfo store={appStore} />
-        </div>
-      </div>
+      </AppStoreContext.Provider>
     </ConfigProvider>
   );
 });
@@ -204,19 +264,19 @@ enum AppNameEnum {
 const NAV_ITEMS: INavItem[] = [
   {
     key: AppNameEnum.introduce,
-    title: '软件介绍',
+    label: '软件介绍',
     // icon: aiAnalyzeImg,
     // activedIcon: aiAnalyzeActivedImg,
   },
   {
     key: AppNameEnum.package,
-    title: '套餐详情',
+    label: '套餐详情',
     // icon: solutionImg,
     // activedIcon: solutionActivedImg,
   },
   {
     key: AppNameEnum.softwareDownload,
-    title: '软件下载',
+    label: '软件下载',
     // icon: solutionImg,
     // activedIcon: solutionActivedImg,
   },

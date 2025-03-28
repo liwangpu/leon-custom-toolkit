@@ -18,8 +18,8 @@ const sellerListMiddeware = (plugin: Plugin) => {
     if (!(resourceName === 'roles' && actionName === 'check')) return await next();
     // params 格式是 {filterByTk:number;resourceName:string;actionName:string;values:any;filter:any}
     const params = ctx.action.params;
-    console.log(`---------[ permission check ]---------`);
-    console.log(`---------[ permission check ]---------`);
+    // console.log(`---------[ permission check ]---------`);
+    // console.log(`---------[ permission check ]---------`);
     // console.log(`params:`, params);
     await next();
     // console.log(`ctx.body:`, ctx.body);

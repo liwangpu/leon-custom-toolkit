@@ -1,9 +1,11 @@
 import { Context } from '@nocobase/actions';
-import { AlipaySdk } from 'alipay-sdk';
-import { uid } from '@nocobase/utils';
 import { isNil } from 'lodash';
 import dayjs from 'dayjs';
 import { Plugin } from '@nocobase/server';
+import { ALIPAY_SETTING_RECORD_KEY, PURCHASEDURATION_MONTHS_MAPPING } from '../commons';
+import { AlipayCenter } from '../dataCenter';
+import { IPaymentCost, IServicePackage, IServicePackagePurchaseOrder } from '../../interfaces';
+import { getUserInfo } from '../middlewares';
 
 export const registerPaymentActions = (props: { plugin: Plugin }) => {
   const { plugin } = props;
@@ -12,51 +14,48 @@ export const registerPaymentActions = (props: { plugin: Plugin }) => {
   app.resourceManager.define({
     name: 'payment',
     actions: {
+      submitSetting: submitSetting(),
       makeDevicePayment: makeDevicePayment(),
       devicePaymentFeedback: devicePaymentFeedback(),
+      makePackagePayment: makePackagePayment(),
+      packagePaymentFeedback,
     },
   });
-  app.acl.allow('payment', '*', 'public');
+  app.acl.allow('payment', '*', 'loggedIn');
+  app.acl.allow('payment', 'makeDevicePayment', 'public');
+  app.acl.allow('payment', 'devicePaymentFeedback', 'public');
+  app.acl.allow('payment', 'packagePaymentFeedback', 'public');
 };
 
-const alipaySdk = (() => {
-  let instance: AlipaySdk;
+const submitSetting = () => {
+  return async (ctx: Context, next: () => any) => {
+    const formData = (ctx.request.body as any) || {};
 
-  const initialize = () => {
-    instance = new AlipaySdk({
-      // // 设置应用 ID
-      // appId: `${env['ALIPAY_RECEIVE_PAYMENT_APPID']}`,
-      // // 设置应用私钥
-      // privateKey: `${env['ALIPAY_RECEIVE_PAYMENT_PRIVATEKEY']}`,
-      // // 设置支付宝公钥
-      // alipayPublicKey: `${env['ALIPAY_RECEIVE_PAYMENT_PRIVATEKEY']}`,
-
-      // 设置应用 ID
-      appId: `2021005119647342`,
-      // 设置应用私钥
-      privateKey: `MIIEvwIBADANBgkqhkiG9w0BAQEFAASCBKkwggSlAgEAAoIBAQDFxo/LcxWTxQ6sylrPoJWFhb4p3RMyCS2hSQQ/hWsx04pGYm1k/lQDb0GicWBks3lnELBxRW7N6ESQzw8t0nZ43etEpx2m7wcDoq9pnOrG5R3AK5rXQl6dZ3Wqwo56Auab/Mr1V6N6KRd68PN9EPfiy0eI83Pzd+vslW+u2AiGwXcyfghnE0R6Ocwug01ytNx0hpfi8HFfxQb5S7foErpCGG2a83EMhhrQRueoFGCNP1oc8+5T5thtVYLXNjsjd968ADHbV+bS+7g4/A93GNCj/wo0WC0PXwhHuS7KTaBPHae9yHGvsAltAb+DwOPYLZWIn0j72Iy9F/O43VrDGR+3AgMBAAECggEBALFZLPizalXoDxDDJEurJGlnVO8VX3Eu6cwHPdf4O/eiSgxzlsVJiuzJh4GzSU0D44mYXaA1MvdRoKp6ApKEd9hKp/4YHW7kSNXpvIJoQ9+29MauU1tUGKPtcoZ9kGW41DJsrVL0E5Qn5PZJuw4beS3WO3+DUCazEsxD9LJE5uBuZ2+vAil2tOasPKNZoWh+h5dAu56BuB97dakNfzZgD+0G71LdXzuvKIxlTevUJ56rGEC0QbXr68wogINwEH6qEdd2ZvY9vscbkfgbGTS3ZPOXm0u+eptodOSzMleqZwPgJloXjmc/PipFrWgH3Qz/Xbb5yTCam8fq5EQF+vsF4QECgYEA8bHSrWWROhmoWnf+Y+2o/rlDgZXs2J9nMbD8MqODwVmmlPMusAzJfa+oHZTT/pRFB0IoShR5R89PHNVB4e51KaiWLuKAOAyAqT7LOOaLohnOJlJDnYx1BAZe1L6MqFGla/W7kRhZaJ7iqWzx/TjkwxnrXOOKjbJEhDMZ5gOrci8CgYEA0XtGSSBYcCW8/ar94wdP0jTHXGuNo556US98BX6wiggOwH9J3hfb9Zfh7t7mP5lpCxWQ4DaWMPTrXsbZJjGees1DIInc9Tf5LAZ4aX0IkxDcszgvKFDJvsdqj4bI2a3X9Cg+DASigWZTHfmU9bm3LTiVrDTdPbCJyBz2jIKl8PkCgYEArcCSnkkoEEaluvQMk7YlCYoSN7SaYlimDRkZFSZr77INiYMRi0qGB68iArIdfSUGQuOSpz70uWUVkLrW9B9DZ0FlRita1fBXBlS4MB29QDmg8/er2DVDYjNaNUMPR2n6rBQqVXLVw9qFRBuoE8y02HVnuI1z682+Z/N8qNj2hc0CgYEAiyoMLXRxjD9l6Fd6RyKKYqlxb/J7rCESPXEAQV5CxdBIjJWDayoKlIOMMvadm868vAJdtrZM3MU4wEP16qu4DvjiCXHM+pNu01KRF/NaiOkA1YcTvQK+pCEyp5rxP7t/5dH+Nlm146UovpcZ4Iy6Ji6bMEYGXH81aV3kZMA+oXECgYA1dYVdwkXNOeXniqQb+Fkj7bc1g672zOil3+kmJZM6BgaQbywMrrT5viEIXkpp1k+l7rtrljnBVVoVbRcLIJE8U29h8oGfZ6hn/CjPoLHFDjlpGDp2ahiiBxZAmkrACksk1dJ/+znjMzByKMWewTSjdWYJ7q4X6D+96SD8IcVWMQ==`,
-      // 设置支付宝公钥
-      alipayPublicKey: `MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAgDG7y+/iy51r6ia0mqpc79DAahqp3uI1VwyBdQX2WXELClJQCX9PK6yXB9fogm51/kBjX+AZ+0VvzE/SqCNMkbqRNIGbPIR399Lp8ImCkW/7IMPBdKBfG44HVOsZv8/x4fn9ehMlsBTajNeW3TecQLGOIxm9sZlwpokY/m4aQFnEl3G9oMUCg97Z/qDmN/mTAkv++U4rzmvPKf7v5EznqV58ODHcHW91jMm0Zr5+mJjzGshoR3MaETDje1J9NFHo+f1Ygf2hGaiacozLReeWkQxqx/asCnK9hcfRQnex1DxmryNiBXDTmCUYgSo2dYOhIxc2k4mhktm14z2sFw9FkQIDAQAB`,
-      // 密钥类型，请与生成的密钥格式保持一致，参考平台配置一节
-      // keyType: 'PKCS1',
-      // 设置网关地址，默认是 https://openapi.alipay.com
-      // endpoint: 'https://openapi.alipay.com',
-    });
+    const configSettingRepo = ctx.db.getRepository('configSetting');
+    const record = await configSettingRepo.findByTargetKey(ALIPAY_SETTING_RECORD_KEY);
+    if (isNil(record)) {
+      await configSettingRepo.create({
+        values: {
+          key: ALIPAY_SETTING_RECORD_KEY,
+          value: formData,
+        },
+      });
+    } else {
+      await configSettingRepo.update({
+        values: {
+          key: ALIPAY_SETTING_RECORD_KEY,
+          value: formData,
+        },
+        filterByTk: ALIPAY_SETTING_RECORD_KEY,
+      });
+    }
+    ctx.withoutDataWrapping = true;
+    ctx.body = {};
+    next();
   };
-  return {
-    generateOutTradeNo() {
-      return `DEVICE_${uid(30).toUpperCase()}`;
-    },
-    getInstance() {
-      if (!instance) {
-        initialize();
-      }
-      return instance;
-    },
-  };
-})();
+};
 
-function makeDevicePayment() {
+const makeDevicePayment = () => {
   return async (ctx: Context, next: () => any) => {
     const { paymentType, paymentKey } = (ctx.query as any) || {};
     // // 这个留着,可以拿来检测sdk key对不对
@@ -68,9 +67,6 @@ function makeDevicePayment() {
     //   },
     // });
 
-    const out_trade_no = alipaySdk.generateOutTradeNo();
-
-    const deviceRepo = ctx.db.getRepository('tk_package_proxy_node');
     const deviceOrderRepo = ctx.db.getRepository('tk_device_order');
     const order = await deviceOrderRepo.findOne({
       filter: {
@@ -78,51 +74,35 @@ function makeDevicePayment() {
       },
       appends: ['region'],
     });
-    const { deviceName, region } = order;
+    console.log(`---------[ order ]---------`);
+
+    const { deviceName, region, organizationId } = order;
     const { name: regionName } = region;
     // 付款订单名称
-    const subject = `${regionName}/${deviceName}设备订单`;
+    const name = `${regionName}/${deviceName}设备订单`;
 
     // origin=http[s]://域名:端口
     // eslint-disable-next-line prefer-const
-    let return_url = `${
-      ctx.URL.origin
-    }/api/payment:devicePaymentFeedback?paymentKey=${paymentKey}&subject=${encodeURIComponent(subject)}`;
+    let returnUrl = `/api/payment:devicePaymentFeedback?paymentKey=${paymentKey}&subject=${encodeURIComponent(name)}`;
 
     // //模拟测试
     // return_url += `&out_trade_no=${out_trade_no}`;
     // ctx.redirect(return_url);
     // return;
 
-    // 统一收单下单并支付页面接口 https://opendocs.alipay.com/open/59da99d0_alipay.trade.page.pay?pathHash=e26b497f&scene=22
-    const result = await alipaySdk.getInstance().pageExec('alipay.trade.page.pay', {
-      bizContent: {
-        product_code: 'FAST_INSTANT_TRADE_PAY',
-        out_trade_no,
-        total_amount: '0.1',
-        subject,
+    await AlipayCenter.generatePayment({
+      ctx,
+      organizationId,
+      returnUrl,
+      cost: {
+        name,
+        amount: 0.1,
       },
-      return_url,
     });
-
-    ctx.set({
-      'Content-Type': 'text/html; charset=UTF-8',
-    });
-    ctx.withoutDataWrapping = true;
-    ctx.body = result;
   };
-}
+};
 
-function devicePaymentFeedback() {
-  const EXPIRED_MONTHS = {
-    one_month: 1,
-    three_months: 3,
-    six_months: 6,
-    one_year: 12,
-    two_years: 24,
-    three_years: 36,
-  };
-
+const devicePaymentFeedback = () => {
   return async (ctx: Context, next: () => any) => {
     const { paymentKey, out_trade_no: outTradeNo, subject, total_amount, out_trade_no } = (ctx.query as any) || {};
     console.log(`---------[ paymentFeedback ]---------`);
@@ -138,7 +118,6 @@ function devicePaymentFeedback() {
     if (isNil(order)) return;
 
     const deviceRepo = ctx.db.getRepository('tk_package_proxy_node');
-    const costsRepo = ctx.db.getRepository('costs');
 
     await deviceOrderRepo.update({
       values: {
@@ -152,7 +131,7 @@ function devicePaymentFeedback() {
     const { deviceName, paymentType, regionId, organizationId, region, purchaseDuration } = order;
     const { timezone } = region;
 
-    const expiredMonths = EXPIRED_MONTHS[purchaseDuration];
+    const expiredMonths = PURCHASEDURATION_MONTHS_MAPPING[purchaseDuration];
 
     const currentTime = dayjs();
     const expiredDate = currentTime.add(expiredMonths, 'M');
@@ -166,21 +145,14 @@ function devicePaymentFeedback() {
       expiredDate,
     };
 
-    const costs = {
-      name: subject,
-      amount: parseFloat(total_amount),
-      paymentType,
-      outTradeNo: out_trade_no,
-      detail: `/admin/66qfu3lmf5n/popups/bz5vyzfz189/filterbytk/${order.id}`,
-    };
-
+    const detailUrl = `/admin/66qfu3lmf5n/popups/bz5vyzfz189/filterbytk/${order.id}`;
     await deviceRepo.create({
       values: device,
     });
 
-    await costsRepo.create({
-      values: costs,
-    });
+    // await AlipayCenter.completePayment(out_trade_no, {
+    //   detailUrl,
+    // });
 
     // ctx.body = {
     //   order,
@@ -200,4 +172,89 @@ function devicePaymentFeedback() {
       </head>
     </html>`;
   };
-}
+};
+
+const makePackagePayment = () => {
+  return async (ctx: Context, next: () => any) => {
+    const formData = ctx.request.body as IServicePackagePurchaseOrder;
+    const { servicePackageId } = formData;
+
+    const { organizationId } = getUserInfo({
+      ctx,
+    });
+    const servicePackageRepo = ctx.db.getRepository('servicePackage');
+    const servicePackage: IServicePackage = await servicePackageRepo.findByTargetKey(servicePackageId);
+    if (isNil(servicePackage)) {
+      throw new Error(`套餐信息已过期,请刷新或者尝试购买其他套餐`);
+    }
+
+    const cost: IPaymentCost = {
+      name: `${servicePackage.name}`,
+      amount: servicePackage.price,
+      extra: formData,
+    };
+
+    console.log(`---------[ makePackagePayment ]---------`);
+    // console.log(`servicePackage:`, servicePackage);
+    console.log(`organizationId:`, organizationId);
+
+    const returnUrl = `/api/payment:packagePaymentFeedback`;
+
+    await AlipayCenter.generatePayment({
+      ctx,
+      organizationId,
+      returnUrl,
+      cost,
+    });
+  };
+};
+
+const packagePaymentFeedback = AlipayCenter.completePayment(async ({ ctx, next, cost }) => {
+  console.log(`---------[ packagePaymentFeedback ]---------`);
+  const { outTradeNo } = (ctx.query as any) || {};
+  const { organizationId, extra } = cost;
+  const order: IServicePackagePurchaseOrder = extra as any;
+  const organServicePackageRepo = ctx.db.getRepository('organizationServicePackage');
+  const servicePackageRepo = ctx.db.getRepository('servicePackage');
+  const expiredMonths = PURCHASEDURATION_MONTHS_MAPPING[order.purchaseDuration];
+  const purchasingDate = dayjs();
+  const expirationDate = purchasingDate.add(expiredMonths, 'M');
+
+  const servicePackage: IServicePackage = await servicePackageRepo.findOne({
+    filterByTk: order.servicePackageId,
+    appends: ['services'],
+  });
+
+  const paidServices = servicePackage.services || [];
+
+  console.log(`servicePackage:`, servicePackage);
+  console.log(`paidServices:`, paidServices);
+
+  const organPaidServices = paidServices.map((service) => {
+    return {
+      organizationId,
+      serviceId: service.id,
+      name: service.name,
+      price: service.price,
+      purchasingDate,
+      expirationDate,
+    };
+  });
+
+  const organServicePackage = {
+    organizationId,
+    packageId: order.servicePackageId,
+    purchasingDate,
+    expirationDate,
+    name: servicePackage.name,
+    price: servicePackage.price,
+    services: organPaidServices,
+  };
+
+  const record = await organServicePackageRepo.create({
+    values: organServicePackage,
+  });
+
+  ctx.withoutDataWrapping = true;
+  ctx.body = record;
+});

@@ -2,8 +2,6 @@ import { Plugin } from '@nocobase/client';
 import { registerPaymentComponent } from './Payment';
 import { registerSignComponent } from './Signin';
 import { registerInfluencerOverviewComponent } from './InfluencerOverview';
-import { registerTestComponent } from './test';
-import { registerTest2Component } from './test2';
 import { registerInfluencerVideoOverviewComponent } from './InfluencerVideoOverview';
 import { registerInfluencerLiveOverviewComponent } from './InfluencerLiveOverview';
 import { registerInfluencerSalesOverviewComponent } from './InfluencerSalesOverview';
@@ -14,6 +12,9 @@ import { registerLiveOverviewComponent } from './LiveOverview';
 import { registerSellerOverviewComponent } from './SellerOverview';
 import { registerSellerVideoOverviewComponent } from './SellerVideoOvervieiw';
 import { registerSellerLiveOverviewComponent } from './SellerLiveOverview';
+import { registerPaidServicePermissionSettingComponent } from './PaidServicePermission';
+import { registerAlipaySettingComponent } from './AlipaySetting';
+import { registerOrganizationInfoComponent } from './OrganizationInfo';
 
 export const registerComponents = (props: { plugin: Plugin }) => {
   registerPaymentComponent(props);
@@ -29,6 +30,9 @@ export const registerComponents = (props: { plugin: Plugin }) => {
   registerSellerOverviewComponent(props);
   registerSellerVideoOverviewComponent(props);
   registerSellerLiveOverviewComponent(props);
+  registerPaidServicePermissionSettingComponent(props);
+  registerAlipaySettingComponent(props);
+  registerOrganizationInfoComponent(props);
   // registerTestComponent(props);
   // registerTest2Component(props);
 };

@@ -1,62 +1,85 @@
-import React from 'react';
-import { observer } from 'mobx-react-lite';
+import React, { useContext } from 'react';
 import { createStyles } from '@nocobase/client';
 import classnames from 'classnames';
-import bg10046 from '../assets/images/10046.png';
-import ImgWinWin from '../assets/images/win-win.png';
-import { AppStore } from './store';
-import { useEvent } from '../hooks';
+import bg10046 from '../../assets/images/10046.png';
+import bg1234 from '../../assets/images/1234.png';
+import ImgWinWin from '../../assets/images/win-win.png';
+import { AppStoreContext } from '../store';
+import { useEvent } from '../../hooks';
+import WideScreenContainer from '../WideScreenContainer';
+import { observer } from 'mobx-react-lite';
+import {
+  FirstLevelTitleFontSize,
+  FirstLevelTitleFontSize_SM,
+  FirstLevelTitleFontWeight,
+  FirstLevelTitleFontWeight_SM,
+  SecondLevelTitleFontSize,
+  SecondLevelTitleFontSize_SM,
+  SecondLevelTitleFontWeight,
+  SecondLevelTitleFontWeight_SM,
+} from '../common';
 
-const useStyles = createStyles(({ css }) => {
+const useStyles = createStyles(({ css, responsive }) => {
   return {
-    container: css`
-      display: flex;
-      flex-flow: column;
-      align-items: center;
-    `,
     infoSection: css`
       display: flex;
-      width: 1360px;
-      padding: 50px 0;
+      flex-flow: row wrap;
       font-size: 16px;
       color: #fff;
+      ${responsive.sm} {
+        font-size: 14px;
+      }
     `,
     infoSectionPart: css`
-      flex: 1;
-      min-height: 596px;
+      width: 566px;
     `,
     infoSectionDes: css`
       display: flex;
       flex-flow: column;
-      /* justify-content: center; */
       padding: 12px;
       gap: 30px 0;
+      ${responsive.sm} {
+        gap: 10px 0;
+      }
     `,
     infoSectionImgContainer: css`
       position: relative;
       display: flex;
     `,
     infoSectionDesTitle: css`
-      font-size: 30px;
-      font-weight: 400;
+      font-size: ${FirstLevelTitleFontSize};
+      font-weight: ${FirstLevelTitleFontWeight};
       padding: 0;
       margin: 0;
+      ${responsive.sm} {
+        font-size: ${FirstLevelTitleFontSize_SM};
+        font-weight: ${FirstLevelTitleFontWeight_SM};
+      }
     `,
     infoSectionDesSubTitle: css`
-      font-size: 18px;
-      font-weight: 400;
+      font-size: ${SecondLevelTitleFontSize};
+      font-weight: ${SecondLevelTitleFontWeight};
       padding: 0;
       margin: 0;
+      ${responsive.sm} {
+        font-size: ${SecondLevelTitleFontSize_SM};
+        font-weight: ${SecondLevelTitleFontWeight_SM};
+      }
     `,
-    infoSectionImg: css`
+    infoSectionImgBg: css`
       position: absolute;
       top: -200px;
       left: -360px;
       width: 1000px;
       height: 1000px;
     `,
+    infoSectionImg: css`
+      width: 656px;
+      height: 595px;
+      z-index: 1;
+    `,
     infoSectionDesExp: css`
-      width: 560px;
+      width: 100%;
       font-size: 13px;
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -68,21 +91,26 @@ const useStyles = createStyles(({ css }) => {
       padding: 10px 16px;
       border-radius: 8px;
       border: none;
+      ${responsive.sm} {
+        font-size: 14px;
+        padding: 5px 8px;
+      }
     `,
     imgWin: css`
       width: 24px;
       height: 24px;
       margin-right: 8px;
     `,
+    imgScroller: css`
+      width: 100%;
+      max-width: 1360px;
+      overflow: hidden;
+    `,
   };
 });
 
-export interface IIntroducePageProps {
-  store: AppStore;
-}
-
-const IntroducePage: React.FC<IIntroducePageProps> = observer((props) => {
-  const { store } = props;
+const Part1: React.FC = observer(() => {
+  const store = useContext(AppStoreContext);
   const { styles } = useStyles();
 
   const handleFreeTrial = useEvent(() => {
@@ -90,7 +118,7 @@ const IntroducePage: React.FC<IIntroducePageProps> = observer((props) => {
   });
 
   return (
-    <div className={styles.container}>
+    <WideScreenContainer>
       <div className={styles.infoSection}>
         <div className={classnames(styles.infoSectionPart, styles.infoSectionDes)}>
           <h1 className={styles.infoSectionDesTitle}>解锁 TikTok 成功 —— 您的一体化增长解决方</h1>
@@ -118,13 +146,14 @@ const IntroducePage: React.FC<IIntroducePageProps> = observer((props) => {
           </div>
         </div>
         <div className={classnames(styles.infoSectionPart, styles.infoSectionImgContainer)}>
-          <img className={styles.infoSectionImg} src={bg10046} />
+          <img className={styles.infoSectionImgBg} src={bg10046} />
+          <img className={styles.infoSectionImg} src={bg1234} />
         </div>
       </div>
-    </div>
+    </WideScreenContainer>
   );
 });
 
-IntroducePage.displayName = 'IntroducePage';
+Part1.displayName = 'Part1';
 
-export default IntroducePage;
+export default Part1;

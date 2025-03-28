@@ -81,6 +81,15 @@ const permissionDefinitions: Array<IPermissionDefinition> = [
       return filter;
     },
   },
+  {
+    name: 'organizationPaidService',
+  },
+  {
+    name: 'organizationServicePackage',
+  },
+  {
+    name: 'costs',
+  },
 ];
 
 const permissionDefinitionMap = new Map(permissionDefinitions.map((def) => [def.name, def]));
