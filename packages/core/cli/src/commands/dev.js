@@ -39,7 +39,6 @@ module.exports = (cli) => {
       let subprocess;
       const runDevClient = () => {
         console.log('starting client', 1 * clientPort);
-        console.log(`---------[ title ]---------`);
         console.log(`serverPort:`,serverPort);
         subprocess = run('umi', ['dev'], {
           env: {

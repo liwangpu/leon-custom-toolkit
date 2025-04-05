@@ -1,0 +1,19 @@
+{
+  "name": "@leon/plugin-extension-patch",
+  "version": "1.0.1",
+  "main": "dist/server/index.js",
+  "displayName": "扩展补丁",
+  "displayName.zh-CN": "扩展补丁",
+  "description": "提供一些细节扩展补丁",
+  "dependencies": {
+    "mobx": "^6.13.1"
+  },
+  "peerDependencies": {
+    "@nocobase/client": "1.x",
+    "@nocobase/server": "1.x",
+    "@nocobase/test": "1.x",
+    "axios": "1.x",
+    "dayjs": "1.x",
+    "lodash": "4.x"
+  }
+}

@@ -13,7 +13,7 @@ import type { Application } from './Application';
 export class Plugin<T = any> {
   constructor(
     public options: T,
-    protected app: Application,
+    public app: Application,
   ) {
     this.options = options;
     this.app = app;
