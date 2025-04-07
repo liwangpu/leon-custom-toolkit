@@ -12,16 +12,17 @@ export const registerWebsiteSettingActions = (props: { plugin: Plugin }) => {
     name: 'officalWebsiteSetting',
     actions: {
       submitSetting: submitSetting(),
-      setting: setSetting(),
+      setting: getSetting(),
+      packages: getPackages(),
     },
   });
-  app.acl.allow('officalWebsiteSetting', '*', 'loggedIn');
+  app.acl.allow('officalWebsiteSetting', '*', 'public');
+  app.acl.allow('officalWebsiteSetting', 'setting', 'loggedIn');
 };
 
-const setSetting = () => {
+const getSetting = () => {
   return async (ctx: Context, next: () => any) => {
     const officialWebSiteSettingRep = ctx.db.getRepository('officialWebSiteSetting');
-
     const record = await officialWebSiteSettingRep.findByTargetKey(WEBSITE_SETTING_RECORD_KEY);
     ctx.withoutDataWrapping = true;
     ctx.body = record;
@@ -52,5 +53,30 @@ const submitSetting = () => {
     }
 
     next();
+  };
+};
+
+const getPackages = () => {
+  return async (ctx: Context, next: () => any) => {
+    const servicePackageRep = ctx.db.getRepository('servicePackage');
+    const paidServiceRep = ctx.db.getRepository('paidService');
+    const packages = await servicePackageRep.find({
+      filter: {
+        $and: [{ enable: { $isTruly: true } }],
+      },
+      sort: 'order',
+    });
+    const services = await paidServiceRep.find({
+      filter: {
+        $and: [{ packages: { id: { $empty: true } } }, { enable: { $isTruly: true } }],
+      },
+      sort: 'order',
+    });
+    // const record = await officialWebSiteSettingRep.findByTargetKey(WEBSITE_SETTING_RECORD_KEY);
+    ctx.withoutDataWrapping = true;
+    ctx.body = {
+      packages,
+      services,
+    };
   };
 };

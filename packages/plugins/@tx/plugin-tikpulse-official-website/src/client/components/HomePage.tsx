@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useAPIClient } from '@nocobase/client';
 import { createStyles, useResponsive } from 'antd-style';
 import { Plugin } from '@nocobase/client';
@@ -11,18 +11,19 @@ import HeaderOperator from './HeaderOperator';
 import FooterInfo from './FooterInfo';
 import { ConfigProvider, Dropdown } from 'antd';
 import { AppStore, AppStoreContext } from './store';
-import DownloadPage from './DownloadPage';
 import IntroducePage from './IntroducePage';
 import PackagePage from './PackagePage';
 import { MenuOutlined } from '@ant-design/icons';
-import { PrimaryColor } from './common';
-
-// 下载链接
-// https://astrolabe-releaser.taixiang-tech.com/download/latest/windows_64
+import { PageHeaderHeight, PageHeaderHeight_SM, PrimaryColor } from './common';
+import { isNil } from 'lodash';
+import ServicePage from './ServicePage';
+import DownloadPage from './DownloadPage';
 
 interface INavItem {
   key: AppNameEnum;
   label: string;
+  Component: React.FunctionComponent;
+  bgColor?: string;
   icon?: string;
   activedIcon?: string;
 }
@@ -38,8 +39,6 @@ export const registerHomePage = (props: { plugin: Plugin }) => {
 };
 
 const useStyles = createStyles(({ css, responsive }) => {
-  const headerHeight = 76;
-
   return {
     page: css`
       position: relative;
@@ -49,7 +48,6 @@ const useStyles = createStyles(({ css, responsive }) => {
       flex-flow: column;
       overflow-y: auto;
       overflow-x: hidden;
-      background-color: #0d3333;
     `,
     pageHeader: css`
       position: fixed;
@@ -59,17 +57,18 @@ const useStyles = createStyles(({ css, responsive }) => {
       display: flex;
       align-items: center;
       max-width: 1360px;
-      height: ${headerHeight}px;
+      height: ${PageHeaderHeight}px;
       margin: auto;
       padding: 16px;
       background-color: #fff;
       color: black;
       border-bottom-left-radius: 16px;
       border-bottom-right-radius: 16px;
+      box-shadow: 0 4px 8px rgba(39, 51, 51, 0.24);
       z-index: 100;
 
       ${responsive.sm} {
-        height: 50px;
+        height: ${PageHeaderHeight_SM}px;
         border-bottom-left-radius: 6px;
         border-bottom-right-radius: 6px;
       }
@@ -77,12 +76,6 @@ const useStyles = createStyles(({ css, responsive }) => {
     pageContent: css`
       flex: 1;
       width: 100%;
-      color: #fff;
-      padding: 50px 0;
-      padding: 140px 0 40px;
-      ${responsive.sm} {
-        padding: 70px 0 20px;
-      }
     `,
     pageFooter: css`
       display: flex;
@@ -119,8 +112,8 @@ const useStyles = createStyles(({ css, responsive }) => {
       display: flex;
       align-items: center;
       flex: 1;
-      font-size: 15px;
-      font-weight: 700;
+      font-size: 19px;
+      font-weight: 600;
       padding: 0 16px;
       color: black;
     `,
@@ -144,7 +137,7 @@ const useStyles = createStyles(({ css, responsive }) => {
 const theme = {
   token: {
     // Seed Token，影响范围大
-    colorPrimary: '#3f6600',
+    colorPrimary: '#026661',
     borderRadius: 2,
 
     // 派生变量，影响范围小
@@ -157,10 +150,11 @@ const HomePage: React.FC = observer((props) => {
   const { appName: _appName } = useParams();
   const navigate = useNavigate();
   const apiClient = useAPIClient();
-  const appStore = useMemo(() => new AppStore({ apiClient }), [apiClient]);
+  const appStore = useMemo(() => new AppStore({ apiClient, navigate }), [apiClient]);
   const { lg } = useResponsive();
-
   const appName: AppNameEnum = (_appName || AppNameEnum.introduce) as any;
+  const [activedApp, setActivedApp] = useState<INavItem>();
+  const bgColor: string = activedApp?.bgColor || '#fff';
 
   const handleNavigateTo = useEvent((appName: AppNameEnum) => {
     navigate(`/home/${appName}`);
@@ -205,16 +199,9 @@ const HomePage: React.FC = observer((props) => {
   };
 
   const renderPage = () => {
-    switch (appName) {
-      case AppNameEnum.softwareDownload:
-        return <DownloadPage />;
-      case AppNameEnum.introduce:
-        return <IntroducePage />;
-      case AppNameEnum.package:
-        return <PackagePage />;
-      default:
-        return <></>;
-    }
+    if (isNil(activedApp)) return;
+    const Component = activedApp.Component;
+    return <Component />;
   };
 
   useEffect(() => {
@@ -231,10 +218,15 @@ const HomePage: React.FC = observer((props) => {
     }
   }, [appStore]);
 
+  useEffect(() => {
+    const app = NAV_ITEMS.find((n) => n.key === appName);
+    setActivedApp(app);
+  }, [appName]);
+
   return (
     <ConfigProvider theme={theme}>
       <AppStoreContext.Provider value={appStore}>
-        <div className={styles.page}>
+        <div className={styles.page} style={{ backgroundColor: bgColor }}>
           <div className={styles.pageHeader}>
             <div className={styles.logoContainer} onClick={handleNavigateToHome}>
               <img className={styles.logo} src={ImgLogo} />
@@ -258,25 +250,39 @@ HomePage.displayName = 'HomePage';
 enum AppNameEnum {
   introduce = 'introduce',
   package = 'package',
+  service = 'service',
   softwareDownload = 'download',
 }
 
 const NAV_ITEMS: INavItem[] = [
   {
     key: AppNameEnum.introduce,
-    label: '软件介绍',
+    label: '产品介绍',
+    Component: IntroducePage,
+    bgColor: '#0d3333',
     // icon: aiAnalyzeImg,
     // activedIcon: aiAnalyzeActivedImg,
   },
   {
+    key: AppNameEnum.service,
+    label: '服务',
+    Component: ServicePage,
+    // icon: solutionImg,
+    // activedIcon: solutionActivedImg,
+  },
+  {
     key: AppNameEnum.package,
     label: '套餐详情',
+    Component: PackagePage,
+    bgColor: 'rgb(4, 4, 4)',
     // icon: solutionImg,
     // activedIcon: solutionActivedImg,
   },
   {
     key: AppNameEnum.softwareDownload,
     label: '软件下载',
+    Component: DownloadPage,
+    // bgColor: 'rgb(4, 4, 4)',
     // icon: solutionImg,
     // activedIcon: solutionActivedImg,
   },

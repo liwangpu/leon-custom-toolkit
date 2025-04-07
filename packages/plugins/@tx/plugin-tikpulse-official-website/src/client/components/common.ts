@@ -14,3 +14,6 @@ export const SecondLevelTitleFontSize = '18px';
 export const SecondLevelTitleFontWeight = 600;
 export const SecondLevelTitleFontSize_SM = '14px';
 export const SecondLevelTitleFontWeight_SM = 600;
+// 布局相关
+export const PageHeaderHeight = 76;
+export const PageHeaderHeight_SM = 50;

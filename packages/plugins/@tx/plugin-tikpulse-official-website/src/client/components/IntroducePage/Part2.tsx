@@ -21,6 +21,7 @@ const useStyles = createStyles(({ css, responsive }) => {
       display: flex;
       flex-flow: column;
       gap: 20px 0;
+      color: #fff;
       ${responsive.sm} {
         gap: 10px 0;
       }
@@ -34,7 +35,7 @@ const useStyles = createStyles(({ css, responsive }) => {
       }
     `,
     containerDes: css`
-      font-size: 16px;
+      font-size: 19px;
       ${responsive.sm} {
         font-size: 14px;
       }
@@ -62,8 +63,8 @@ const useStyles = createStyles(({ css, responsive }) => {
     `,
     cardTitle: css`
       color: black;
-      font-size: ${SecondLevelTitleFontSize};
-      font-weight: ${SecondLevelTitleFontWeight};
+      font-size: 25px;
+      font-weight: 700;
       ${responsive.sm} {
         font-size: ${SecondLevelTitleFontSize_SM};
         font-weight: ${SecondLevelTitleFontWeight_SM};
@@ -71,7 +72,7 @@ const useStyles = createStyles(({ css, responsive }) => {
     `,
     cardContent: css`
       color: black;
-      font-size: 15px;
+      font-size: 16px;
     `,
     cardIcon: css`
       width: 40px;

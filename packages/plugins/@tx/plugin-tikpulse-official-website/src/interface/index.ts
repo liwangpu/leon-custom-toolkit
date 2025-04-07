@@ -12,3 +12,14 @@ export interface IWebsiteSetting {
    */
   trialDays?: number;
 }
+
+export interface IPackage {
+  id?: number;
+  name: string;
+  description?: string;
+  price?: number;
+  annualPrice?: number;
+  needPurchase?: boolean;
+  features?: string[];
+  remark?: string;
+}

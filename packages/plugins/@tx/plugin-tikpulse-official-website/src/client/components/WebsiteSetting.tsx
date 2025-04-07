@@ -1,8 +1,7 @@
 import React, { memo, useCallback, useEffect } from 'react';
 import { Plugin, useAPIClient } from '@nocobase/client';
-import { App as AntdApp, Button, Form, Input, Card, Space, InputNumber } from 'antd';
+import { App as AntdApp, Button, Form, Input, Card, InputNumber } from 'antd';
 import { createStyles } from '@nocobase/client';
-// import type { IWebsiteSetting } from '../../interfaces';
 import { isNil } from 'lodash';
 import { IWebsiteSetting } from '../../interface';
 
@@ -44,11 +43,6 @@ const WebsiteSetting: React.FC = memo((props) => {
     },
     [message, apiClient],
   );
-
-  const renderSSs = () => {
-    // return <Button>Submit</Button>;
-    return <div>Submit</div>;
-  };
 
   const renderForm = () => {
     return (

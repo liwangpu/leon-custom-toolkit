@@ -1,5 +1,5 @@
 import React, { useContext } from 'react';
-import { createStyles } from '@nocobase/client';
+import { createStyles, useResponsive } from 'antd-style';
 import classnames from 'classnames';
 import bg10046 from '../../assets/images/10046.png';
 import bg1234 from '../../assets/images/1234.png';
@@ -21,7 +21,7 @@ import {
 
 const useStyles = createStyles(({ css, responsive }) => {
   return {
-    infoSection: css`
+    part: css`
       display: flex;
       flex-flow: row wrap;
       font-size: 16px;
@@ -33,11 +33,12 @@ const useStyles = createStyles(({ css, responsive }) => {
     infoSectionPart: css`
       width: 566px;
     `,
-    infoSectionDes: css`
+    infoSection: css`
       display: flex;
       flex-flow: column;
       padding: 12px;
       gap: 30px 0;
+      z-index: 10;
       ${responsive.sm} {
         gap: 10px 0;
       }
@@ -47,8 +48,8 @@ const useStyles = createStyles(({ css, responsive }) => {
       display: flex;
     `,
     infoSectionDesTitle: css`
-      font-size: ${FirstLevelTitleFontSize};
-      font-weight: ${FirstLevelTitleFontWeight};
+      font-size: 50px;
+      font-weight: 550;
       padding: 0;
       margin: 0;
       ${responsive.sm} {
@@ -56,9 +57,17 @@ const useStyles = createStyles(({ css, responsive }) => {
         font-weight: ${FirstLevelTitleFontWeight_SM};
       }
     `,
+    infoSectionDes: css`
+      font-size: 19px;
+      /* font-weight: 550; */
+      ${responsive.sm} {
+        font-size: ${FirstLevelTitleFontSize_SM};
+        font-weight: ${FirstLevelTitleFontWeight_SM};
+      }
+    `,
     infoSectionDesSubTitle: css`
-      font-size: ${SecondLevelTitleFontSize};
-      font-weight: ${SecondLevelTitleFontWeight};
+      font-size: 25px;
+      font-weight: 650;
       padding: 0;
       margin: 0;
       ${responsive.sm} {
@@ -77,10 +86,14 @@ const useStyles = createStyles(({ css, responsive }) => {
       width: 656px;
       height: 595px;
       z-index: 1;
+      ${responsive.sm} {
+        width: 300px;
+        width: 400px;
+      }
     `,
     infoSectionDesExp: css`
       width: 100%;
-      font-size: 13px;
+      font-size: 19px;
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 4px 8px;
@@ -112,6 +125,7 @@ const useStyles = createStyles(({ css, responsive }) => {
 const Part1: React.FC = observer(() => {
   const store = useContext(AppStoreContext);
   const { styles } = useStyles();
+  const { lg } = useResponsive();
 
   const handleFreeTrial = useEvent(() => {
     store.toggleTrialModa(true);
@@ -119,13 +133,12 @@ const Part1: React.FC = observer(() => {
 
   return (
     <WideScreenContainer>
-      <div className={styles.infoSection}>
-        <div className={classnames(styles.infoSectionPart, styles.infoSectionDes)}>
-          <h1 className={styles.infoSectionDesTitle}>解锁 TikTok 成功 —— 您的一体化增长解决方</h1>
-          <div>
-            <div>使用面向创作者和企业的智能工具，自动化、优化您的 TikTok 业务并实现盈利</div>
-            <div>自动化运营，智能分析，助你玩转TikTok</div>
-            <div>AI驱动增长，安全无忧，TikTok成功触手可及</div>
+      <div className={styles.part}>
+        <div className={classnames(styles.infoSectionPart, styles.infoSection)}>
+          <div className={styles.infoSectionDesTitle}>利用 TikPulse 智能解锁 TikTok 运营新境界</div>
+          <div className={styles.infoSectionDes}>
+            TikPulse是一款为商家，个人创作者和代理商打造的一站式TikTok运营工具。通过多账号管理、自动化运营、数据收集分析、选品⽀持、达⼈匹配和直播优化于⼀体，帮助⽤⼾突破运营瓶颈，实现快速变现。⽆论您是企业还是个⼈创业者，TikPulse
+            都能为您提供⾼性价⽐、⾼安全性的全链路⽀持，助⼒在TikTok平台脱颖⽽出。
           </div>
           <div>
             <button className={styles.trialBtn} onClick={handleFreeTrial}>
@@ -139,15 +152,16 @@ const Part1: React.FC = observer(() => {
           <div>
             <div className={styles.infoSectionDesExp}>
               <div>独家数据看板</div>
-              <div>击破封号壁垒，TikPulse护航你的TikTok征途</div>
-              <div>定向引流，铸就你的TikTok影响力王国</div>
-              <div>智能洞察市场，爆款选品尽在TikPulse</div>
+              <div>击破封号壁垒</div>
+              <div>定向引流吸粉</div>
+              <div>智能洞察市场</div>
             </div>
           </div>
         </div>
         <div className={classnames(styles.infoSectionPart, styles.infoSectionImgContainer)}>
           <img className={styles.infoSectionImgBg} src={bg10046} />
           <img className={styles.infoSectionImg} src={bg1234} />
+          {/* <Image width={lg ? 656 : 300} height={lg ? 595 : 400} src={bg1234} /> */}
         </div>
       </div>
     </WideScreenContainer>

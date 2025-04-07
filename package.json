@@ -43,7 +43,8 @@
     "release": "lerna publish",
     "run:example": "tsx -r dotenv/config -r tsconfig-paths/register ./examples/index.ts",
     "build_and_tar_tk": "yarn build @tx/plugin-tiktok && yarn nocobase tar @tx/plugin-tiktok",
-    "build_and_tar_official": "yarn build @tx/plugin-tikpulse-official-website && yarn nocobase tar @tx/plugin-tikpulse-official-website"
+    "build_and_tar_official": "yarn build @tx/plugin-tikpulse-official-website && yarn nocobase tar @tx/plugin-tikpulse-official-website",
+    "build_and_tar_sms": "yarn build @tx/plugin-aliyun-sms && yarn nocobase tar @tx/plugin-aliyun-sms"
   },
   "resolutions": {
     "@types/react": "^17.0.0",

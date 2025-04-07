@@ -101,6 +101,7 @@ export function organizationResourceMiddeware(plugin: Plugin) {
 
   return async (ctx: any, next: () => Promise<any>) => {
     const { resourceName, organizationId, userId, isRootOrAdmin, isOrganizationAdminUser } = getUserInfo({ ctx });
+    // console.log(`getUserInfo:`, getUserInfo({ ctx }));
     if (organizationResourceDefinitions.has(resourceName) && !isRootOrAdmin) {
       const filter = {
         $and: [{ organizationId }],
@@ -155,30 +156,4 @@ export function organizationResourceDBEvent(props: { db: Database }) {
       }
     });
   }
-
-  db.on('organization.afterCreate', async (model, options) => {
-    const { transaction } = options;
-    const organization = await model.constructor.findByPk(model.id, {
-      transaction,
-    });
-    const userRep = db.getRepository('users');
-    await userRep.create({
-      values: {
-        nickname: organization.director,
-        username: organization.directorPhone,
-        phone: organization.directorPhone,
-        email: organization.directorEmail,
-        password: '123456',
-        organizationId: organization.id,
-        roles: [
-          {
-            name: 'organizationAdmin',
-          },
-          // {
-          //   name: 'organizationUser',
-          // },
-        ],
-      },
-    });
-  });
 }

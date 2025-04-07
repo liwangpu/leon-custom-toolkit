@@ -3,6 +3,8 @@ import { Context } from '@nocobase/actions';
 import { isNil } from 'lodash';
 import { getUserInfo } from '../middlewares';
 import { IOrganizationPaidService, IOrganizationServicePackage } from '../../interfaces';
+import dayjs from 'dayjs';
+import { UserOnlineRecorder } from '../middlewares/permission';
 
 export const registerServicePermissionsActions = (props: { plugin: Plugin }) => {
   const { plugin } = props;
@@ -13,9 +15,11 @@ export const registerServicePermissionsActions = (props: { plugin: Plugin }) => 
     actions: {
       submit: submitPermissions(),
       servicesInfo: getOrganizationServiceInfo(),
+      checkOrganPackageIsExpired: checkOrganPackageIsExpired(),
     },
   });
   app.acl.allow('servicePermissions', '*', 'loggedIn');
+  app.acl.allow('servicePermissions', 'checkOrganPackageIsExpired', 'public');
 };
 
 const submitPermissions = () => {
@@ -69,19 +73,70 @@ const getOrganizationServiceInfo = () => {
     }
     const organServicePackageRepo = ctx.db.getRepository('organizationServicePackage');
     const organPaidServiceRepo = ctx.db.getRepository('organizationPaidService');
-    console.log(`---------[ getOrganizationServiceInfo ]---------`);
-    console.log(`organizationId:`, organizationId);
+    const transferDateTime = (datetime: any) => {
+      if (isNil(datetime)) return null;
+      return dayjs(datetime).format('YYYY-MM-DD HH:mm:ss');
+    };
+    const currentTime = dayjs();
     organPackages = await organServicePackageRepo.find({
       filter: {
         organizationId,
       },
     });
+    organPackages = organPackages.map((pck: any) => {
+      const item: IOrganizationServicePackage = pck.dataValues;
+      let daysRemaining = currentTime.diff(item.expirationDate, 'day');
+      if (daysRemaining > 0) {
+        daysRemaining = 0;
+      }
+      return {
+        ...item,
+        purchasingDate: transferDateTime(item.purchasingDate),
+        expirationDate: transferDateTime(item.expirationDate),
+        daysRemaining: -daysRemaining,
+      };
+    });
     organServices = await organPaidServiceRepo.find({
       filter: {
-        organizationId,
+        $and: [
+          // 隐藏归属于套餐的服务
+          { packages: { id: { $empty: true } } },
+          organizationId,
+        ],
       },
     });
 
+    organServices = organServices.map((srv: any) => {
+      const item: IOrganizationPaidService = srv.dataValues;
+      let daysRemaining = currentTime.diff(item.expirationDate, 'day');
+      if (daysRemaining > 0) {
+        daysRemaining = 0;
+      }
+      return {
+        ...item,
+        purchasingDate: transferDateTime(item.purchasingDate),
+        expirationDate: transferDateTime(item.expirationDate),
+        daysRemaining: -daysRemaining,
+      };
+    });
+
     genResponse();
+  };
+};
+
+const checkOrganPackageIsExpired = () => {
+  return async (ctx: Context, next: () => any) => {
+    const organServicePackageRepo = ctx.db.getRepository('organizationServicePackage');
+    const expiredPackages = await organServicePackageRepo.find({
+      filter: { $and: [{ expirationDate: { $dateBefore: dayjs().format('YYYY-MM-DD HH:mm:ss') } }] },
+    });
+    for (const p of expiredPackages) {
+      const pack = p.dataValues;
+      UserOnlineRecorder.forceOfflineAllOrganClients({ organizationId: pack.organizationId, app: ctx.app });
+    }
+    ctx.withoutDataWrapping = true;
+    ctx.body = {
+      expiredPackages,
+    };
   };
 };

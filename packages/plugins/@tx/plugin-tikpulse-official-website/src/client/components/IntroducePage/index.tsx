@@ -4,6 +4,7 @@ import { createStyles } from '@nocobase/client';
 import Part1 from './Part1';
 import Part2 from './Part2';
 import Part3 from './Part3';
+import PageLayout from '../PageLayout';
 
 const useStyles = createStyles(({ css }) => {
   return {
@@ -11,7 +12,7 @@ const useStyles = createStyles(({ css }) => {
       display: flex;
       flex-flow: column;
       align-items: center;
-      gap: 42px 0;
+      gap: 70px 0;
     `,
   };
 });
@@ -20,11 +21,13 @@ const IntroducePage: React.FC = observer(() => {
   const { styles } = useStyles();
 
   return (
-    <div className={styles.container}>
-      <Part1 />
-      <Part2 />
-      <Part3 />
-    </div>
+    <PageLayout verticalPadding={true}>
+      <div className={styles.container}>
+        <Part1 />
+        <Part2 />
+        <Part3 />
+      </div>
+    </PageLayout>
   );
 });
 

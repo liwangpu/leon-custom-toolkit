@@ -66,6 +66,23 @@ const useStyles = createStyles(({ css, responsive }) => {
         background-color: #273333;
       }
     `,
+    requestDemoBtn: css`
+      padding: 8px 14px;
+      color: rgb(4, 4, 4);
+      font-size: 16px;
+      font-weight: 700;
+      border: 2px solid rgb(4, 4, 4);
+      border-radius: 6px;
+      background-color: transparent;
+      cursor: pointer;
+      ${responsive.sm} {
+        font-size: 13px;
+        padding: 4px 7px;
+      }
+      &:hover {
+        color: #273333;
+      }
+    `,
     loginBtn: css`
       background: rgba(1, 77, 255, 0.1);
       color: #014dff;
@@ -96,10 +113,11 @@ type IFreeTrialForm = {
 };
 
 const testValue = {
-  name: 'leon',
-  phone: '15721457985',
-  verificationCode: '123456',
-  email: 'liwang.pu@gmail.com',
+  name: '小昭昭',
+  // phone: '15577637102',
+  phone: '15577637101',
+  // verificationCode: '123456',
+  email: 'zhao@gmail.com',
 };
 
 export interface IHeaderOperatorProps {
@@ -126,11 +144,11 @@ const HeaderOperator: React.FC<IHeaderOperatorProps> = observer((props) => {
   });
 
   const handleSendVerificationCode = useEvent(async () => {
-    const verificationKey = GenerateShortId();
+    const verificationKey = GenerateShortId('free_trial', 16);
     form.setFieldValue('verificationKey', verificationKey);
     const phone = form.getFieldValue('phone');
     await apiClient.request({
-      url: 'applyUsers:sendPhoneVerificationSMS',
+      url: 'applyUser:sendPhoneVerificationSMS',
       method: 'POST',
       data: {
         verificationKey,
@@ -145,6 +163,10 @@ const HeaderOperator: React.FC<IHeaderOperatorProps> = observer((props) => {
     form.resetFields();
   });
 
+  const handleRequestDemo = useEvent(() => {
+    store.requestDemoHandler();
+  });
+
   const handleSubmitFreeTrial = useEvent(async (formData) => {
     try {
       const {
@@ -154,14 +176,17 @@ const HeaderOperator: React.FC<IHeaderOperatorProps> = observer((props) => {
         method: 'POST',
         data: formData,
       });
-      console.log(`---------[ handleSubmitFreeTrial ]---------`);
-      console.log(`data:`, data);
-      // await apiClient.auth.signIn(data);
-      // let appUrl = '/';
-      // if (!smallScreeen) {
-      //   appUrl = '/';
-      // }
-      // window.location.href = appUrl;
+
+      const appUrl = '/';
+
+      messageApi.success('用户注册成功!');
+      setTimeout(async () => {
+        handleCancelFreeTrial();
+        await apiClient.auth.signIn(data, 'basic');
+        // navigate('/');
+        window.location.href = appUrl;
+        // window.open(appUrl, '_blank');
+      }, 1000);
     } catch (error) {
       console.log(`error:`, error);
     }
@@ -198,16 +223,17 @@ const HeaderOperator: React.FC<IHeaderOperatorProps> = observer((props) => {
           >
             <Input addonBefore="+86" maxLength={11} />
           </Form.Item>
-          <Form.Item<IFreeTrialForm>
+
+          {/* <Form.Item<IFreeTrialForm>
             label="验证码"
             name="verificationCode"
-            // rules={[{ required: true, message: '该项为必填信息!' }]}
+            rules={[{ required: true, message: '该项为必填信息!' }]}
           >
             <Space.Compact style={{ width: '100%' }}>
               <Input />
               <CountDownButton disabled={!canSendVerificationCode} onClick={handleSendVerificationCode} />
             </Space.Compact>
-          </Form.Item>
+          </Form.Item> */}
 
           <div className={styles.operatorContainer}>
             <Button type="primary" size="large" block htmlType="submit">
@@ -222,6 +248,10 @@ const HeaderOperator: React.FC<IHeaderOperatorProps> = observer((props) => {
   return (
     <div className={styles.operators}>
       {contextHolder}
+
+      <button className={styles.requestDemoBtn} onClick={handleRequestDemo}>
+        预约演示
+      </button>
 
       <button className={styles.freeTrialBtn} onClick={handleFreeTrial}>
         免费试用

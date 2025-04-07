@@ -113,6 +113,10 @@ export interface IOrganizationPaidService {
   remark?: string;
   purchasingDate?: string;
   expirationDate?: string;
+  /**
+   * 前端显示字段,不落库
+   */
+  daysRemaining?: number;
 }
 
 export interface IOrganizationServicePackage {
@@ -120,20 +124,39 @@ export interface IOrganizationServicePackage {
   organizationId?: number;
   packageId?: number;
   name?: string;
+  subAccount?: number;
   price?: number;
   services?: Array<IOrganizationPaidService>;
   purchasingDate?: string;
   expirationDate?: string;
   remark?: string;
+  /**
+   * 前端显示字段,不落库
+   */
+  daysRemaining?: number;
 }
 
 /**
  * 购买套餐信息
  */
 export interface IServicePackagePurchaseOrder {
+  organizationId?: number;
   /**
-   * 要购买的套餐Id
+   * 要购买的套餐/服务Id
    */
-  servicePackageId: number;
-  purchaseDuration: string;
+  packageId: number;
+  /**
+   *
+   */
+  packageType: 'package' | 'service';
+  duration: number;
+  /**
+   * 购买时长单位: monthly/annual
+   */
+  durationUnit: 'monthly' | 'annual';
+  /**
+   * 根据用户购买的单位和时间,折算成月份
+   */
+  purchaseMonths: number;
+  subAccount?: number;
 }

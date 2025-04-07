@@ -1,6 +1,6 @@
 {
   "name": "@tx/plugin-tikpulse-official-website",
-  "version": "1.0.11",
+  "version": "1.0.29",
   "displayName": "TikPulse官网",
   "displayName.zh-CN": "TikPulse官网",
   "description": "TikPulse官网相关",
@@ -13,6 +13,8 @@
     "@nocobase/client": "1.x",
     "@nocobase/server": "1.x",
     "@nocobase/test": "1.x",
-    "lodash": "4.x"
+    "query-string": "6.x",
+    "lodash": "4.x",
+    "antd": "5.x"
   }
 }

@@ -1,0 +1,21 @@
+{
+  "name": "@tx/plugin-aliyun-sms",
+  "version": "1.0.2",
+  "displayName": "阿里云短信服务",
+  "displayName.zh-CN": "阿里云短信服务",
+  "description": "提供阿里云短信服务",
+  "main": "dist/server/index.js",
+  "dependencies": {
+    "@alicloud/dysmsapi20170525": "2.0.17",
+    "@alicloud/openapi-client": "0.4.1",
+    "nanoid": "^4.0.1"
+  },
+  "peerDependencies": {
+    "@nocobase/client": "1.x",
+    "@nocobase/server": "1.x",
+    "@nocobase/test": "1.x",
+    "lodash": "4.x",
+    "antd": "5.x",
+    "dayjs": "1.x"
+  }
+}
