@@ -56,17 +56,17 @@ export class TokenController implements TokenControlService {
       if (!configRecord) return null;
       const config = configRecord.config as TokenPolicyConfig;
       return {
-        tokenExpirationTime: ms(config.tokenExpirationTime),
-        sessionExpirationTime: ms(config.sessionExpirationTime),
-        expiredTokenRenewLimit: ms(config.expiredTokenRenewLimit),
-      };
+        tokenExpirationTime: ms(config.tokenExpirationTime as any),
+        sessionExpirationTime: ms(config.sessionExpirationTime as any),
+        expiredTokenRenewLimit: ms(config.expiredTokenRenewLimit as any),
+      } as any;
     });
   }
   setConfig(config: TokenPolicyConfig) {
     return this.cache.set('config', {
-      tokenExpirationTime: ms(config.tokenExpirationTime),
-      sessionExpirationTime: ms(config.sessionExpirationTime),
-      expiredTokenRenewLimit: ms(config.expiredTokenRenewLimit),
+      tokenExpirationTime: ms(config.tokenExpirationTime as any),
+      sessionExpirationTime: ms(config.sessionExpirationTime as any),
+      expiredTokenRenewLimit: ms(config.expiredTokenRenewLimit as any),
     });
   }
 

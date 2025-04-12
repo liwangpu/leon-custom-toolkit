@@ -36,6 +36,7 @@ import { useLinkageAction } from './hooks';
 import { requestSettingsSchema } from './utils';
 import { useRecord } from '../../../record-provider';
 import { useVariableOptions } from '../../../schema-settings';
+import { useFormBlockContext } from '../../../block-provider';
 
 const MenuGroup = (props) => {
   return props.children;
