@@ -7,7 +7,7 @@
  * For more information, please refer to: https://www.nocobase.com/agreement.
  */
 
-import { ACLRolesCheckProvider, NavigateIfNotSignIn, Plugin } from '@nocobase/client';
+import { ACLRolesCheckProvider, Plugin } from '@nocobase/client';
 import { CooperationManagement } from './components';
 import React from 'react';
 
@@ -16,11 +16,9 @@ export class PluginCooperationManagementClient extends Plugin {
     this.app.router.add('cooperation_management', {
       path: 'cooperation-management',
       Component: () => (
-        <NavigateIfNotSignIn>
-          <ACLRolesCheckProvider>
-            <CooperationManagement />
-          </ACLRolesCheckProvider>
-        </NavigateIfNotSignIn>
+        <ACLRolesCheckProvider>
+          <CooperationManagement />
+        </ACLRolesCheckProvider>
       ),
     });
   }
