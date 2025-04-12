@@ -24,9 +24,6 @@ const signInMiddeware = (plugin: Plugin) => {
     });
     ctx.res.setHeader('x-organization-id', organizationId);
 
-    if (!expiredPackages?.length) {
-      return ctx.throw(400, '您没有购买有任何套餐,无法使用,请先购买套餐后再使用!');
-    }
     const currentTime = dayjs();
     const hasExpirated = expiredPackages.some((pck) => {
       const _expirationDate = pck.expirationDate;
