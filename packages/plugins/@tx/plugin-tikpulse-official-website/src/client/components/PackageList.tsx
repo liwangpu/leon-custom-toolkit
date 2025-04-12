@@ -96,7 +96,6 @@ const PackageList: React.FC<IPackageListProps> = observer((props) => {
   const duration = Form.useWatch((values) => {
     return values.duration;
   }, form);
-  // const subAccountAveragePrice = subAccount > 0 ? floor(purchasePriceValue / duration / subAccount) : 0;
 
   useEffect(() => {
     if (isNil(packageId) || isNil(subAccount)) return;
@@ -115,7 +114,10 @@ const PackageList: React.FC<IPackageListProps> = observer((props) => {
       })) as any;
 
       setPurchasePriceValue(price || 0);
-      const _subAccountAveragePrice = floor(price / duration / (subAccount + 1));
+      const _subAccountAveragePrice = round(
+        price / duration / (subAccount + 1) / (purchaseMethod === 'annual' ? 12 : 1),
+        1,
+      );
       setSubAccountAveragePrice(_subAccountAveragePrice);
     })();
   }, [apiClient, purchaseMethod, duration, subAccount, packageId]);
@@ -214,9 +216,7 @@ const PackageList: React.FC<IPackageListProps> = observer((props) => {
           <Form.Item<any> noStyle>
             <div className={styles.subAccountAveragePrice}>
               <span>仅 </span>
-              <span>
-                ¥ {subAccountAveragePrice} 每账号/{purchaseDurationUnit}
-              </span>
+              <span>¥ {subAccountAveragePrice} 每账号/月</span>
             </div>
           </Form.Item>
 

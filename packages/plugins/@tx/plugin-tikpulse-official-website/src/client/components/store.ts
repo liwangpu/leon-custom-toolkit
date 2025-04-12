@@ -10,7 +10,7 @@ export class AppStore {
   public hotline: string;
   public organizationId: number;
   public trialDays = 3;
-  public trialModaShow = true;
+  public trialModaShow = false;
   public packages: IPackage[];
   public services: IPackage[];
   public purchasedPackage: Map<string, { subAccount?: number }> = new Map();

@@ -205,7 +205,7 @@ const HeaderOperator: React.FC<IHeaderOperatorProps> = observer((props) => {
   const renderFreeTrialForm = () => {
     return (
       <CommonModalLayout title={`免费试用${store.trialDays}天`}>
-        {/* <Form
+        <Form
           labelCol={{ span: 6 }}
           wrapperCol={{ span: 18 }}
           form={form}
@@ -253,8 +253,8 @@ const HeaderOperator: React.FC<IHeaderOperatorProps> = observer((props) => {
               立即提交
             </Button>
           </div>
-        </Form> */}
-        <iframe src="/signin" />
+        </Form>
+        {/* <iframe src="/signin" /> */}
       </CommonModalLayout>
     );
   };
