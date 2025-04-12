@@ -8,7 +8,7 @@
  */
 
 import { createForm } from '@formily/core';
-import { Schema } from '@formily/react';
+import { Schema, useFieldSchema } from '@formily/react';
 import { Spin } from 'antd';
 import React, { memo, useMemo } from 'react';
 import { useRemoteCollectionManagerLoading } from '../../collection-manager/CollectionManagerProvider';
@@ -62,6 +62,7 @@ const RequestSchemaComponent: React.FC<RemoteSchemaComponentProps> = (props) => 
   });
   const NotFoundComponent = useComponent(NotFoundPage);
   const collectionManagerLoading = useRemoteCollectionManagerLoading();
+  const parentSchema = useFieldSchema();
 
   if (collectionManagerLoading || loading || hidden) {
     return <Spin style={{ width: '100%', marginTop: 20 }} delay={LOADING_DELAY} />;
@@ -73,10 +74,20 @@ const RequestSchemaComponent: React.FC<RemoteSchemaComponentProps> = (props) => 
   }
 
   return noForm ? (
-    <SchemaComponent components={components} scope={scope} schema={schemaTransform(schema || {})} />
+    <SchemaComponent
+      components={components}
+      scope={scope}
+      schema={schemaTransform(schema || {})}
+      parentSchema={parentSchema}
+    />
   ) : (
     <FormProvider form={form}>
-      <SchemaComponent components={components} scope={scope} schema={schemaTransform(schema || {})} />
+      <SchemaComponent
+        components={components}
+        scope={scope}
+        schema={schemaTransform(schema || {})}
+        parentSchema={parentSchema}
+      />
     </FormProvider>
   );
 };
@@ -84,4 +95,5 @@ const RequestSchemaComponent: React.FC<RemoteSchemaComponentProps> = (props) => 
 export const RemoteSchemaComponent: React.FC<RemoteSchemaComponentProps> = memo((props) => {
   return props.uid ? <RequestSchemaComponent {...props} /> : null;
 });
+
 RemoteSchemaComponent.displayName = 'RemoteSchemaComponent';

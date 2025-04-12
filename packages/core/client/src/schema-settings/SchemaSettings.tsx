@@ -22,6 +22,7 @@ import {
   CascaderProps,
   ConfigProvider,
   Dropdown,
+  Menu,
   MenuItemProps,
   MenuProps,
   Modal,
@@ -34,7 +35,6 @@ import React, {
   FC,
   ReactNode,
   createContext,
-  // @ts-ignore
   startTransition,
   useCallback,
   useContext,
@@ -119,6 +119,7 @@ export interface SchemaSettingsProps {
   field?: GeneralField;
   fieldSchema?: Schema;
   children?: ReactNode;
+  mode?: 'inline' | 'dropdown';
 }
 
 interface SchemaSettingsContextProps<T = any> {
@@ -167,7 +168,7 @@ export const SchemaSettingsProvider: React.FC<SchemaSettingsProviderProps> = (pr
   return <SchemaSettingsContext.Provider value={value}>{children}</SchemaSettingsContext.Provider>;
 };
 
-export const SchemaSettingsDropdown: React.FC<SchemaSettingsProps> = React.memo((props) => {
+const InternalSchemaSettingsDropdown: React.FC<SchemaSettingsProps> = React.memo((props) => {
   const { title, dn, ...others } = props;
   const [visible, setVisible] = useState(false);
   const { Component, getMenuItems } = useMenuItem();
@@ -230,6 +231,25 @@ export const SchemaSettingsDropdown: React.FC<SchemaSettingsProps> = React.memo(
       </Dropdown>
     </SchemaSettingsProvider>
   );
+});
+
+const InternalSchemaSettingsMenu: React.FC<SchemaSettingsProps> = React.memo((props) => {
+  const { title, dn, ...others } = props;
+  const [visible, setVisible] = useState(true);
+  const { Component, getMenuItems } = useMenuItem();
+  const items = getMenuItems(() => props.children);
+
+  return (
+    <SchemaSettingsProvider visible={visible} setVisible={setVisible} dn={dn} {...others}>
+      <Component />
+      <Menu items={items} />
+    </SchemaSettingsProvider>
+  );
+});
+
+export const SchemaSettingsDropdown: React.FC<SchemaSettingsProps> = React.memo((props) => {
+  const { mode } = props;
+  return mode === 'inline' ? <InternalSchemaSettingsMenu {...props} /> : <InternalSchemaSettingsDropdown {...props} />;
 });
 
 SchemaSettingsDropdown.displayName = 'SchemaSettingsDropdown';
@@ -548,13 +568,14 @@ export interface SchemaSettingsSelectItemProps
   extends Omit<SchemaSettingsItemProps, 'onChange' | 'onClick'>,
     Omit<SelectWithTitleProps, 'title' | 'defaultValue'> {
   value?: SelectWithTitleProps['defaultValue'];
+  optionRender?: (option: any, info: { index: number }) => React.ReactNode;
 }
 export const SchemaSettingsSelectItem: FC<SchemaSettingsSelectItemProps> = (props) => {
-  const { title, options, value, onChange, ...others } = props;
+  const { title, options, value, onChange, optionRender, ...others } = props;
 
   return (
     <SchemaSettingsItem title={title} {...others}>
-      <SelectWithTitle {...{ title, defaultValue: value, onChange, options }} />
+      <SelectWithTitle {...{ title, defaultValue: value, onChange, options, optionRender }} />
     </SchemaSettingsItem>
   );
 };
@@ -705,8 +726,8 @@ export const SchemaSettingsActionModalItem: FC<SchemaSettingsActionModalItemProp
         }
         return result;
       }, {});
-      await onSubmit?.(cloneDeep(visibleValues));
       setVisible(false);
+      await onSubmit?.(cloneDeep(visibleValues));
     } catch (err) {
       console.error(err);
     }

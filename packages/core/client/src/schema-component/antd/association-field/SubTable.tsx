@@ -7,7 +7,7 @@
  * For more information, please refer to: https://www.nocobase.com/agreement.
  */
 
-import { PlusSquareOutlined, ZoomInOutlined } from '@ant-design/icons';
+import { PlusOutlined, ZoomInOutlined } from '@ant-design/icons';
 import { css } from '@emotion/css';
 import { ArrayField } from '@formily/core';
 import { exchangeArrayState } from '@formily/core/esm/shared/internals';
@@ -189,6 +189,7 @@ export const SubTable: any = observer(
         onChange: (page, pageSize) => {
           setCurrentPage(page);
           setPageSize(pageSize);
+          field.componentProps.pageSize = pageSize;
           field.onInput(field.value);
         },
         showSizeChanger: true,
@@ -255,8 +256,7 @@ export const SubTable: any = observer(
                 {field.editable && (
                   <Space
                     style={{
-                      marginTop: '10px',
-                      position: field.value?.length ? 'absolute' : 'relative',
+                      position: 'relative',
                       bottom: '0',
                       gap: 15,
                     }}
@@ -266,7 +266,7 @@ export const SubTable: any = observer(
                         useAction={useSubTableAddNewProps}
                         title={
                           <Space style={{ gap: 2 }} className="nb-sub-table-addNew">
-                            <PlusSquareOutlined /> {t('Add new')}
+                            <PlusOutlined /> {t('Add new')}
                           </Space>
                         }
                       />

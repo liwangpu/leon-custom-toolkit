@@ -59,10 +59,16 @@ RUN echo "${COMMIT_HASH}" > /tmp/commit_hash.txt
 
 
 FROM node:20.18.3
-RUN apt-get update && apt-get install -y nginx libaio1 \
-  && apt-get install -y --no-install-recommends postgresql-common gnupg \
-  && /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh -y \
-  && apt-get install -y --no-install-recommends postgresql-client-16 \
+RUN apt-get update && apt-get install -y --no-install-recommends \
+  nginx \
+  libaio1 \
+  postgresql-client-16 \
+  postgresql-client-17 \
+  libfreetype6 \
+  fontconfig \
+  libgssapi-krb5-2 \
+  fonts-liberation \
+  fonts-noto-cjk \
   && rm -rf /var/lib/apt/lists/*
 RUN rm -rf /etc/nginx/sites-enabled/default
 

@@ -7,9 +7,8 @@
  * For more information, please refer to: https://www.nocobase.com/agreement.
  */
 
-import { useAPIClient, useCompile, useLocationSearch } from '@nocobase/client';
-import { useBoolean } from 'ahooks';
-import { Button, Card, Form, Input, Tabs, message } from 'antd';
+import { TextAreaWithGlobalScope, useAPIClient, useCompile, useLocationSearch } from '@nocobase/client';
+import { Button, Card, Form, Tabs, message } from 'antd';
 import React, { useEffect, useMemo } from 'react';
 import { MapTypes } from '../constants';
 import { MapConfigurationResourceKey, getSSKey, useMapConfiguration } from '../hooks';
@@ -20,14 +19,12 @@ interface BaseConfigurationProps {
 }
 const BaseConfiguration: React.FC<BaseConfigurationProps> = ({ type, children }) => {
   const { t } = useMapTranslation();
-  const [isDisabled, disableAction] = useBoolean(false);
   const apiClient = useAPIClient();
   const [form] = Form.useForm();
-  const data = useMapConfiguration(type);
+  const data = useMapConfiguration(type, false);
   useEffect(() => {
     if (data) {
       form.setFieldsValue(data);
-      disableAction.toggle();
     }
   }, [data]);
 
@@ -35,15 +32,34 @@ const BaseConfiguration: React.FC<BaseConfigurationProps> = ({ type, children })
     return apiClient.resource(MapConfigurationResourceKey);
   }, [apiClient]);
 
-  const onSubmit = (values) => {
+  function removeInvisibleCharsFromObject(obj: Record<string, string>): Record<string, string | null> {
+    const cleanObj: Record<string, string | null> = {};
+    for (const [key, value] of Object.entries(obj)) {
+      if (typeof value === 'string') {
+        // 去除不可见字符
+        const cleanedValue = value.replace(/[\p{C}\p{Z}\p{Zl}\p{Zp}]+/gu, '');
+        // 如果清理后为空字符串，则赋值为 null
+        cleanObj[key] = cleanedValue || null;
+      }
+    }
+
+    return cleanObj;
+  }
+  const onSubmit = async (values) => {
+    // 移除不可见字符并更新表单值
+    const result = removeInvisibleCharsFromObject(values);
+    form.setFieldsValue(result);
+
+    // 等待表单值更新完成后再校验
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    await form.validateFields();
     resource
       .set({
-        ...values,
+        ...removeInvisibleCharsFromObject(values),
         type,
       })
       .then((res) => {
         sessionStorage.removeItem(getSSKey(type));
-        disableAction.toggle();
         message.success(t('Saved successfully'));
       })
       .catch((err) => {
@@ -51,19 +67,13 @@ const BaseConfiguration: React.FC<BaseConfigurationProps> = ({ type, children })
       });
   };
   return (
-    <Form disabled={isDisabled} form={form} layout="vertical" onFinish={onSubmit}>
+    <Form form={form} layout="vertical" onFinish={onSubmit}>
       {children}
-      {isDisabled ? (
-        <Button disabled={false} onClick={disableAction.toggle}>
-          {t('Edit')}
+      <Form.Item>
+        <Button disabled={false} type="primary" htmlType="submit">
+          {t('Submit')}
         </Button>
-      ) : (
-        <Form.Item>
-          <Button disabled={false} type="primary" htmlType="submit">
-            {t('Save')}
-          </Button>
-        </Form.Item>
-      )}
+      </Form.Item>
     </Form>
   );
 };
@@ -72,11 +82,19 @@ const AMapConfiguration = () => {
   const { t } = useMapTranslation();
   return (
     <BaseConfiguration type="amap">
-      <Form.Item required name="accessKey" label={t('Access key')}>
-        <Input />
+      <Form.Item
+        rules={[{ required: true, message: t('Access key is required') }]}
+        name="accessKey"
+        label={t('Access key')}
+      >
+        <TextAreaWithGlobalScope />
       </Form.Item>
-      <Form.Item required name="securityJsCode" label={t('securityJsCode or serviceHost')}>
-        <Input />
+      <Form.Item
+        rules={[{ required: true, message: t('securityJsCode or serviceHost is required') }]}
+        name="securityJsCode"
+        label={t('securityJsCode or serviceHost')}
+      >
+        <TextAreaWithGlobalScope />
       </Form.Item>
     </BaseConfiguration>
   );
@@ -86,8 +104,8 @@ const GoogleMapConfiguration = () => {
   const { t } = useMapTranslation();
   return (
     <BaseConfiguration type="google">
-      <Form.Item required name="accessKey" label={t('Api key')}>
-        <Input />
+      <Form.Item rules={[{ required: true, message: t('Api key is required') }]} name="accessKey" label={t('Api key')}>
+        <TextAreaWithGlobalScope />
       </Form.Item>
     </BaseConfiguration>
   );

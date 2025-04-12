@@ -15,9 +15,10 @@ import LRUCache from 'lru-cache';
 
 import { Op } from '@nocobase/database';
 import { Plugin } from '@nocobase/server';
-import { Registry } from '@nocobase/utils';
-
+import { Registry, uid } from '@nocobase/utils';
+import { SequelizeCollectionManager } from '@nocobase/data-source-manager';
 import { Logger, LoggerOptions } from '@nocobase/logger';
+
 import Processor from './Processor';
 import initActions from './actions';
 import { EXECUTION_STATUS } from './constants';
@@ -34,10 +35,9 @@ import DestroyInstruction from './instructions/DestroyInstruction';
 import QueryInstruction from './instructions/QueryInstruction';
 import UpdateInstruction from './instructions/UpdateInstruction';
 
-import type { ExecutionModel, JobModel, WorkflowModel } from './types';
+import type { ExecutionModel, JobModel, WorkflowModel, WorkflowTaskModel } from './types';
 import WorkflowRepository from './repositories/WorkflowRepository';
-import { Context } from '@nocobase/actions';
-import { SequelizeCollectionManager } from '@nocobase/data-source-manager';
+import WorkflowTasksRepository from './repositories/WorkflowTasksRepository';
 
 type ID = number | string;
 
@@ -74,6 +74,10 @@ export default class PluginWorkflowServer extends Plugin {
 
   private onBeforeSave = async (instance: WorkflowModel, { transaction }) => {
     const Model = <typeof WorkflowModel>instance.constructor;
+
+    if (!instance.key) {
+      instance.set('key', uid());
+    }
 
     if (instance.enabled) {
       instance.set('current', true);
@@ -213,6 +217,7 @@ export default class PluginWorkflowServer extends Plugin {
   async beforeLoad() {
     this.db.registerRepositories({
       WorkflowRepository,
+      WorkflowTasksRepository,
     });
   }
 
@@ -253,6 +258,7 @@ export default class PluginWorkflowServer extends Plugin {
         'flow_nodes:update',
         'flow_nodes:destroy',
         'flow_nodes:test',
+        'jobs:get',
       ],
     });
 
@@ -261,6 +267,7 @@ export default class PluginWorkflowServer extends Plugin {
       actions: ['workflows:list'],
     });
 
+    this.app.acl.allow('workflowTasks', 'countMine', 'loggedIn');
     this.app.acl.allow('*', ['trigger'], 'loggedIn');
 
     this.db.addMigrations({
@@ -280,9 +287,17 @@ export default class PluginWorkflowServer extends Plugin {
     db.on('workflows.afterUpdate', (model: WorkflowModel, { transaction }) =>
       this.toggle(model, model.enabled, { transaction }),
     );
-    db.on('workflows.afterDestroy', (model: WorkflowModel, { transaction }) =>
-      this.toggle(model, false, { transaction }),
-    );
+    db.on('workflows.afterDestroy', async (model: WorkflowModel, { transaction }) => {
+      this.toggle(model, false, { transaction });
+
+      const TaskRepo = this.db.getRepository('workflowTasks');
+      await TaskRepo.destroy({
+        filter: {
+          workflowId: model.id,
+        },
+        transaction,
+      });
+    });
 
     // [Life Cycle]:
     //   * load all workflows in db
@@ -351,11 +366,16 @@ export default class PluginWorkflowServer extends Plugin {
       const prev = workflow.previous();
       if (prev.config) {
         trigger.off({ ...workflow.get(), ...prev });
+        this.getLogger(workflow.id).info(`toggle OFF workflow ${workflow.id} based on configuration before updated`);
       }
       trigger.on(workflow);
+      this.getLogger(workflow.id).info(`toggle ON workflow ${workflow.id}`);
+
       this.enabledCache.set(workflow.id, workflow);
     } else {
       trigger.off(workflow);
+      this.getLogger(workflow.id).info(`toggle OFF workflow ${workflow.id}`);
+
       this.enabledCache.delete(workflow.id);
     }
     if (!silent) {
@@ -730,6 +750,48 @@ export default class PluginWorkflowServer extends Plugin {
     }
     if (create) {
       return db.sequelize.transaction();
+    }
+  }
+
+  /**
+   * @experimental
+   */
+  public async toggleTaskStatus(task: WorkflowTaskModel, done: boolean, { transaction }: Transactionable) {
+    const { db } = this.app;
+    const repository = db.getRepository('workflowTasks') as WorkflowTasksRepository;
+    if (done) {
+      await repository.destroy({
+        filter: {
+          type: task.type,
+          key: `${task.key}`,
+        },
+        transaction,
+      });
+    } else {
+      await repository.updateOrCreate({
+        filterKeys: ['key', 'type'],
+        values: task,
+        transaction,
+      });
+    }
+
+    // NOTE:
+    // 1. `ws` not works in backend test cases for now.
+    // 2. `userId` here for compatibility of no user approvals (deprecated).
+    if (task.userId) {
+      const counts =
+        (await repository.countAll({
+          where: {
+            userId: task.userId,
+            workflowId: { [Op.ne]: null },
+          },
+          transaction,
+        })) || [];
+      this.app.emit('ws:sendToTag', {
+        tagKey: 'userId',
+        tagValue: `${task.userId}`,
+        message: { type: 'workflow:tasks:updated', payload: counts },
+      });
     }
   }
 }

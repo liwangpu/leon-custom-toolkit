@@ -9,11 +9,10 @@
 
 import { css } from '@emotion/css';
 import { observer, useField, useFieldSchema } from '@formily/react';
-import { Modal, ModalProps } from 'antd';
+import { Modal, ModalProps, Skeleton } from 'antd';
 import classNames from 'classnames';
+import React, { FC, startTransition, useEffect, useState } from 'react';
 import { ErrorBoundary, FallbackProps } from 'react-error-boundary';
-// @ts-ignore
-import React, { FC, startTransition, useEffect, useMemo, useState } from 'react';
 import { NocoBaseRecursionField } from '../../../formily/NocoBaseRecursionField';
 import { useToken } from '../../../style';
 import { ErrorFallback } from '../error-fallback';
@@ -23,7 +22,7 @@ import { ActionContextNoRerender } from './context';
 import { useActionContext } from './hooks';
 import { useSetAriaLabelForModal } from './hooks/useSetAriaLabelForModal';
 import { ActionDrawerProps, ComposedActionDrawer, OpenSize } from './types';
-import { useZIndexContext, zIndexContext } from './zIndexContext';
+import { getZIndex, useZIndexContext, zIndexContext } from './zIndexContext';
 
 const ModalErrorFallback: React.FC<FallbackProps> = (props) => {
   const { visible, setVisible } = useActionContext();
@@ -54,7 +53,6 @@ const ActionModalContent: FC<{ footerNodeName: string; field: any; schema: any }
     if (!deferredVisible) {
       return null;
     }
-
     return (
       <NocoBaseRecursionField
         basePath={field.address}
@@ -67,6 +65,19 @@ const ActionModalContent: FC<{ footerNodeName: string; field: any; schema: any }
     );
   },
 );
+
+export function useDelayedVisible(visible: boolean, delay = 200) {
+  const [ready, setReady] = useState(false);
+  useEffect(() => {
+    if (visible) {
+      const timer = setTimeout(() => setReady(true), delay);
+      return () => clearTimeout(timer);
+    } else {
+      setReady(false);
+    }
+  }, [visible]);
+  return ready;
+}
 
 export const InternalActionModal: React.FC<ActionDrawerProps<ModalProps>> = observer(
   (props) => {
@@ -85,35 +96,24 @@ export const InternalActionModal: React.FC<ActionDrawerProps<ModalProps>> = obse
       return buf;
     });
     const { hidden } = useCurrentPopupContext();
-    const styles: any = useMemo(() => {
-      return {
-        mask: {
-          display: hidden ? 'none' : 'block',
-        },
-        content: {
-          display: hidden ? 'none' : 'block',
-        },
-      };
-    }, [hidden]);
-
     const showFooter = !!footerSchema;
     if (process.env.__E2E__) {
       useSetAriaLabelForModal(visible);
     }
 
-    const zIndex = _zIndex || parentZIndex + (props.level || 0);
+    const zIndex = getZIndex('modal', _zIndex || parentZIndex, props.level || 0);
+    const ready = useDelayedVisible(visible, 200); // 200ms 与 Modal 动画时间一致
 
     return (
       <ActionContextNoRerender>
         <zIndexContext.Provider value={zIndex}>
           <TabsContextProvider {...tabContext} tabBarExtraContent={null}>
             <Modal
-              zIndex={zIndex}
+              zIndex={hidden ? -1 : zIndex}
               width={actualWidth}
               title={field.title}
               {...(others as ModalProps)}
               {...modalProps}
-              styles={styles}
               style={{
                 ...modalProps?.style,
                 ...others?.style,
@@ -167,7 +167,11 @@ export const InternalActionModal: React.FC<ActionDrawerProps<ModalProps>> = obse
                 )
               }
             >
-              <ActionModalContent footerNodeName={footerNodeName} field={field} schema={schema} />
+              {ready ? (
+                <ActionModalContent footerNodeName={footerNodeName} field={field} schema={schema} />
+              ) : (
+                <Skeleton active paragraph={{ rows: 6 }} />
+              )}
             </Modal>
           </TabsContextProvider>
         </zIndexContext.Provider>

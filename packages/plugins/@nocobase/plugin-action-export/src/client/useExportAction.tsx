@@ -15,7 +15,7 @@ import {
   useCollectionManager_deprecated,
   useCompile,
   useCurrentAppInfo,
-  useDataBlockRequest,
+  useTableBlockContext,
   useDataBlockResource,
 } from '@nocobase/client';
 import lodash from 'lodash';
@@ -25,8 +25,9 @@ import { useExportTranslation } from './locale';
 import { useMemo } from 'react';
 
 export const useExportAction = () => {
-  const { service, resource, props } = useBlockRequestContext();
+  const { service, props } = useBlockRequestContext();
   const newResource = useDataBlockResource();
+  const { params } = useTableBlockContext();
 
   const appInfo = useCurrentAppInfo();
   const defaultFilter = props?.params.filter;
@@ -36,7 +37,7 @@ export const useExportAction = () => {
   const { name, title } = useCollection_deprecated();
   const { t } = useExportTranslation();
   const { modal } = App.useApp();
-  const filters = service.params?.[1]?.filters || {};
+  const filters = service.params[0]?.filter || {};
   const field = useField();
   const exportLimit = useMemo(() => {
     if (appInfo?.data?.exportLimit) {
@@ -80,8 +81,8 @@ export const useExportAction = () => {
         {
           title: compile(title),
           appends: service.params[0]?.appends?.join(),
-          filter: mergeFilter([...Object.values(filters), defaultFilter]),
-          sort: service.params[0]?.sort,
+          filter: mergeFilter([filters, defaultFilter]),
+          sort: params?.sort,
           values: {
             columns: compile(exportSettings),
           },

@@ -8,10 +8,9 @@
  */
 
 import React, { createContext, useContext, useMemo } from 'react';
-import { Navigate } from 'react-router-dom';
 import { useACLRoleContext } from '../acl';
-import { ReturnTypeOfUseRequest, useRequest } from '../api-client';
-import { useAppSpin, useLocationNoUpdate } from '../application';
+import { ReturnTypeOfUseRequest, useAPIClient, useRequest } from '../api-client';
+import { useAppSpin } from '../application';
 import { useCompile } from '../schema-component';
 
 export const CurrentUserContext = createContext<ReturnTypeOfUseRequest>(null);
@@ -19,6 +18,11 @@ CurrentUserContext.displayName = 'CurrentUserContext';
 
 export const useCurrentUserContext = () => {
   return useContext(CurrentUserContext);
+};
+
+export const useIsLoggedIn = () => {
+  const ctx = useContext(CurrentUserContext);
+  return !!ctx?.data?.data;
 };
 
 export const useCurrentRoles = () => {
@@ -39,29 +43,25 @@ export const useCurrentRoles = () => {
 };
 
 export const CurrentUserProvider = (props) => {
+  const api = useAPIClient();
+  const result = useRequest<any>(
+    () =>
+      api
+        .request({
+          url: '/auth:check',
+          skipNotify: true,
+          skipAuth: true,
+        })
+        .then((res) => res?.data),
+    {
+      manual: !api.auth.token,
+    },
+  );
   const { render } = useAppSpin();
-  const result = useRequest<any>({
-    url: 'auth:check',
-  });
 
   if (result.loading) {
     return render();
   }
 
   return <CurrentUserContext.Provider value={result}>{props.children}</CurrentUserContext.Provider>;
-};
-
-export const NavigateToSigninWithRedirect = () => {
-  const { pathname, search } = useLocationNoUpdate();
-  const redirect = `?redirect=${pathname}${search}`;
-  return <Navigate replace to={`/signin${redirect}`} />;
-};
-
-export const NavigateIfNotSignIn = ({ children }) => {
-  const result = useCurrentUserContext();
-
-  if (result.loading === false && !result.data?.data?.id) {
-    return <NavigateToSigninWithRedirect />;
-  }
-  return <>{children}</>;
 };

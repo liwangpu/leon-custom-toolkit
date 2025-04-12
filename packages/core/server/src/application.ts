@@ -73,9 +73,11 @@ import { createPubSubManager, PubSubManager, PubSubManagerOptions } from './pub-
 import { SyncMessageManager } from './sync-message-manager';
 
 import packageJson from '../package.json';
-import { ServiceContainer } from './service-container';
 import { availableActions } from './acl/available-action';
+import AesEncryptor from './aes-encryptor';
 import { AuditManager } from './audit-manager';
+import { Environment } from './environment';
+import { ServiceContainer } from './service-container';
 
 export type PluginType = string | typeof Plugin;
 export type PluginConfiguration = PluginType | [PluginType, any];
@@ -309,6 +311,12 @@ export class Application<StateT = DefaultState, ContextT = DefaultContext> exten
     return this._maintainingMessage;
   }
 
+  private _env: Environment;
+
+  get environment() {
+    return this._env;
+  }
+
   protected _cronJobManager: CronJobManager;
 
   get cronJobManager() {
@@ -428,6 +436,12 @@ export class Application<StateT = DefaultState, ContextT = DefaultContext> exten
 
   get dataSourceManager() {
     return this._dataSourceManager;
+  }
+
+  protected _aesEncryptor: AesEncryptor;
+
+  get aesEncryptor() {
+    return this._aesEncryptor;
   }
 
   /**
@@ -558,6 +572,10 @@ export class Application<StateT = DefaultState, ContextT = DefaultContext> exten
 
     this.log.info('app reinitializing');
 
+    // trigger the stop events to make sure old instances are cleaned up
+    await this.emitAsync('beforeStop');
+    await this.emitAsync('afterStop');
+
     if (this.cacheManager) {
       await this.cacheManager.close();
     }
@@ -583,7 +601,10 @@ export class Application<StateT = DefaultState, ContextT = DefaultContext> exten
   }
 
   async createCacheManager() {
-    this._cacheManager = await createCacheManager(this, this.options.cacheManager);
+    this._cacheManager = await createCacheManager(this, {
+      prefix: this.name,
+      ...this.options.cacheManager,
+    });
     return this._cacheManager;
   }
 
@@ -612,6 +633,8 @@ export class Application<StateT = DefaultState, ContextT = DefaultContext> exten
         await oldDb.close();
       }
     }
+
+    this._aesEncryptor = await AesEncryptor.create(this);
 
     if (this.cacheManager) {
       await this.cacheManager.close();
@@ -932,6 +955,7 @@ export class Application<StateT = DefaultState, ContextT = DefaultContext> exten
     }
 
     await this.emitAsync('afterStop', this, options);
+    this.emit('__stopped', this, options);
 
     this.stopped = true;
     log.info(`app has stopped`, { method: 'stop' });
@@ -1180,6 +1204,7 @@ export class Application<StateT = DefaultState, ContextT = DefaultContext> exten
     this.createMainDataSource(options);
 
     this._cronJobManager = new CronJobManager(this);
+    this._env = new Environment();
 
     this._cli = this.createCLI();
     this._i18n = createI18n(options);
@@ -1314,6 +1339,11 @@ export class Application<StateT = DefaultState, ContextT = DefaultContext> exten
       },
       logger: this._logger.child({ module: 'database' }),
     });
+
+    // NOTE: to avoid listener number warning (default to 10)
+    // See: https://nodejs.org/api/events.html#emittersetmaxlistenersn
+    db.setMaxListeners(100);
+
     return db;
   }
 }

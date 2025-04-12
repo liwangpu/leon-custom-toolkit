@@ -65,7 +65,7 @@ export class PluginPublicFormsServer extends Plugin {
             passwordRequired: true,
           };
         }
-        if (instance.get('password') !== password) {
+        if (this.app.environment.renderJsonTemplate(instance.get('password')) !== password) {
           throw new PasswordError('Please enter your password');
         }
       }
@@ -73,6 +73,7 @@ export class PluginPublicFormsServer extends Plugin {
     const keys = instance.collection.split(':');
     const collectionName = keys.pop();
     const dataSourceKey = keys.pop() || 'main';
+    const title = instance.get('title');
     const schema = await uiSchema.getJsonSchema(filterByTk);
     const { getAssociationAppends } = parseAssociationNames(dataSourceKey, collectionName, this.app, schema);
     const { appends } = getAssociationAppends();
@@ -94,6 +95,7 @@ export class PluginPublicFormsServer extends Plugin {
         },
       ),
       schema,
+      title,
     };
   }
 
@@ -150,6 +152,7 @@ export class PluginPublicFormsServer extends Plugin {
         if (actionName === 'publicSubmit') {
           ctx.action.actionName = 'create';
         }
+        ctx.skipAuthCheck = true;
       } catch (error) {
         ctx.throw(401, error.message);
       }
@@ -168,7 +171,7 @@ export class PluginPublicFormsServer extends Plugin {
         skip: true,
       };
     } else if (
-      (actionName === 'list' && ctx.PublicForm['targetCollections'].includes(resourceName)) ||
+      (['list', 'get'].includes(actionName) && ctx.PublicForm['targetCollections'].includes(resourceName)) ||
       (collection.options.template === 'file' && actionName === 'create') ||
       (resourceName === 'storages' && actionName === 'getBasicInfo') ||
       (resourceName === 'map-configuration' && actionName === 'get')
@@ -192,7 +195,7 @@ export class PluginPublicFormsServer extends Plugin {
     });
     this.app.dataSourceManager.afterAddDataSource((dataSource) => {
       dataSource.resourceManager.use(this.parseToken, {
-        before: 'acl',
+        before: 'auth',
       });
       dataSource.acl.use(this.parseACL, {
         before: 'core',

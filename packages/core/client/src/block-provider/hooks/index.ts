@@ -170,7 +170,7 @@ export function useCollectValuesToSubmit() {
         if (parsedValue !== null && parsedValue !== undefined) {
           assignedValues[key] = transformVariableValue(parsedValue, { targetCollectionField: collectionField });
         }
-      } else if (value != null && value !== '') {
+      } else if (value !== '') {
         assignedValues[key] = value;
       }
     });
@@ -376,7 +376,7 @@ export const useAssociationCreateActionProps = () => {
           if (parsedValue) {
             assignedValues[key] = transformVariableValue(parsedValue, { targetCollectionField: collectionField });
           }
-        } else if (value != null && value !== '') {
+        } else if (value !== '') {
           assignedValues[key] = value;
         }
       });
@@ -505,6 +505,10 @@ const useDoFilter = () => {
               ...Object.values(storedFilter).map((filter) => removeNullCondition(filter)),
               block.defaultFilter,
             ]);
+
+            if (_.isEmpty(storedFilter[uid])) {
+              block.clearSelection?.();
+            }
 
             if (doNothingWhenFilterIsEmpty && _.isEmpty(storedFilter[uid])) {
               return;
@@ -667,7 +671,7 @@ export const useCustomizeUpdateActionProps = () => {
             if (parsedValue) {
               assignedValues[key] = transformVariableValue(parsedValue, { targetCollectionField: collectionField });
             }
-          } else if (value != null && value !== '') {
+          } else if (value !== '') {
             assignedValues[key] = value;
           }
         });
@@ -782,7 +786,7 @@ export const useCustomizeBulkUpdateActionProps = () => {
           if (parsedValue) {
             assignedValues[key] = transformVariableValue(parsedValue, { targetCollectionField: collectionField });
           }
-        } else if (value != null && value !== '') {
+        } else if (value !== '') {
           assignedValues[key] = value;
         }
       });
@@ -1005,7 +1009,7 @@ export const useUpdateActionProps = () => {
           if (parsedValue) {
             assignedValues[key] = transformVariableValue(parsedValue, { targetCollectionField: collectionField });
           }
-        } else if (value != null && value !== '') {
+        } else if (value !== '') {
           assignedValues[key] = value;
         }
       });
@@ -1461,6 +1465,7 @@ export const useAssociationFilterBlockProps = () => {
             [filterKey]: value,
           };
         } else {
+          block.clearSelection?.();
           if (block.dataLoadingMode === 'manual') {
             return block.clearData();
           }
@@ -1553,6 +1558,8 @@ async function doReset({
       getDataBlocks().map(async (block) => {
         const target = targets.find((target) => target.uid === block.uid);
         if (!target) return;
+
+        block.clearSelection?.();
 
         if (block.dataLoadingMode === 'manual') {
           return block.clearData();

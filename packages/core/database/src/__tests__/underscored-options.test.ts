@@ -7,13 +7,13 @@
  * For more information, please refer to: https://www.nocobase.com/agreement.
  */
 
-import { Database, mockDatabase } from '@nocobase/database';
+import { createMockDatabase, Database } from '@nocobase/database';
 
 describe('underscored options', () => {
   let db: Database;
 
   beforeEach(async () => {
-    db = mockDatabase({
+    db = await createMockDatabase({
       underscored: true,
     });
 
@@ -147,7 +147,7 @@ describe('underscored options', () => {
           type: 'belongsToMany',
           name: 'tags',
           through: 'collectionCategory',
-          target: 'posts',
+          target: 'tags',
           sourceKey: 'name',
           foreignKey: 'postsName',
           targetKey: 'name',

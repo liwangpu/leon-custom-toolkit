@@ -37,7 +37,9 @@ const getPageHeaderHeight = (disablePageHeader, enablePageTabs, hidePageTitle, t
           token.paddingContentHorizontalLG
         );
       }
-      return token.controlHeight + token.marginXS + (token.paddingXXS + 2) * 2 + token.paddingContentHorizontalLG;
+      return (
+        token.controlHeight + token.marginXS + (token.paddingContentVertical + 2) * 2 + token.paddingContentHorizontalLG
+      );
     } else {
       if (enablePageTabs) {
         return (
@@ -93,7 +95,7 @@ const useFullScreenHeight = (props?) => {
   return pageReservedHeight;
 };
 
-const InternalWorkflowCollection = ['users_jobs', 'approvals', 'approvalRecords'];
+const InternalWorkflowCollection = ['workflowManualTasks', 'approvals', 'approvalRecords'];
 // 表格区块高度计算
 const useTableHeight = () => {
   const { token } = theme.useToken();
@@ -102,6 +104,7 @@ const useTableHeight = () => {
   const { designable } = useDesignable();
   const schema = useFieldSchema();
   const heightProps = tableHeightProps || blockHeightProps;
+  const { titleHeight } = blockHeightProps;
   const pageFullScreenHeight = useFullScreenHeight(heightProps);
   const { name } = useCollection();
   const { heightMode, height, title } = heightProps;
@@ -113,7 +116,7 @@ const useTableHeight = () => {
   const actionBarHeight = hasTableActions || designable ? token.controlHeight + 2 * token.marginLG : token.marginLG;
   const tableHeaderHeight =
     (designable && !InternalWorkflowCollection.includes(name) ? token.controlHeight : 22) + 2 * token.padding + 1;
-  const blockHeaderHeight = title ? token.fontSizeLG * token.lineHeightLG + token.padding * 2 - 1 : 0;
+  const blockHeaderHeight = title ? titleHeight : 0;
   if (heightMode === HeightMode.FULL_HEIGHT) {
     return (
       window.innerHeight -
@@ -135,10 +138,10 @@ interface UseDataBlockHeightOptions {
 export const useDataBlockHeight = (options?: UseDataBlockHeightOptions) => {
   const { heightProps } = useBlockHeightProps();
   const pageFullScreenHeight = useFullScreenHeight();
-  const { token } = theme.useToken();
 
-  const { heightMode, height, title } = heightProps || {};
-  const blockHeaderHeight = title ? token.fontSizeLG * token.lineHeightLG + token.padding * 2 - 1 : 0;
+  const { heightMode, height, title, titleHeight } = heightProps || {};
+
+  const blockHeaderHeight = title ? titleHeight : 0;
 
   if (!heightProps?.heightMode || heightMode === HeightMode.DEFAULT) {
     return;

@@ -12,6 +12,7 @@ import { observer, Schema, useField, useFieldSchema, useForm } from '@formily/re
 import { isPortalInBody } from '@nocobase/utils/client';
 import { App, Button } from 'antd';
 import classnames from 'classnames';
+import debounce from 'lodash/debounce';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ErrorBoundary } from 'react-error-boundary';
 import { useTranslation } from 'react-i18next';
@@ -47,6 +48,9 @@ import { ActionContextProvider } from './context';
 import { useGetAriaLabelOfAction } from './hooks/useGetAriaLabelOfAction';
 import { ActionContextProps, ActionProps, ComposedAction } from './types';
 import { linkageAction, setInitialActionState } from './utils';
+
+// 这个要放到最下面，否则会导致前端单测失败
+import { useApp } from '../../../application';
 
 const useA = () => {
   return {
@@ -95,7 +99,7 @@ export const Action: ComposedAction = withDynamicSchemaProps(
     const { setSubmitted } = useActionContext();
     const { getAriaLabel } = useGetAriaLabelOfAction(title);
     const parentRecordData = useCollectionParentRecordData();
-
+    const app = useApp();
     useEffect(() => {
       if (field.stateOfLinkageRules) {
         setInitialActionState(field);
@@ -105,13 +109,16 @@ export const Action: ComposedAction = withDynamicSchemaProps(
         .filter((k) => !k.disabled)
         .forEach((v) => {
           v.actions?.forEach((h) => {
-            linkageAction({
-              operator: h.operator,
-              field,
-              condition: v.condition,
-              variables,
-              localVariables,
-            });
+            linkageAction(
+              {
+                operator: h.operator,
+                field,
+                condition: v.condition,
+                variables,
+                localVariables,
+              },
+              app.jsonLogic,
+            );
           });
         });
     }, [field, linkageRules, localVariables, variables]);
@@ -240,7 +247,6 @@ const InternalAction: React.FC<InternalActionProps> = observer(function Com(prop
   const aclCtx = useACLActionParamsContext();
   const { run, element, disabled: disableAction } = useAction?.(actionCallback) || ({} as any);
   const disabled = form.disabled || field.disabled || field.data?.disabled || propsDisabled || disableAction;
-
   const buttonStyle = useMemo(() => {
     return {
       ...style,
@@ -522,7 +528,7 @@ const RenderButtonInner = observer(
     buttonStyle: React.CSSProperties;
     handleMouseEnter: (e: React.MouseEvent) => void;
     getAriaLabel: (postfix?: string) => string;
-    handleButtonClick: (e: React.MouseEvent) => void;
+    handleButtonClick: (e: React.MouseEvent, checkPortal?: boolean) => void;
     tarComponent: React.ElementType;
     componentCls: string;
     hashId: string;
@@ -531,6 +537,7 @@ const RenderButtonInner = observer(
     Designer: React.ElementType;
     designerProps: any;
     title: string;
+    isLink?: boolean;
   }) => {
     const {
       designable,
@@ -551,15 +558,33 @@ const RenderButtonInner = observer(
       Designer,
       designerProps,
       title,
+      isLink,
       ...others
     } = props;
+    const debouncedClick = useCallback(
+      debounce(
+        (e: React.MouseEvent, checkPortal = true) => {
+          handleButtonClick(e, checkPortal);
+        },
+        300,
+        { leading: true, trailing: false },
+      ),
+      [handleButtonClick],
+    );
+
+    useEffect(() => {
+      return () => {
+        debouncedClick.cancel();
+      };
+    }, []);
 
     if (!designable && (field?.data?.hidden || !aclCtx)) {
       return null;
     }
 
     const actionTitle = title || field?.title;
-
+    const { opacity, ...restButtonStyle } = buttonStyle;
+    const linkStyle = isLink && opacity ? { opacity } : undefined;
     return (
       <SortableItem
         role="button"
@@ -568,15 +593,19 @@ const RenderButtonInner = observer(
         onMouseEnter={handleMouseEnter}
         // @ts-ignore
         loading={field?.data?.loading || loading}
-        icon={typeof icon === 'string' ? <Icon type={icon} /> : icon}
+        icon={typeof icon === 'string' ? <Icon type={icon} style={linkStyle} /> : icon}
         disabled={disabled}
-        style={buttonStyle}
-        onClick={handleButtonClick}
+        style={isLink ? restButtonStyle : buttonStyle}
+        onClick={process.env.__E2E__ ? handleButtonClick : debouncedClick} // E2E 中的点击操作都是很快的，如果加上 debounce 会导致 E2E 测试失败
         component={tarComponent || Button}
         className={classnames(componentCls, hashId, className, 'nb-action')}
         type={type === 'danger' ? undefined : type}
       >
-        {actionTitle && <span className={icon ? 'nb-action-title' : null}>{actionTitle}</span>}
+        {actionTitle && (
+          <span className={icon ? 'nb-action-title' : null} style={linkStyle}>
+            {actionTitle}
+          </span>
+        )}
         <Designer {...designerProps} />
       </SortableItem>
     );
