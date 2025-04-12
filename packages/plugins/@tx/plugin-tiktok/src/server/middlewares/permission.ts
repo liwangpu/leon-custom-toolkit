@@ -178,7 +178,6 @@ export const implementPermissionMiddleware = (plugin: Plugin) => {
     const currentTimeStr = currentTime.format('YYYY-MM-DD HH:mm:ss');
     // 检查用户套餐信息,如果过期,退出登录
     const organizationId = currentUser.organizationId;
-    console.log(`organizationId:`, organizationId);
     const organServicePackageRepo = db.getRepository('organizationServicePackage');
     const expiredPackages: any[] = await organServicePackageRepo.find({
       filter: {

@@ -28,11 +28,14 @@ const roleCheckMiddeware = (plugin: Plugin) => {
       const roleInstance = await roleRepo.findOne({
         filter: {
           name: role.name,
+          classification: 'tiktok',
         },
         appends: ['menuUiSchemas'],
       });
-      const mids: string[] = roleInstance.get('menuUiSchemas').map((uiSchema) => uiSchema.get('x-uid'));
-      mids.forEach((mid) => allowMenuItemIdSet.add(mid));
+      if (roleInstance) {
+        const mids: string[] = roleInstance.get('menuUiSchemas').map((uiSchema) => uiSchema.get('x-uid'));
+        mids.forEach((mid) => allowMenuItemIdSet.add(mid));
+      }
     }
     const newMids = [...allowMenuItemIdSet.values()];
     ctx.body.allowMenuItemIds = newMids;

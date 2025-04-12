@@ -8,7 +8,7 @@ export const registerScripts = (props: { plugin: Plugin }) => {
 const loadUamaiScript = () => {
   const script = document.createElement('script');
   script.defer = true;
-  script.src = `https://analysis.taixiang-tech.com/script.js`;
-  script.setAttribute('data-website-id', 'dba9afd1-943c-4251-9e84-c209b4ae2fa3');
+  script.src = `https://analysis.tikpulse.net/script.js`;
+  script.setAttribute('data-website-id', 'b364836f-7339-4e76-97c5-aedd91be8e0d');
   document.head.appendChild(script);
 };

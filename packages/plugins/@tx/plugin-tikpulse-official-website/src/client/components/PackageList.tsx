@@ -2,12 +2,13 @@ import React, { useContext, useEffect, useState } from 'react';
 import { createStyles, useAPIClient, useCurrentUserContext } from '@nocobase/client';
 import { observer } from 'mobx-react-lite';
 import { Button, Form, Input, InputNumber, Modal, Radio, message } from 'antd';
-import { CheckOutlined, MoneyCollectFilled, MoneyCollectOutlined } from '@ant-design/icons';
+import { CheckOutlined, CloseOutlined, MoneyCollectFilled, MoneyCollectOutlined } from '@ant-design/icons';
 import { IPackage } from '../../interface';
-import { isNil, round } from 'lodash';
+import { cloneDeep, floor, isNil, isString, round } from 'lodash';
 import { useEvent } from '../hooks';
 import { AppStoreContext } from './store';
 import queryString from 'query-string';
+import classnames from 'classnames';
 
 const useStyles = createStyles(({ css, responsive, token }) => {
   return {
@@ -36,12 +37,24 @@ const useStyles = createStyles(({ css, responsive, token }) => {
     fullWidth: css`
       width: 100%;
     `,
+    formContainer: css`
+      padding: 28px;
+    `,
     modalPurchasePrice: css`
       text-align: right;
       font-size: 16px;
       font-weight: 600;
       padding: 0 14px;
       color: ${token.colorPrimary};
+    `,
+    subAccountAveragePrice: css`
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      margin-bottom: 12px;
+    `,
+    noErrorFit: css`
+      margin-bottom: 0 !important;
     `,
   };
 });
@@ -54,13 +67,12 @@ const options = [
 export interface IPackageListProps {
   packages: IPackage[];
   packageType: string;
-  organizationId?: number | string;
 }
 
 const PackageList: React.FC<IPackageListProps> = observer((props) => {
-  const { packages = [], packageType, organizationId } = props;
+  const { packages = [], packageType } = props;
   const { styles } = useStyles();
-  const [purchaseMethod, setPurchaseMethod] = useState<string>('monthly');
+  const [purchaseMethod, setPurchaseMethod] = useState<string>('annual');
   const store = useContext(AppStoreContext);
   const [messageApi, contextHolder] = message.useMessage({ top: 300 });
   const loginIn = store.loginIn;
@@ -72,6 +84,9 @@ const PackageList: React.FC<IPackageListProps> = observer((props) => {
   // const currentUser = currentUserContext?.data?.data;
   const purchaseDurationUnit = purchaseMethod === 'annual' ? '年' : '月';
   const [purchasePriceValue, setPurchasePriceValue] = useState<number>(0);
+  const [subAccountAveragePrice, setSubAccountAveragePrice] = useState<number>(0);
+  const organizationId = store.organizationId;
+
   const subAccount = Form.useWatch((values) => {
     return values.subAccount;
   }, form);
@@ -81,12 +96,13 @@ const PackageList: React.FC<IPackageListProps> = observer((props) => {
   const duration = Form.useWatch((values) => {
     return values.duration;
   }, form);
+  // const subAccountAveragePrice = subAccount > 0 ? floor(purchasePriceValue / duration / subAccount) : 0;
 
   useEffect(() => {
     if (isNil(packageId) || isNil(subAccount)) return;
     (async () => {
       const {
-        data: { price },
+        data: { price = 0 },
       } = (await apiClient.request({
         url: 'payment:caculatePackagePrice',
         method: 'GET',
@@ -97,15 +113,14 @@ const PackageList: React.FC<IPackageListProps> = observer((props) => {
           durationUnit: purchaseMethod,
         },
       })) as any;
+
       setPurchasePriceValue(price || 0);
+      const _subAccountAveragePrice = floor(price / duration / (subAccount + 1));
+      setSubAccountAveragePrice(_subAccountAveragePrice);
     })();
   }, [apiClient, purchaseMethod, duration, subAccount, packageId]);
 
   const handlePurchaseClick = useEvent((pck: IPackage) => {
-    if (!loginIn) {
-      messageApi.info(`购买功能需要在客户端中才能购买!`);
-      return;
-    }
     const price = purchaseMethod === 'annual' ? pck.annualPrice : pck.price;
     const currentPackagePurchaseInfo = purchasedPackage.get(`${pck.id}`);
     form.setFieldsValue({
@@ -120,6 +135,11 @@ const PackageList: React.FC<IPackageListProps> = observer((props) => {
   });
 
   const handlePurchase = useEvent(async (values: any) => {
+    if (isNil(organizationId)) {
+      messageApi.info(`请先登录后再购买!`);
+      return;
+    }
+
     const { duration, durationUnit } = values;
     const purchaseMonths = durationUnit === 'annual' ? duration * 12 : duration;
     const baseUrl = `${window.location.origin}/api/payment:makePackagePayment`;
@@ -128,7 +148,6 @@ const PackageList: React.FC<IPackageListProps> = observer((props) => {
       query: {
         ...values,
         purchaseMonths,
-        // organizationId: currentUser.organizationId,
         organizationId,
       },
     });
@@ -155,48 +174,59 @@ const PackageList: React.FC<IPackageListProps> = observer((props) => {
 
   const renderPackagePurchaseForm = () => {
     return (
-      <Form
-        form={form}
-        layout="horizontal"
-        labelCol={{ span: 6 }}
-        wrapperCol={{ span: 18 }}
-        autoComplete="off"
-        onFinish={handlePurchase}
-      >
-        <Form.Item name="packageId" noStyle>
-          <Input type="hidden" />
-        </Form.Item>
+      <div className={styles.formContainer}>
+        <Form
+          form={form}
+          layout="horizontal"
+          labelCol={{ span: 6 }}
+          wrapperCol={{ span: 18 }}
+          autoComplete="off"
+          onFinish={handlePurchase}
+        >
+          <Form.Item name="packageId" noStyle>
+            <Input type="hidden" />
+          </Form.Item>
 
-        <Form.Item name="packageType" noStyle>
-          <Input type="hidden" />
-        </Form.Item>
+          <Form.Item name="packageType" noStyle>
+            <Input type="hidden" />
+          </Form.Item>
 
-        <Form.Item name="durationUnit" noStyle>
-          <Input type="hidden" />
-        </Form.Item>
+          <Form.Item name="durationUnit" noStyle>
+            <Input type="hidden" />
+          </Form.Item>
 
-        <Form.Item name="packagePrice" noStyle>
-          <Input type="hidden" />
-        </Form.Item>
+          <Form.Item name="packagePrice" noStyle>
+            <Input type="hidden" />
+          </Form.Item>
 
-        <Form.Item<any> label="购买时长" name="duration" rules={[{ required: true, message: '该项为必填信息!' }]}>
-          <InputNumber className={styles.fullWidth} addonAfter={purchaseDurationUnit} min={1} precision={0} />
-        </Form.Item>
+          <Form.Item<any> label="购买时长" name="duration" rules={[{ required: true, message: '该项为必填信息!' }]}>
+            <InputNumber className={styles.fullWidth} addonAfter={purchaseDurationUnit} min={1} precision={0} />
+          </Form.Item>
 
-        <Form.Item<any> label="子账号" name="subAccount" rules={[{ required: true, message: '该项为必填信息!' }]}>
-          <InputNumber className={styles.fullWidth} addonAfter="个" min={0} precision={0} />
-        </Form.Item>
+          <Form.Item<any> label="子账号" name="subAccount" rules={[{ required: true, message: '该项为必填信息!' }]}>
+            <InputNumber className={styles.fullWidth} addonAfter="个" min={0} precision={0} />
+          </Form.Item>
 
-        <Form.Item<any> shouldUpdate label="费用" name="price" dependencies={['duration']}>
-          <div className={styles.modalPurchasePrice}>{purchasePriceValue} 元</div>
-        </Form.Item>
+          <Form.Item<any> className={styles.noErrorFit} label="费用" name="price">
+            <div className={styles.modalPurchasePrice}>¥{purchasePriceValue}</div>
+          </Form.Item>
 
-        <div className={styles.operatorContainer}>
-          <Button type="primary" size="large" block htmlType="submit">
-            付款
-          </Button>
-        </div>
-      </Form>
+          <Form.Item<any> noStyle>
+            <div className={styles.subAccountAveragePrice}>
+              <span>仅 </span>
+              <span>
+                ¥ {subAccountAveragePrice} 每账号/{purchaseDurationUnit}
+              </span>
+            </div>
+          </Form.Item>
+
+          <div className={styles.operatorContainer}>
+            <Button type="primary" size="large" block htmlType="submit">
+              付款
+            </Button>
+          </div>
+        </Form>
+      </div>
     );
   };
 
@@ -216,6 +246,7 @@ const PackageList: React.FC<IPackageListProps> = observer((props) => {
           // className={styles.customModal}
           title="购买信息"
           open={showModa}
+          centered={true}
           width={500}
           footer={null}
           keyboard={false}
@@ -293,6 +324,10 @@ const useCardStyles = createStyles(({ css, responsive, token }) => {
     priceUnit: css`
       font-size: 16px;
       padding-left: 20px;
+
+      &.hidden {
+        display: none;
+      }
     `,
     operators: css`
       padding: 10px 0 6px;
@@ -308,7 +343,12 @@ const useCardStyles = createStyles(({ css, responsive, token }) => {
       padding: 0 12px;
     `,
     feature: css`
-      //
+      display: flex;
+      flex-flow: row;
+      align-items: center;
+      &.disabled {
+        color: ${token.colorTextDisabled};
+      }
     `,
     featureIcon: css`
       margin-right: 8px;
@@ -323,11 +363,48 @@ const ServiceItemCard: React.FC<{
   purchased?: boolean;
 }> = (props) => {
   const { item, purchaseMethod, onPurchase, purchased } = props;
+  const { features } = item;
   const { styles } = useCardStyles();
   const price = purchaseMethod === 'annual' ? item.annualPrice : item.price;
   const months = purchaseMethod === 'annual' ? 12 : 1;
   const monthlyPrice = round(price / months, 0);
   const needPurchase = item.needPurchase;
+
+  const renderFeatures = () => {
+    if (!(features && features.length)) return;
+
+    const renderItem = (feature: any) => {
+      if (isNil(item)) return;
+      let disabled = false;
+      let featureContent = '';
+      let style: Record<string, any> = {};
+      if (isString(feature)) {
+        featureContent = feature;
+      } else {
+        featureContent = feature.content;
+        disabled = feature.disabled;
+        style = feature.style ? cloneDeep(feature.style) : {};
+      }
+
+      return (
+        <div
+          className={classnames(styles.feature, {
+            disabled,
+          })}
+          style={style}
+        >
+          {disabled ? (
+            <CloseOutlined className={styles.featureIcon} />
+          ) : (
+            <CheckOutlined className={styles.featureIcon} />
+          )}
+          <div>{featureContent}</div>
+        </div>
+      );
+    };
+
+    return <div className={styles.featureContainer}>{features.map((feature) => renderItem(feature))}</div>;
+  };
   return (
     <div className={styles.card}>
       <div className={styles.title}>{item.name}</div>
@@ -340,23 +417,22 @@ const ServiceItemCard: React.FC<{
       )}
       <div className={styles.priceMessage}>
         <div className={styles.price}> {`¥ ${monthlyPrice}`}</div>
-        <div className={styles.priceUnit}> {' / 每月'}</div>
+        <div
+          className={classnames(styles.priceUnit, {
+            hidden: monthlyPrice < 1,
+          })}
+        >
+          {' '}
+          {' / 每月'}
+        </div>
       </div>
       <div className={styles.operators}>
-        <Button block type="primary" onClick={() => onPurchase(item)} disabled={!needPurchase}>
-          {purchased ? '续费' : '购买'}
+        <Button block type="primary" onClick={() => onPurchase(item)}>
+          {needPurchase ? '购买' : '免费领取'}
         </Button>
       </div>
-      {item.features && item.features.length ? (
-        <div className={styles.featureContainer}>
-          {item.features.map((f, idx) => (
-            <div className={styles.feature} key={idx}>
-              <CheckOutlined className={styles.featureIcon} />
-              <span>{f}</span>
-            </div>
-          ))}
-        </div>
-      ) : null}
+
+      {renderFeatures()}
     </div>
   );
 };

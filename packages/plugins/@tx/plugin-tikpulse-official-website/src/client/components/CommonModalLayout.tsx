@@ -28,7 +28,7 @@ const useStyles = createStyles(({ css }) => {
       background: linear-gradient(180deg, #a7dac5 0%, rgba(255, 255, 255, 0.0001) 100%);
     `,
     modalContent: css`
-      padding: 0 30px 0;
+      padding: 0 50px 0;
     `,
     modalFooter: css`
       padding: 0px 24px 34px;

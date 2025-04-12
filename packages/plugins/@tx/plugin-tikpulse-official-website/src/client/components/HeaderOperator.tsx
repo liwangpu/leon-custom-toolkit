@@ -55,6 +55,7 @@ const useStyles = createStyles(({ css, responsive }) => {
       color: #fff;
       font-size: 16px;
       font-weight: 700;
+      min-width: 96px;
       border: none;
       border-radius: 6px;
       cursor: pointer;
@@ -89,9 +90,14 @@ const useStyles = createStyles(({ css, responsive }) => {
     `,
     operatorContainer: css`
       display: flex;
-      flex-flow: column;
+      flex-flow: row;
+      justify-content: center;
+      align-items: center;
       width: 100%;
-      padding: 0 0 34px 24px;
+      padding: 0 0 34px 68px;
+    `,
+    submitBtn: css`
+      /* max-width: 420px; */
     `,
     fullWidth: css`
       width: 100%;
@@ -115,7 +121,7 @@ type IFreeTrialForm = {
 const testValue = {
   name: '小昭昭',
   // phone: '15577637102',
-  phone: '15577637101',
+  phone: '15577637102',
   // verificationCode: '123456',
   email: 'zhao@gmail.com',
 };
@@ -131,6 +137,7 @@ const HeaderOperator: React.FC<IHeaderOperatorProps> = observer((props) => {
   const apiClient = useAPIClient();
   const [messageApi, contextHolder] = message.useMessage();
   const [form] = Form.useForm();
+  const [loading, setLoading] = useState<boolean>(false);
   const canSendVerificationCode = Form.useWatch<IFreeTrialForm>((val) => val.phone && val.phone.length === 11, form);
 
   const smallScreeen = false;
@@ -168,7 +175,9 @@ const HeaderOperator: React.FC<IHeaderOperatorProps> = observer((props) => {
   });
 
   const handleSubmitFreeTrial = useEvent(async (formData) => {
+    if (loading) return;
     try {
+      setLoading(true);
       const {
         data: { data },
       } = await apiClient.request({
@@ -190,15 +199,15 @@ const HeaderOperator: React.FC<IHeaderOperatorProps> = observer((props) => {
     } catch (error) {
       console.log(`error:`, error);
     }
+    setLoading(false);
   });
 
   const renderFreeTrialForm = () => {
     return (
       <CommonModalLayout title={`免费试用${store.trialDays}天`}>
-        <Form
+        {/* <Form
           labelCol={{ span: 6 }}
           wrapperCol={{ span: 18 }}
-          // variant="underlined"
           form={form}
           initialValues={testValue}
           autoComplete="off"
@@ -224,7 +233,7 @@ const HeaderOperator: React.FC<IHeaderOperatorProps> = observer((props) => {
             <Input addonBefore="+86" maxLength={11} />
           </Form.Item>
 
-          {/* <Form.Item<IFreeTrialForm>
+          <Form.Item<IFreeTrialForm>
             label="验证码"
             name="verificationCode"
             rules={[{ required: true, message: '该项为必填信息!' }]}
@@ -233,14 +242,19 @@ const HeaderOperator: React.FC<IHeaderOperatorProps> = observer((props) => {
               <Input />
               <CountDownButton disabled={!canSendVerificationCode} onClick={handleSendVerificationCode} />
             </Space.Compact>
-          </Form.Item> */}
+          </Form.Item>
+
+          <Form.Item<any> label="邀请码" name="invitationCode">
+            <Input />
+          </Form.Item>
 
           <div className={styles.operatorContainer}>
-            <Button type="primary" size="large" block htmlType="submit">
+            <Button className={styles.submitBtn} type="primary" size="large" block htmlType="submit" loading={loading}>
               立即提交
             </Button>
           </div>
-        </Form>
+        </Form> */}
+        <iframe src="/signin" />
       </CommonModalLayout>
     );
   };
@@ -253,14 +267,18 @@ const HeaderOperator: React.FC<IHeaderOperatorProps> = observer((props) => {
         预约演示
       </button>
 
-      <button className={styles.freeTrialBtn} onClick={handleFreeTrial}>
+      {/* <button className={styles.freeTrialBtn} onClick={handleFreeTrial}>
         免费试用
+      </button> */}
+
+      <button className={styles.freeTrialBtn} onClick={handleFreeTrial}>
+        登录
       </button>
 
       <Modal
         className={styles.customModal}
         open={store.trialModaShow}
-        width={smallScreeen ? '92%' : 500}
+        width={smallScreeen ? '92%' : 600}
         footer={null}
         keyboard={false}
         maskClosable={false}

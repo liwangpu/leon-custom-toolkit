@@ -61,6 +61,7 @@ const requestTrial = () => {
         director: formData.name,
         directorPhone: formData.phone,
         directorEmail: formData.email,
+        invitationCode: formData.invitationCode,
       },
     });
 

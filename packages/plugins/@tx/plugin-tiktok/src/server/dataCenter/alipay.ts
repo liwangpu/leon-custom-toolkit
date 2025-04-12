@@ -88,8 +88,8 @@ export const AlipayCenter = (() => {
       // 模拟测试跳转
       console.log(`---------[ generatePayment ]---------`);
       console.log(`return_url:`, return_url);
-      // await createCostRecord();
-      // return ctx.redirect(return_url);
+      await createCostRecord();
+      return ctx.redirect(return_url);
 
       // 统一收单下单并支付页面接口 https://opendocs.alipay.com/open/59da99d0_alipay.trade.page.pay?pathHash=e26b497f&scene=22
       const result = await instance.pageExec('alipay.trade.page.pay', {

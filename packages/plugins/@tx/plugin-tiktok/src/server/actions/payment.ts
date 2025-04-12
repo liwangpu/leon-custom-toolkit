@@ -495,7 +495,7 @@ const makePackagePayment = () => {
       throw new Error(`套餐信息已过期,请刷新或者尝试购买其他套餐`);
     }
 
-    // price = 0.1;
+    price = 0.1;
 
     const cost: IPaymentCost = {
       name: `${record.name}`,
@@ -552,7 +552,7 @@ const packagePaymentFeedback = AlipayCenter.completePayment(async ({ ctx, next, 
     </html>`;
   };
 
-  const subAccount = order.subAccount + 1;
+  const subAccount = Number(order.subAccount) + 1;
   const paidServices = servicePackage.services || [];
 
   const organOldServicePackage = await organServicePackageRepo.findOne({

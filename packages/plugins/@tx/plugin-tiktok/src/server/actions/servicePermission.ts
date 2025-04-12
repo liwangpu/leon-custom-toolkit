@@ -16,10 +16,12 @@ export const registerServicePermissionsActions = (props: { plugin: Plugin }) => 
       submit: submitPermissions(),
       servicesInfo: getOrganizationServiceInfo(),
       checkOrganPackageIsExpired: checkOrganPackageIsExpired(),
+      getOrganizationId: getOrganizationIdByUsername(),
     },
   });
   app.acl.allow('servicePermissions', '*', 'loggedIn');
   app.acl.allow('servicePermissions', 'checkOrganPackageIsExpired', 'public');
+  app.acl.allow('servicePermissions', 'servicesInfo', 'public');
 };
 
 const submitPermissions = () => {
@@ -89,8 +91,10 @@ const getOrganizationServiceInfo = () => {
       if (daysRemaining > 0) {
         daysRemaining = 0;
       }
+      const subAccount = item.subAccount > 0 ? item.subAccount - 1 : 0;
       return {
         ...item,
+        subAccount,
         purchasingDate: transferDateTime(item.purchasingDate),
         expirationDate: transferDateTime(item.expirationDate),
         daysRemaining: -daysRemaining,
@@ -138,5 +142,11 @@ const checkOrganPackageIsExpired = () => {
     ctx.body = {
       expiredPackages,
     };
+  };
+};
+
+const getOrganizationIdByUsername = () => {
+  return async (ctx: Context, next: () => any) => {
+    const { noid } = ctx.request.query as any;
   };
 };

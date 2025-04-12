@@ -1,23 +1,13 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import { Plugin, useAPIClient } from '@nocobase/client';
+import React, { useContext, useEffect, useState } from 'react';
+import { useAPIClient } from '@nocobase/client';
 import { createStyles } from '@nocobase/client';
 import { isNil } from 'lodash';
 import PackageList from './PackageList';
 import { observer } from 'mobx-react-lite';
-import { useNavigate, useParams } from 'react-router-dom';
-import { AppStore, AppStoreContext } from './store';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { AppStoreContext } from './store';
 import { useEvent } from '../hooks';
 import classNames from 'classnames';
-
-export const registerPublicPackagePurchase = (props: { plugin: Plugin }) => {
-  const { plugin } = props;
-  const { app } = plugin;
-
-  app.router.add('public-package-purchase', {
-    path: '/package-purchase/:organizationId',
-    Component: PackagePurchase,
-  });
-};
 
 const useStyles = createStyles(({ css, responsive }) => {
   return {
@@ -31,18 +21,23 @@ const useStyles = createStyles(({ css, responsive }) => {
       background-color: #fff;
     `,
     header: css`
-      height: 62px;
+      flex: 0 0 62px;
       border-bottom: 3px solid #f3f3f3;
       z-index: 1;
     `,
     content: css`
       position: relative;
+      flex: 0 0 auto;
       padding: 20px 30px 50px;
       z-index: 1;
     `,
     footer: css`
-      height: 62px;
+      flex: 0 0 62px;
       border-top: 3px solid #f3f3f3;
+
+      &.noFooterBorder {
+        border-color: transparent !important;
+      }
     `,
     contentImgBg1: css`
       position: absolute;
@@ -94,20 +89,25 @@ const useStyles = createStyles(({ css, responsive }) => {
   };
 });
 
-const PackagePurchase: React.FC = observer((props) => {
+const PackageAndService: React.FC<{ noFooterBorder?: boolean }> = observer((props) => {
+  const { noFooterBorder } = props;
   const { styles } = useStyles();
   const navigate = useNavigate();
   const apiClient = useAPIClient();
-  const type = 'package';
+  const [searchParams, setSearchParams] = useSearchParams();
+  let type = searchParams.get('type');
+  if (isNil(type)) {
+    type = 'package';
+  }
   const [activedItem, setActivedItem] = useState<ITabItem>(tabs.find((t) => t.key === type));
-  const store = useMemo(() => new AppStore({ apiClient, loginIn: true, navigate }), [apiClient]);
-  const { organizationId } = useParams();
+  const store = useContext(AppStoreContext);
   const packages = store.packages || [];
   const services = store.services || [];
   const packageType = activedItem.key;
 
   const handleActiveTab = useEvent((item: ITabItem) => {
     setActivedItem(item);
+    setSearchParams([['type', item.key]]);
   });
 
   const renderNavs = () => {
@@ -131,29 +131,42 @@ const PackagePurchase: React.FC = observer((props) => {
   const renderTab = () => {
     if (isNil(activedItem)) return;
     const ds = packageType === 'package' ? packages : services;
-    return (
-      <PackageList packages={ds} key={activedItem.name} packageType={packageType} organizationId={organizationId} />
-    );
+    return <PackageList packages={ds} key={activedItem.name} packageType={packageType} />;
   };
 
   useEffect(() => {
-    store.initialize();
+    (async () => {
+      const { data } = await apiClient.request({
+        url: `servicePermissions:servicesInfo`,
+      });
+      if (!isNil(data)) {
+        const { organPackages, organServices } = data;
+        const purchasedInfo: Record<string, any> = {};
+        for (const pck of organPackages) {
+          purchasedInfo[pck.packageId] = pck;
+        }
+        store.setPurchasedPackage(purchasedInfo);
+      }
+      store.initialize();
+    })();
   }, []);
 
   return (
-    <AppStoreContext.Provider value={store}>
-      <div className={styles.container}>
-        <div className={styles.header}>{renderNavs()}</div>
-        <div className={styles.content}>{renderTab()}</div>
-        <div className={styles.footer}></div>
-      </div>
-    </AppStoreContext.Provider>
+    <div className={styles.container}>
+      <div className={styles.header}>{renderNavs()}</div>
+      <div className={styles.content}>{renderTab()}</div>
+      <div
+        className={classNames(styles.footer, {
+          noFooterBorder,
+        })}
+      ></div>
+    </div>
   );
 });
 
-PackagePurchase.displayName = 'PackagePurchase';
+PackageAndService.displayName = 'PackageAndService';
 
-export default PackagePurchase;
+export default PackageAndService;
 
 interface ITabItem {
   key: string;

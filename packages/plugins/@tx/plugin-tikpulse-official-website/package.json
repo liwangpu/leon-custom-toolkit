@@ -1,6 +1,6 @@
 {
   "name": "@tx/plugin-tikpulse-official-website",
-  "version": "1.0.29",
+  "version": "1.0.33",
   "displayName": "TikPulse官网",
   "displayName.zh-CN": "TikPulse官网",
   "description": "TikPulse官网相关",

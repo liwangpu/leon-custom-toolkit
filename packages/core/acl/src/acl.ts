@@ -524,6 +524,7 @@ function getUser(ctx) {
       filterByTk: ctx.state.currentUser.id,
       fields: userFields,
     });
+
     ctx.logger?.info('filter-parse: ', {
       $user: user?.toJSON(),
     });

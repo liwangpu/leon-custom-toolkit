@@ -2,6 +2,7 @@ import React, { useContext } from 'react';
 import { createStyles } from '@nocobase/client';
 import WideScreenContainer from '../WideScreenContainer';
 import { observer } from 'mobx-react-lite';
+import classnames from 'classnames';
 import {
   FirstLevelTitleFontSize,
   FirstLevelTitleFontSize_SM,
@@ -17,8 +18,9 @@ import Img10007 from '../../assets/images/10007.png';
 import ImgWindows from '../../assets/images/windows.png';
 import ImgMacOS from '../../assets/images/macOS.png';
 import { AppStoreContext } from '../store';
+import { Tooltip } from 'antd';
 
-const useStyles = createStyles(({ css, responsive }) => {
+const useStyles = createStyles(({ css, responsive, token }) => {
   return {
     partContainer: css`
       width: 100%;
@@ -28,10 +30,11 @@ const useStyles = createStyles(({ css, responsive }) => {
     intro: css`
       display: flex;
       flex-flow: row wrap;
+      justify-content: space-around;
       gap: 0 40px;
     `,
     introLeft: css`
-      flex: 1;
+      flex: 0 0 44%;
       display: flex;
       flex-flow: column;
       align-items: flex-start;
@@ -48,8 +51,8 @@ const useStyles = createStyles(({ css, responsive }) => {
     `,
     introImg: css`
       position: static;
-      width: 600px;
-      height: 658px;
+      width: 400px;
+      height: 458px;
       z-index: 2;
     `,
     tip: css`
@@ -75,6 +78,11 @@ const useStyles = createStyles(({ css, responsive }) => {
         /* font-weight: ${SecondLevelTitleFontWeight_SM}; */
       }
     `,
+    downloadOperators: css`
+      display: flex;
+      align-items: center;
+      gap: 10px 20px;
+    `,
     downloadBtn: css`
       color: #026661;
       background-color: rgb(2, 102, 97);
@@ -96,22 +104,31 @@ const useStyles = createStyles(({ css, responsive }) => {
         font-weight: 600;
         margin-left: 8px;
       }
+
+      &.disabled {
+        background-color: gray !important;
+        cursor: not-allowed;
+      }
     `,
     windowsIcon: css`
       width: 22px;
       height: 22px;
     `,
+    macIcon: css`
+      width: 28px;
+      height: 28px;
+    `,
   };
 });
 
 // 下载链接
-// https://astrolabe-releaser.taixiang-tech.com/download/latest/windows_64
+// https://releaser.tikpulse.net/download/latest/windows_64
 
 const Part1: React.FC = observer((props) => {
   const { styles } = useStyles();
   const store = useContext(AppStoreContext);
   const handleDownloadWindows = useEvent(() => {
-    window.open('https://astrolabe-releaser.taixiang-tech.com/download/latest/windows_64', '_blank');
+    window.open('https://releaser.tikpulse.net/download/latest/windows_64', '_blank');
   });
   return (
     <WideScreenContainer>
@@ -119,17 +136,24 @@ const Part1: React.FC = observer((props) => {
         <div className={styles.intro}>
           <div className={styles.introLeft}>
             {/* <div className={styles.tip}>客户服务</div> */}
-            <div className={styles.introTitle}>功能强大的客户端软件</div>
+            <div className={styles.introTitle}>TIKPULSE 客户端下载</div>
             <div className={styles.introSubTitle}>
-              Lorem ipsum dolor sit amet consectetur adipisicing elit. Molestias inventore necessitatibus aliquid
-              tempore saepe quia aspernatur corporis sed ratione repellat ipsum possimus nemo reiciendis doloribus vitae
-              minus sit, temporibus magnam!
+              多账号管理，安全智能系统，为每个账号构建独立运行空间，已守护超千万跨境账号安全
             </div>
-            <div>
-              <button className={styles.downloadBtn} onClick={handleDownloadWindows}>
-                <img className={styles.windowsIcon} src={ImgWindows} />
-                <div>Windows</div>
-              </button>
+            <div className={styles.downloadOperators}>
+              <Tooltip title="点击下载" placement="bottom">
+                <button className={styles.downloadBtn} onClick={handleDownloadWindows}>
+                  <img className={styles.windowsIcon} src={ImgWindows} />
+                  <div>Windows</div>
+                </button>
+              </Tooltip>
+
+              <Tooltip title="敬请期待" placement="bottom">
+                <button className={classnames(styles.downloadBtn, 'disabled')}>
+                  <img className={styles.macIcon} src={ImgMacOS} />
+                  <div>MacOS</div>
+                </button>
+              </Tooltip>
             </div>
           </div>
           <div className={styles.introRight}>

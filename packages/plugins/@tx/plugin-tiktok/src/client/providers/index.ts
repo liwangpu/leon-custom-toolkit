@@ -1,8 +1,6 @@
 import { Plugin } from '@nocobase/client';
-import { registerOrganPackageInfoProvider } from './organPackageInfo';
-import { registerCustomWSEventHandlerProvider } from './customWSEventHandler';
+import { registerCustomEventHandlerProvider } from './customEventHandler';
 
 export const registerProviders = (props: { plugin: Plugin }) => {
-  registerOrganPackageInfoProvider(props);
-  registerCustomWSEventHandlerProvider(props);
+  registerCustomEventHandlerProvider(props);
 };
