@@ -100,11 +100,15 @@ export function organizationResourceMiddeware(plugin: Plugin) {
   const organizationResourceDefinitions = new Set(permissionDefinitions.map((d) => d.name));
 
   return async (ctx: any, next: () => Promise<any>) => {
-    const { resourceName, organizationId, userId, isRootOrAdmin, isOrganizationAdminUser } = getUserInfo({ ctx });
-    // console.log(`getUserInfo:`, getUserInfo({ ctx }));
+    // eslint-disable-next-line prefer-const
+    let { resourceName, organizationId, userId, isRootOrAdmin, isOrganizationAdminUser } = getUserInfo({ ctx });
     if (organizationResourceDefinitions.has(resourceName) && !isRootOrAdmin) {
+      // 一般不会有organizationId,如果有,那么是程序异常,那么这里设置一个不可能存在的值,也是为了不返回数据
+      if (isNil(organizationId)) {
+        organizationId = 0;
+      }
       const filter = {
-        $and: [{ organizationId }],
+        $and: [{ organizationId: { $eq: organizationId } }],
       };
 
       const def = permissionDefinitionMap.get(resourceName);

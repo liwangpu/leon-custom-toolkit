@@ -53,7 +53,7 @@ const requestTrial = () => {
     }
 
     const organizationRepo = ctx.db.getRepository('organization');
-    const userRep = ctx.db.getRepository('users');
+    // const userRep = ctx.db.getRepository('users');
 
     const organ = await organizationRepo.create({
       values: {
@@ -61,6 +61,10 @@ const requestTrial = () => {
         director: formData.name,
         directorPhone: formData.phone,
         directorEmail: formData.email,
+        invitationCode: formData.invitationCode,
+        extra: {
+          initialPassword: formData.password,
+        },
       },
     });
 

@@ -3,6 +3,7 @@ import { observer } from 'mobx-react-lite';
 import { createStyles } from '@nocobase/client';
 import Part1 from './Part1';
 import PageLayout from '../PageLayout';
+import { PublicPackagePurchase } from '../PackagePurchase';
 
 const useStyles = createStyles(({ css, responsive }) => {
   return {
@@ -10,8 +11,7 @@ const useStyles = createStyles(({ css, responsive }) => {
       position: relative;
       display: flex;
       flex-flow: column;
-      gap: 50px 0;
-      color: #fff;
+      /* gap: 50px 0; */
     `,
   };
 });

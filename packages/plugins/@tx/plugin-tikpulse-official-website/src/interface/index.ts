@@ -19,6 +19,7 @@ export interface IPackage {
   description?: string;
   price?: number;
   annualPrice?: number;
+  packageUidType?: string;
   needPurchase?: boolean;
   features?: string[];
   remark?: string;

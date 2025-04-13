@@ -113,18 +113,6 @@ const FooterInfo: React.FC<IFooterInfoProps> = observer((props) => {
         <div className={styles.cardInfoKV}>
           <div className={styles.cardInfoKVLabel}>小店数据分析</div>
         </div>
-        {/* <div className={styles.cardInfoKV}>
-          <div className={styles.cardInfoKVLabel}>开店管理</div>
-        </div>
-        <div className={styles.cardInfoKV}>
-          <div className={styles.cardInfoKVLabel}>门店巡检</div>
-        </div>
-        <div className={styles.cardInfoKV}>
-          <div className={styles.cardInfoKVLabel}>收入与供应商对账</div>
-        </div>
-        <div className={styles.cardInfoKV}>
-          <div className={styles.cardInfoKVLabel}>数据中台</div>
-        </div> */}
       </div>
       <div className={styles.cardInfo}>
         <h4 className={styles.cardInfoTitle}>联系我们</h4>

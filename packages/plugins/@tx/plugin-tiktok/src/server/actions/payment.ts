@@ -75,6 +75,8 @@ const PackagePriceCalculator = (() => {
           }
           break;
         default:
+          addSubAccountPrice = 0;
+          price = 0;
           break;
       }
       price += addSubAccountPrice;
@@ -472,7 +474,7 @@ const caculatePackagePrice = () => {
 const makePackagePayment = () => {
   return async (ctx: Context, next: () => any) => {
     const formData = ctx.query as unknown as IServicePackagePurchaseOrder;
-    const { packageId, packageType, duration = 1, durationUnit = 'monthly', organizationId } = formData;
+    const { packageId, packageType, organizationId } = formData;
     if (isNil(organizationId)) {
       throw new Error(`没有付款信息需要组织信息参数,请传递organizationId`);
     }
@@ -483,13 +485,20 @@ const makePackagePayment = () => {
     let price = 0;
     if (isPackagePayment) {
       const servicePackageRepo = ctx.db.getRepository('servicePackage');
-      record = await servicePackageRepo.findByTargetKey(packageId);
+      record = await servicePackageRepo.findOne({
+        filterByTk: packageId,
+      });
       await PackagePriceCalculator.startup({ db: ctx.db });
       price = PackagePriceCalculator.calculatePrice(formData as any);
     } else {
       // const paidServiceRepo = ctx.db.getRepository('paidService');
       // record = await paidServiceRepo.findByTargetKey(packageId);
     }
+    // console.log(`---------[ makePackagePayment ]---------`);
+    // console.log(`formData:`, formData);
+    // console.log(`record:`, record);
+
+    // return;
 
     if (isNil(record)) {
       throw new Error(`套餐信息已过期,请刷新或者尝试购买其他套餐`);
@@ -515,6 +524,12 @@ const makePackagePayment = () => {
   };
 };
 
+const transferDateTime = (datetime: any) => {
+  if (isNil(datetime)) return null;
+  const dt = dayjs.isDayjs(datetime) ? datetime : dayjs(datetime);
+  return dt.format('YYYY-MM-DD HH:mm:ss');
+};
+
 const packagePaymentFeedback = AlipayCenter.completePayment(async ({ ctx, next, cost }) => {
   // const { outTradeNo } = (ctx.query as any) || {};
   const { organizationId, extra } = cost;
@@ -522,19 +537,14 @@ const packagePaymentFeedback = AlipayCenter.completePayment(async ({ ctx, next, 
   const organServicePackageRepo = ctx.db.getRepository('organizationServicePackage');
   const organizationPaidServiceRepo = ctx.db.getRepository('organizationPaidService');
   const servicePackageRepo = ctx.db.getRepository('servicePackage');
-  const { purchaseMonths } = order;
+  const { purchaseMonths, expirationDate: _expirationDate } = order;
   const currentTime = dayjs();
-  const transferDateTime = (datetime: any) => {
-    if (isNil(datetime)) return null;
-    const dt = dayjs.isDayjs(datetime) ? datetime : dayjs(datetime);
-    return dt.format('YYYY-MM-DD HH:mm:ss');
-  };
   const currentTimeStr = transferDateTime(currentTime);
-  const expirationDate = currentTime.add(purchaseMonths, 'M');
-  const expirationDateStr = transferDateTime(expirationDate);
+  const expirationDate = isNil(_expirationDate) ? currentTime.add(purchaseMonths, 'M') : _expirationDate;
+  const expirationDateStr = isNil(_expirationDate) ? transferDateTime(expirationDate) : _expirationDate;
   const servicePackage: IServicePackage = await servicePackageRepo.findOne({
     filterByTk: order.packageId,
-    appends: ['services'],
+    // appends: ['services'],
   });
 
   const returnCloseWin = () => {
@@ -552,7 +562,7 @@ const packagePaymentFeedback = AlipayCenter.completePayment(async ({ ctx, next, 
     </html>`;
   };
 
-  const subAccount = order.subAccount + 1;
+  const subAccount = Number(order.subAccount) + 1;
   const paidServices = servicePackage.services || [];
 
   const organOldServicePackage = await organServicePackageRepo.findOne({
@@ -560,42 +570,76 @@ const packagePaymentFeedback = AlipayCenter.completePayment(async ({ ctx, next, 
       organizationId,
       packageId: order.packageId,
     },
-    appends: ['services'],
+    // appends: ['services'],
   });
 
   if (!isNil(organOldServicePackage)) {
     // 判断一下当前的购买套餐情况,如果没过期,那么
     const rc: IOrganizationServicePackage = organOldServicePackage.dataValues;
 
+    // 如果是免费的套餐，不能重复领取
+    if (!servicePackage.needPurchase) {
+      throw new Error(`用户已经领过该套餐，不能重复领取`);
+    }
+
     const hasExpirated = currentTime.isAfter(dayjs(rc.expirationDate));
     // 如果套餐已经过期,购买时间更新为当前时间
-    let services = rc.services || [];
+    // let services = rc.services || [];
     const updateValue: IOrganizationServicePackage = {
       ...omit(rc, ['services']),
     };
+
+    // 这里有个注意点，如果是降低了子账号配置，那么清空组织的人员关于养号和选品产品的角色信息
+    if (rc.subAccount > order.subAccount) {
+      const userRepo = ctx.db.getRepository('users');
+      const organUsers: any[] = await userRepo.find({
+        filter: {
+          organizationId,
+        },
+        appends: ['roles'],
+      });
+
+      await Promise.all(
+        organUsers.map((u) => {
+          const user = u.dataValues;
+          const roles: any[] = user.roles;
+          const filterRoles = roles.filter(
+            (r) => r.classification !== 'tiktok' || r.name === 'organizationAdmin' || r.name === 'organizationUser',
+          );
+
+          return userRepo.update({
+            filterByTk: user.id,
+            values: {
+              roles: filterRoles.map((f) => f.name),
+            },
+          });
+        }),
+      );
+    }
+
     if (hasExpirated) {
       updateValue.purchasingDate = currentTimeStr;
       updateValue.expirationDate = expirationDateStr;
       updateValue.subAccount = subAccount;
-      services = services.map((s: any) => {
-        const it = omit(s.dataValues, ['organServicePackageToOrganPaidServiceMapping']);
-        return {
-          ...it,
-          purchasingDate: currentTimeStr,
-          expirationDate: expirationDateStr,
-        };
-      });
+      // services = services.map((s: any) => {
+      //   const it = omit(s.dataValues, ['organServicePackageToOrganPaidServiceMapping']);
+      //   return {
+      //     ...it,
+      //     purchasingDate: currentTimeStr,
+      //     expirationDate: expirationDateStr,
+      //   };
+      // });
     } else {
       const _expirationDate = transferDateTime(dayjs(rc.expirationDate).add(purchaseMonths, 'M'));
       updateValue.expirationDate = _expirationDate;
       updateValue.subAccount = subAccount;
-      services = services.map((s: any) => {
-        const it = omit(s.dataValues, ['organServicePackageToOrganPaidServiceMapping']);
-        return {
-          ...it,
-          expirationDate: _expirationDate,
-        };
-      });
+      // services = services.map((s: any) => {
+      //   const it = omit(s.dataValues, ['organServicePackageToOrganPaidServiceMapping']);
+      //   return {
+      //     ...it,
+      //     expirationDate: _expirationDate,
+      //   };
+      // });
     }
 
     await organServicePackageRepo.update({
@@ -603,12 +647,12 @@ const packagePaymentFeedback = AlipayCenter.completePayment(async ({ ctx, next, 
       filterByTk: updateValue.id,
     });
 
-    for (const sr of services) {
-      await organizationPaidServiceRepo.update({
-        values: sr,
-        filterByTk: sr.id,
-      });
-    }
+    // for (const sr of services) {
+    //   await organizationPaidServiceRepo.update({
+    //     values: sr,
+    //     filterByTk: sr.id,
+    //   });
+    // }
 
     return returnCloseWin();
   }

@@ -1,7 +1,7 @@
 import React from 'react';
 import { observer } from 'mobx-react-lite';
 import { createStyles } from '@nocobase/client';
-import ImgLogo from '../assets/images/logo.png';
+import ImgLogo from '../assets/images/logo-s.png';
 
 export interface ICommonModalLayoutProps {
   title: string;
@@ -28,17 +28,24 @@ const useStyles = createStyles(({ css }) => {
       background: linear-gradient(180deg, #a7dac5 0%, rgba(255, 255, 255, 0.0001) 100%);
     `,
     modalContent: css`
-      padding: 0 30px 0;
+      display: flex;
+      flex-flow: column;
+      justify-content: center;
+      padding: 0 50px 0;
     `,
     modalFooter: css`
       padding: 0px 24px 34px;
     `,
     logo: css`
-      width: 147.41px;
-      height: 40px;
-      opacity: 1;
-      background: url(${ImgLogo});
-      background-size: contain;
+      display: flex;
+      align-items: center;
+      gap: 0 8px;
+      font-size: 22px;
+      font-weight: 700;
+    `,
+    logoImg: css`
+      width: 24px;
+      height: 24px;
     `,
     title: css`
       position: relative;
@@ -90,7 +97,10 @@ const CommonModalLayout: React.FC<ICommonModalLayoutProps> = observer((props) =>
   return (
     <div className={styles.modal}>
       <div className={styles.modalHeader}>
-        <div className={styles.logo}></div>
+        <div className={styles.logo}>
+          <img className={styles.logoImg} src={ImgLogo} />
+          <div>TIKPULSE</div>
+        </div>
         <div className={styles.title}>
           <span>{title}</span>
         </div>

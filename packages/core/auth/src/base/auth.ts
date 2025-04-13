@@ -84,6 +84,8 @@ export class BaseAuth extends Auth {
           raw: true,
         }),
       );
+      // console.log(`---------[ user check ]---------`);
+      // console.log(`currentUser:`, user);
       if (temp && user.passwordChangeTz && iat * 1000 < user.passwordChangeTz) {
         throw new Error('Token is invalid');
       }

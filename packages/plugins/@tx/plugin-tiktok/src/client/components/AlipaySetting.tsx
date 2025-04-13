@@ -10,12 +10,13 @@ export const registerAlipaySettingComponent = (props: { plugin: Plugin }) => {
   const { app } = plugin;
   const { pluginSettingsManager } = app;
 
-  pluginSettingsManager.add('alipay_setting', {
-    title: '支付宝密钥',
-    icon: 'AlipayOutlined',
-    Component: AlipaySetting,
-    aclSnippet: 'pm.alipay_setting',
-  });
+  // 这个口子,需要的时候再显示就行
+  // pluginSettingsManager.add('alipay_setting', {
+  //   title: '支付宝密钥',
+  //   icon: 'AlipayOutlined',
+  //   Component: AlipaySetting,
+  //   aclSnippet: 'pm.alipay_setting',
+  // });
 };
 
 const useStyles = createStyles(({ css }) => {

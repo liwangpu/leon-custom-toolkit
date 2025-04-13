@@ -100,6 +100,7 @@ export interface IServicePackage {
   id?: number;
   name?: string;
   price?: number;
+  needPurchase?: boolean;
   services?: Array<IPaidService>;
   remark?: string;
 }
@@ -158,5 +159,9 @@ export interface IServicePackagePurchaseOrder {
    * 根据用户购买的单位和时间,折算成月份
    */
   purchaseMonths: number;
+  /**
+   * 与purchaseMonths互斥，该字段优先级高于purchaseMonths，用于自定义过期时间
+   */
+  expirationDate?: string;
   subAccount?: number;
 }

@@ -73,6 +73,7 @@ export const AlipayCenter = (() => {
       }
 
       const createCostRecord = async () => {
+        if (isNil(cost)) return;
         const costsRepo = ctx.db.getRepository('costs');
 
         await costsRepo.create({
@@ -85,11 +86,18 @@ export const AlipayCenter = (() => {
         });
       };
 
+      // console.log(`---------[ generatePayment ]---------`);
+      // console.log(`cost:`, cost);
+
+      await createCostRecord();
+
       // 模拟测试跳转
-      console.log(`---------[ generatePayment ]---------`);
-      console.log(`return_url:`, return_url);
-      // await createCostRecord();
-      // return ctx.redirect(return_url);
+      return ctx.redirect(return_url);
+
+      // 金额为0,是不需要付款的，所以直接走下个流程
+      if (cost.amount === 0) {
+        return ctx.redirect(return_url);
+      }
 
       // 统一收单下单并支付页面接口 https://opendocs.alipay.com/open/59da99d0_alipay.trade.page.pay?pathHash=e26b497f&scene=22
       const result = await instance.pageExec('alipay.trade.page.pay', {
@@ -102,8 +110,6 @@ export const AlipayCenter = (() => {
         return_url,
       });
 
-      await createCostRecord();
-
       ctx.set({
         'Content-Type': 'text/html; charset=UTF-8',
       });
@@ -115,8 +121,8 @@ export const AlipayCenter = (() => {
   const completePayment = (cb: (props: { ctx: Context; next: () => any; cost: IPaymentCost }) => any) => {
     return async (ctx: Context, next: () => any) => {
       const { outTradeNo } = (ctx.query as any) || {};
-      console.log(`---------[ completePayment ]---------`);
-      console.log(`ctx.query :`, ctx.query);
+      // console.log(`---------[ completePayment ]---------`);
+      // console.log(`ctx.query :`, ctx.query);
       if (isNil(outTradeNo)) return;
       const { db } = plugin;
       const costsRepo = db.getRepository('costs');
@@ -124,16 +130,20 @@ export const AlipayCenter = (() => {
       if (isNil(cost)) return;
       // 该请求已经处理
       if (cost.feedback) return;
-      // console.log(`---------[ completePayment ]---------`);
-      // console.log(`outTradeNo:`, outTradeNo);
-      await costsRepo.update({
-        filterByTk: outTradeNo,
-        values: {
-          feedback: true,
-          status: 'paid',
-          feedbackParams: ctx.query,
-        },
-      });
+
+      // 价格为0的单子，不记录费用信息
+      if (cost.amount === 0) {
+        await costsRepo.destroy(outTradeNo);
+      } else {
+        await costsRepo.update({
+          filterByTk: outTradeNo,
+          values: {
+            feedback: true,
+            status: 'paid',
+            feedbackParams: ctx.query,
+          },
+        });
+      }
 
       return cb({ ctx, next, cost });
     };

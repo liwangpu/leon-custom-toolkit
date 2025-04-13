@@ -12,24 +12,42 @@ export const implementUserRoleMiddleware = (plugin: Plugin) => {
 
 const userRoleValidationMiddeware = (plugin: Plugin) => {
   return async (ctx: Context, next: () => Promise<any>) => {
-    const { resourceName, actionName } = getUserInfo({
+    const {
+      resourceName,
+      actionName,
+      organizationId: creatorOrganizationId,
+    } = getUserInfo({
       ctx,
     });
 
-    if (!(resourceName === 'users' && actionName === 'update')) return next();
+    if (!(resourceName === 'users' && (actionName === 'update' || actionName === 'create'))) return next();
+    if (isNil(creatorOrganizationId)) return next();
     // params 格式是 {filterByTk:number;resourceName:string;actionName:string;values:any;filter:any}
     const params = ctx.action.params;
     const { values } = params;
-    const { organizationId, roles: currentUserRoles = [] } = values || {};
-    if (isNil(organizationId)) return next();
+    if (isNil(values)) return next();
+    // eslint-disable-next-line prefer-const
+    let { id: userId, organizationId, roles: userNewRoles = [] } = values || {};
+    // console.log(`---------[ userRoleValidationMiddeware ]---------`);
+    // console.log(`actionName:`, actionName);
+    // console.log(`resourceName:`, resourceName);
+    // console.log(`values:`, values);
+
+    const isCreated = actionName === 'create';
+
+    if (isCreated && isNil(organizationId)) {
+      organizationId = creatorOrganizationId;
+    }
+
+    // 如果是新建的时候,是没有组织id的,编辑才有
     const usersRepo = ctx.db.getRepository('users');
+
     const organUsers = await usersRepo.find({
       filter: {
         organizationId,
       },
       appends: ['roles'],
     });
-
     const roleCountMap = new Map<string, { roleTitle: string; count: number }>();
     const allowRoleCountMap = new Map<string, number>();
 
@@ -40,18 +58,29 @@ const userRoleValidationMiddeware = (plugin: Plugin) => {
       roleCountMap.set(role.name, { roleTitle: role.title, count: count + 1 });
     };
 
+    const calculateCurrentNewRoles = () => {
+      for (const role of userNewRoles) {
+        addCount(role);
+      }
+    };
     // 统计未变更用户角色数量
     for (const us of organUsers) {
       const user = us.dataValues;
-      const roles = user.roles;
-      for (const ro of roles) {
-        const role = ro.dataValues;
-        addCount(role);
+      // 如果当前用户是更新,那么用最新的来判定
+      if (userId === user.id) {
+        calculateCurrentNewRoles();
+      } else {
+        const roles = user.roles;
+        for (const ro of roles) {
+          const role = ro.dataValues;
+          addCount(role);
+        }
       }
     }
-    // 加上当前用户变更的角色信息
-    for (const role of currentUserRoles) {
-      addCount(role);
+
+    // // 加上当前用户变更的角色信息
+    if (isCreated) {
+      calculateCurrentNewRoles();
     }
 
     const currentTime = dayjs();
@@ -63,6 +92,9 @@ const userRoleValidationMiddeware = (plugin: Plugin) => {
       },
       appends: ['package'],
     });
+    // console.log(`---------[ title ]---------`);
+    // console.log(`organizationId:`, organizationId);
+    // console.log(`usablePackages:`, usablePackages);
     for (const _organPck of usablePackages) {
       const organPck = _organPck.dataValues;
       const pck = organPck.package;
@@ -85,6 +117,7 @@ const userRoleValidationMiddeware = (plugin: Plugin) => {
         );
       }
     }
+
     return next();
   };
 };

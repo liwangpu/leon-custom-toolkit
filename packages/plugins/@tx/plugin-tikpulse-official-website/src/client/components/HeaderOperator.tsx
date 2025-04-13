@@ -1,42 +1,14 @@
 import React, { useState } from 'react';
-import { createStyles, useAPIClient } from '@nocobase/client';
+import { createStyles, useCurrentUserContext } from '@nocobase/client';
 import { observer } from 'mobx-react-lite';
-import { Button, Form, Input, Modal, Space, message } from 'antd';
-import CommonModalLayout from './CommonModalLayout';
-import { useNavigate } from 'react-router-dom';
+import { Button, Dropdown, MenuProps } from 'antd';
 import { useEvent } from '../hooks';
-import { GenerateShortId } from '../utils';
-import { isFunction } from 'lodash';
+import { isFunction, isNil } from 'lodash';
 import { AppStore } from './store';
-
-const CountDownButton: React.FC<{ disabled?: boolean; onClick?: () => void }> = observer((props) => {
-  const { disabled, onClick } = props;
-  const [countDown, setCountDown] = useState<number>(0);
-
-  const handleSendVerificationCode = useEvent(() => {
-    if (countDown > 0) return;
-
-    if (isFunction(onClick)) {
-      onClick();
-    }
-    let _countDown = 60;
-    setCountDown(_countDown);
-    const timer = setInterval(() => {
-      if (_countDown === 0) {
-        clearInterval(timer);
-        return;
-      }
-      _countDown--;
-      setCountDown(_countDown);
-    }, 1000);
-  });
-
-  return (
-    <Button disabled={disabled || countDown > 0} onClick={handleSendVerificationCode}>
-      {countDown > 0 ? `重新发送 (${countDown}s)` : '获取验证码'}
-    </Button>
-  );
-});
+import { LogoutOutlined } from '@ant-design/icons';
+import Avatar from '../assets/images/user.png';
+import { useFreeTrialForm } from './forms/FreeTrialForm';
+import { useSignInForm } from './forms/SignInForm';
 
 const useStyles = createStyles(({ css, responsive }) => {
   return {
@@ -55,6 +27,7 @@ const useStyles = createStyles(({ css, responsive }) => {
       color: #fff;
       font-size: 16px;
       font-weight: 700;
+      min-width: 96px;
       border: none;
       border-radius: 6px;
       cursor: pointer;
@@ -90,8 +63,14 @@ const useStyles = createStyles(({ css, responsive }) => {
     operatorContainer: css`
       display: flex;
       flex-flow: column;
+      /* justify-content: center; */
+      align-items: flex-start;
       width: 100%;
-      padding: 0 0 34px 24px;
+      padding: 0 0 34px 68px;
+      gap: 6px 0;
+    `,
+    submitBtn: css`
+      /* max-width: 420px; */
     `,
     fullWidth: css`
       width: 100%;
@@ -102,23 +81,21 @@ const useStyles = createStyles(({ css, responsive }) => {
         border-radius: 8px !important;
       }
     `,
+    userInfo: css`
+      display: flex;
+      align-items: center;
+      font-size: 16px;
+      font-weight: 700;
+      margin-left: 20px;
+      gap: 0 8px;
+      cursor: pointer;
+    `,
+    userAvatar: css`
+      width: 38px;
+      height: 38px;
+    `,
   };
 });
-
-type IFreeTrialForm = {
-  name?: string;
-  phone?: string;
-  email?: string;
-  verificationCode?: string;
-};
-
-const testValue = {
-  name: '小昭昭',
-  // phone: '15577637102',
-  phone: '15577637101',
-  // verificationCode: '123456',
-  email: 'zhao@gmail.com',
-};
 
 export interface IHeaderOperatorProps {
   store: AppStore;
@@ -127,147 +104,73 @@ export interface IHeaderOperatorProps {
 const HeaderOperator: React.FC<IHeaderOperatorProps> = observer((props) => {
   const { store } = props;
   const { styles } = useStyles();
-  const navigate = useNavigate();
-  const apiClient = useAPIClient();
-  const [messageApi, contextHolder] = message.useMessage();
-  const [form] = Form.useForm();
-  const canSendVerificationCode = Form.useWatch<IFreeTrialForm>((val) => val.phone && val.phone.length === 11, form);
+  const currentUserContext = useCurrentUserContext();
+  const currentUser = currentUserContext?.data?.data;
+  const notLogin = isNil(currentUser) || isNil(currentUser.id);
 
-  const smallScreeen = false;
+  const { contextHolder: freeTrialFormContextHolder, toggleModa: toggleFreeTrialFormModa } = useFreeTrialForm({
+    onNavigateLogin: () => {
+      toggleFreeTrialFormModa(false);
+      toggleSignInFormModa(true);
+    },
+  });
+
+  const { contextHolder: signInFormContextHolder, toggleModa: toggleSignInFormModa } = useSignInForm({
+    onNavigateSignIn() {
+      toggleSignInFormModa(false);
+      toggleFreeTrialFormModa(true);
+    },
+  });
 
   const handleFreeTrial = useEvent(() => {
-    store.toggleTrialModa(true);
+    toggleSignInFormModa(true);
   });
 
-  const handleLogin = useEvent(() => {
-    navigate('/signin');
-  });
-
-  const handleSendVerificationCode = useEvent(async () => {
-    const verificationKey = GenerateShortId('free_trial', 16);
-    form.setFieldValue('verificationKey', verificationKey);
-    const phone = form.getFieldValue('phone');
-    await apiClient.request({
-      url: 'applyUser:sendPhoneVerificationSMS',
-      method: 'POST',
-      data: {
-        verificationKey,
-        phone,
-      },
-    });
-    messageApi.success('短信发送成功!');
-  });
-
-  const handleCancelFreeTrial = useEvent(() => {
-    store.toggleTrialModa(false);
-    form.resetFields();
+  const handleLogout = useEvent(() => {
+    localStorage.removeItem('NOCOBASE_TOKEN');
+    window.location.reload();
   });
 
   const handleRequestDemo = useEvent(() => {
     store.requestDemoHandler();
   });
 
-  const handleSubmitFreeTrial = useEvent(async (formData) => {
-    try {
-      const {
-        data: { data },
-      } = await apiClient.request({
-        url: 'applyUser:requestTrial',
-        method: 'POST',
-        data: formData,
-      });
-
-      const appUrl = '/';
-
-      messageApi.success('用户注册成功!');
-      setTimeout(async () => {
-        handleCancelFreeTrial();
-        await apiClient.auth.signIn(data, 'basic');
-        // navigate('/');
-        window.location.href = appUrl;
-        // window.open(appUrl, '_blank');
-      }, 1000);
-    } catch (error) {
-      console.log(`error:`, error);
-    }
-  });
-
-  const renderFreeTrialForm = () => {
+  const renderUserInfo = () => {
+    if (notLogin) return;
+    const items: MenuProps['items'] = [
+      {
+        key: 'logout',
+        icon: <LogoutOutlined />,
+        label: <div>退出登录</div>,
+        onClick: handleLogout,
+      },
+    ];
     return (
-      <CommonModalLayout title={`免费试用${store.trialDays}天`}>
-        <Form
-          labelCol={{ span: 6 }}
-          wrapperCol={{ span: 18 }}
-          // variant="underlined"
-          form={form}
-          initialValues={testValue}
-          autoComplete="off"
-          onFinish={handleSubmitFreeTrial}
-        >
-          <Form.Item name="verificationKey" noStyle>
-            <Input type="hidden" />
-          </Form.Item>
-
-          <Form.Item<IFreeTrialForm> label="姓名" name="name" rules={[{ required: true, message: '该项为必填信息!' }]}>
-            <Input />
-          </Form.Item>
-
-          <Form.Item<IFreeTrialForm> label="邮箱" name="email" rules={[{ required: true, message: '该项为必填信息!' }]}>
-            <Input />
-          </Form.Item>
-
-          <Form.Item<IFreeTrialForm>
-            label="手机号"
-            name="phone"
-            rules={[{ required: true, message: '该项为必填信息!' }]}
-          >
-            <Input addonBefore="+86" maxLength={11} />
-          </Form.Item>
-
-          {/* <Form.Item<IFreeTrialForm>
-            label="验证码"
-            name="verificationCode"
-            rules={[{ required: true, message: '该项为必填信息!' }]}
-          >
-            <Space.Compact style={{ width: '100%' }}>
-              <Input />
-              <CountDownButton disabled={!canSendVerificationCode} onClick={handleSendVerificationCode} />
-            </Space.Compact>
-          </Form.Item> */}
-
-          <div className={styles.operatorContainer}>
-            <Button type="primary" size="large" block htmlType="submit">
-              立即提交
-            </Button>
-          </div>
-        </Form>
-      </CommonModalLayout>
+      <Dropdown menu={{ items }}>
+        <div className={styles.userInfo}>
+          <img className={styles.userAvatar} src={Avatar} />
+          <div>{currentUser.nickname}</div>
+        </div>
+      </Dropdown>
     );
   };
 
   return (
     <div className={styles.operators}>
-      {contextHolder}
+      {freeTrialFormContextHolder()}
+      {signInFormContextHolder()}
 
       <button className={styles.requestDemoBtn} onClick={handleRequestDemo}>
         预约演示
       </button>
 
-      <button className={styles.freeTrialBtn} onClick={handleFreeTrial}>
-        免费试用
-      </button>
+      {notLogin && (
+        <button className={styles.freeTrialBtn} onClick={handleFreeTrial}>
+          登录
+        </button>
+      )}
 
-      <Modal
-        className={styles.customModal}
-        open={store.trialModaShow}
-        width={smallScreeen ? '92%' : 500}
-        footer={null}
-        keyboard={false}
-        maskClosable={false}
-        onCancel={handleCancelFreeTrial}
-      >
-        {renderFreeTrialForm()}
-      </Modal>
+      {renderUserInfo()}
     </div>
   );
 });
@@ -275,3 +178,26 @@ const HeaderOperator: React.FC<IHeaderOperatorProps> = observer((props) => {
 HeaderOperator.displayName = 'HeaderOperator';
 
 export default HeaderOperator;
+
+// export function useCompanySKUUniqueCheckRule(id: string) {
+//   const check = useEvent(async (val: string) => {
+//     // 如果以-结尾,说明正在编排sku,不必查询
+//     const { data } = await axios.request({
+//       url: '/api/production/query',
+//       method: 'POST',
+//       data: {
+//         select: ['companySKU'],
+//         filter: {
+//           companySKU: val.trim(),
+//         },
+//       },
+//     }) as IRequestResult;
+//     const { count, content } = data;
+//     if (id && count > 0 && content.some(c => c.id === id)) {
+//       return false;
+//     }
+//     return count > 0;
+//   });
+
+//   return useUniqueCheckRule({ message: 'SKU已经存在!', check });
+// }

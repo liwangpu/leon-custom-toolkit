@@ -29,10 +29,11 @@ const useStyles = createStyles(({ css, responsive }) => {
     intro: css`
       display: flex;
       flex-flow: row wrap;
+      justify-content: space-around;
       gap: 0 40px;
     `,
     introLeft: css`
-      flex: 1;
+      flex: 0 0 44%;
       display: flex;
       flex-flow: column;
       align-items: flex-start;
@@ -49,8 +50,8 @@ const useStyles = createStyles(({ css, responsive }) => {
     `,
     introImg: css`
       position: static;
-      width: 600px;
-      height: 658px;
+      width: 400px;
+      height: 458px;
       z-index: 2;
     `,
     tip: css`

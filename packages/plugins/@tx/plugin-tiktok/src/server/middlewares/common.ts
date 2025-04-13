@@ -7,13 +7,19 @@ import axios from 'axios';
  * @param ctx 必须是middlewares中的ctx
  * @returns
  */
-export function getUserInfo(props: { ctx: any }) {
+export function getUserInfo(props: { ctx: Context }) {
   const { ctx } = props;
   const { currentUser, currentRole } = ctx.state || {};
+
+  // 切记，如果发现currentUser为空，那么有可能是因为resource.action设置了public，即接口不用token访问，此时哪怕传递了token,这里获得的用户信息依旧是null/undefined
+  // 解决的办法只有取消action public
   if (isNil(currentUser)) {
     return {};
   }
+
   const { organizationId, roles } = currentUser || { roles: [], organizationId: null };
+  // console.log(`getUserInfo currentUser.organizationId:`, currentUser.organizationId);
+  // console.log(`getUserInfo currentUser.name:`, currentUser.name);
   // console.log(`currentUser:`, currentUser);
   // const rolesSet = new Set(roles.map((r) => r.name));
   const isRootOrAdmin = currentRole === 'root' || currentRole === 'admin' || currentRole === 'tkAppRegisterDemoUser';
@@ -38,7 +44,7 @@ export function serverRequest(props: { url: string; method?: string; ctx?: Conte
 
   const { url, method, data, params, ctx } = props;
   const headers = ctx ? pick(ctx.request.headers, commonHeader) : {};
-  console.log(`headers:`, headers);
+
   return axios.request({
     url: `${serverBaseUrl}/${url}`,
     method: method || 'POST',

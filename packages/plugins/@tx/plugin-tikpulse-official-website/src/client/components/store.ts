@@ -2,14 +2,15 @@ import { APIClient } from '@nocobase/client';
 import { action, flow, makeObservable, observable } from 'mobx';
 import { isNil } from 'lodash';
 import { createContext } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { IPackage } from '../../interface';
 
 export class AppStore {
   public wechatServieQRCode: string;
   public hotline: string;
+  public organizationId: number;
   public trialDays = 3;
-  public trialModaShow: boolean;
+  public trialModaShow = true;
   public packages: IPackage[];
   public services: IPackage[];
   public purchasedPackage: Map<string, { subAccount?: number }> = new Map();
@@ -18,6 +19,7 @@ export class AppStore {
     public props: { apiClient: APIClient; navigate: ReturnType<typeof useNavigate>; loginIn?: boolean },
   ) {
     makeObservable(this, {
+      organizationId: observable,
       loginIn: observable,
       wechatServieQRCode: observable,
       hotline: observable,
@@ -29,6 +31,7 @@ export class AppStore {
       toggleTrialModa: action,
       setPurchasedPackage: action,
       requestDemoHandler: action,
+      setOrganizationId: action,
       initialize: flow,
     });
     this.loginIn = props.loginIn;
@@ -78,7 +81,6 @@ export class AppStore {
     for (const packageId of packageIds) {
       this.purchasedPackage.set(packageId, initData[packageId]);
     }
-    console.log(`this.purchasedPackage:`, this.purchasedPackage);
   }
 
   public requestDemoHandler() {
@@ -96,6 +98,14 @@ export class AppStore {
       scrollToView();
     }, waitingTime);
     //
+  }
+
+  public setOrganizationId(organId: any) {
+    if (isNil(organId)) {
+      this.organizationId = organId;
+    } else {
+      this.organizationId = Number(organId);
+    }
   }
 }
 

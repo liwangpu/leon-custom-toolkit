@@ -37,20 +37,28 @@ const useStyles = createStyles(({ css, responsive }) => {
       display: flex;
       justify-content: center;
       align-items: center;
-      min-width: 600px;
-      min-height: 600px;
+    `,
+    imageWrapper: css`
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      width: 240px;
+      height: 240px;
       background-color: rgb(152, 229, 142);
       border-radius: 16px;
+      padding: 20px;
       overflow: hidden;
       ${responsive.sm} {
         width: 300px;
         height: 300px;
-        min-width: 300px !important;
-        min-height: 300px !important;
+        /* min-width: 300px !important;
+        min-height: 300px !important; */
         padding: 8px;
       }
     `,
     image: css`
+      width: 100%;
+      height: 100%;
       ${responsive.sm} {
         width: 240px;
         height: 240px;
@@ -70,11 +78,11 @@ const useStyles = createStyles(({ css, responsive }) => {
     featureContainer: css`
       display: flex;
       flex-flow: column;
-      gap: 10px 0;
+      gap: 4px 0;
     `,
     feature: css`
       /* border: 2px solid transparent; */
-      padding: 16px;
+      padding: 4px 10px;
       border-radius: 8px;
       cursor: pointer;
       /* color: #515e5f; */
@@ -165,7 +173,11 @@ const FeatureIntroduce: React.FC<IFeatureIntroduceProps> = observer((props) => {
   const renderImage = () => {
     return (
       <div className={styles.imagePart}>
-        {activedFeature && activedFeature.image ? <img src={activedFeature.image} className={styles.image} /> : null}
+        {activedFeature && activedFeature.image ? (
+          <div className={styles.imageWrapper}>
+            <img src={activedFeature.image} className={styles.image} />
+          </div>
+        ) : null}
       </div>
     );
   };

@@ -16,6 +16,7 @@ export const registerServicePermissionsActions = (props: { plugin: Plugin }) => 
       submit: submitPermissions(),
       servicesInfo: getOrganizationServiceInfo(),
       checkOrganPackageIsExpired: checkOrganPackageIsExpired(),
+      getOrganizationId: getOrganizationIdByUsername(),
     },
   });
   app.acl.allow('servicePermissions', '*', 'loggedIn');
@@ -60,7 +61,6 @@ const getOrganizationServiceInfo = () => {
     let organPackages: IOrganizationServicePackage[] = [];
     let organServices: IOrganizationPaidService[] = [];
     ctx.withoutDataWrapping = true;
-
     const genResponse = () => {
       ctx.body = {
         organPackages,
@@ -83,14 +83,18 @@ const getOrganizationServiceInfo = () => {
         organizationId,
       },
     });
+
+    // console.log(`organPackages:`, organPackages);
     organPackages = organPackages.map((pck: any) => {
       const item: IOrganizationServicePackage = pck.dataValues;
       let daysRemaining = currentTime.diff(item.expirationDate, 'day');
       if (daysRemaining > 0) {
         daysRemaining = 0;
       }
+      const subAccount = item.subAccount > 0 ? item.subAccount - 1 : 0;
       return {
         ...item,
+        subAccount,
         purchasingDate: transferDateTime(item.purchasingDate),
         expirationDate: transferDateTime(item.expirationDate),
         daysRemaining: -daysRemaining,
@@ -138,5 +142,11 @@ const checkOrganPackageIsExpired = () => {
     ctx.body = {
       expiredPackages,
     };
+  };
+};
+
+const getOrganizationIdByUsername = () => {
+  return async (ctx: Context, next: () => any) => {
+    const { noid } = ctx.request.query as any;
   };
 };
