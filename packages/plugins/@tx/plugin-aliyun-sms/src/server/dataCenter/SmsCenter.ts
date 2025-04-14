@@ -36,11 +36,9 @@ export const SmsCenter = (() => {
       lastClientAccessKeyId === setting.accessKeyID &&
       lastClientAccessKeySecret === setting.accessKeySecret
     ) {
-      console.log(`ins未改变`);
       return _client;
     }
 
-    console.log(`生成ins`);
     lastClientAccessKeyId = setting.accessKeyID;
     lastClientAccessKeySecret = setting.accessKeySecret;
 
@@ -96,6 +94,9 @@ export const SmsCenter = (() => {
   const verificationCode = (props: { verificationKey: string; verificationCode: string }): string | null => {
     const { verificationKey, verificationCode } = props;
     const record = verificationMap.get(verificationKey);
+    console.log(`---------[ verificationCode ]---------`);
+    console.log(`verificationKey:`, verificationKey);
+    console.log(`verificationCode:`, verificationCode);
     if (!record || record.verificationCode !== verificationCode) {
       return INVALID_VERIFIACTION_CODE_MESSAGE;
     }

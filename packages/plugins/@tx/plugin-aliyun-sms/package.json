@@ -1,6 +1,6 @@
 {
   "name": "@tx/plugin-aliyun-sms",
-  "version": "1.0.2",
+  "version": "1.0.4",
   "displayName": "阿里云短信服务",
   "displayName.zh-CN": "阿里云短信服务",
   "description": "提供阿里云短信服务",

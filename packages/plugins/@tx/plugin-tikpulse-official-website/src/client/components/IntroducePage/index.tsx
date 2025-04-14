@@ -13,6 +13,7 @@ const useStyles = createStyles(({ css }) => {
       flex-flow: column;
       align-items: center;
       gap: 70px 0;
+      z-index: 10;
     `,
   };
 });

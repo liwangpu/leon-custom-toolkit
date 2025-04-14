@@ -4,7 +4,7 @@ import { createStyles } from '@nocobase/client';
 import { isNil } from 'lodash';
 import PackageList from './PackageList';
 import { observer } from 'mobx-react-lite';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
 import { AppStoreContext } from './store';
 import { useEvent } from '../hooks';
 import classNames from 'classnames';

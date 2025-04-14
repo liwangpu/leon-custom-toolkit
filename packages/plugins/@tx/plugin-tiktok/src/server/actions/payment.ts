@@ -2,7 +2,7 @@ import { Context } from '@nocobase/actions';
 import { isNil, omit } from 'lodash';
 import dayjs from 'dayjs';
 import { Plugin } from '@nocobase/server';
-import Database, { CollectionOptions, IDatabaseOptions } from '@nocobase/database';
+import Database from '@nocobase/database';
 import { ALIPAY_SETTING_RECORD_KEY, PURCHASEDURATION_MONTHS_MAPPING } from '../commons';
 import { AlipayCenter } from '../dataCenter';
 import {
@@ -537,6 +537,7 @@ const packagePaymentFeedback = AlipayCenter.completePayment(async ({ ctx, next, 
   const organServicePackageRepo = ctx.db.getRepository('organizationServicePackage');
   const organizationPaidServiceRepo = ctx.db.getRepository('organizationPaidService');
   const servicePackageRepo = ctx.db.getRepository('servicePackage');
+  const organizationRep = ctx.db.getRepository('organization');
   const { purchaseMonths, expirationDate: _expirationDate } = order;
   const currentTime = dayjs();
   const currentTimeStr = transferDateTime(currentTime);
@@ -657,8 +658,26 @@ const packagePaymentFeedback = AlipayCenter.completePayment(async ({ ctx, next, 
     return returnCloseWin();
   }
 
-  // 这里其实有个判断,如果是已经购买过的套餐,需延长时间
-
+  // 如果当前套餐是试用版本，那么把当前的管理员设置为运营和开发的角色
+  if (servicePackage.packageUidType === '试用') {
+    const organ = await organizationRep.findByTargetKey(organizationId);
+    const organManagerId = organ.managerId;
+    const userRepo = ctx.db.getRepository('users');
+    const organUser = await userRepo.findOne({
+      filter: {
+        id: organManagerId,
+      },
+      appends: ['roles'],
+    });
+    const roles = (organUser.roles as any[]).map((r) => ({ name: r.name }));
+    roles.push({ name: 'operationSpecialist' }, { name: 'productDeveloper' });
+    await userRepo.update({
+      values: {
+        roles,
+      },
+      filterByTk: organManagerId,
+    });
+  }
   const organPaidServices = paidServices.map((service) => {
     return {
       organizationId,

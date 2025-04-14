@@ -1,7 +1,7 @@
 import { Plugin } from '@nocobase/server';
 import { Context } from '@nocobase/actions';
 import { isNil } from 'lodash';
-import { IAliyunSmsSetting, INormalSmsProps } from '../../interfaces';
+import { IAliyunSmsSetting, INormalSmsProps, ISmsVerificationData } from '../../interfaces';
 
 import { ALIYUN_SMS_SETTING_RECORD_KEY } from '../consts';
 import { SmsCenter } from '../dataCenter';
@@ -19,9 +19,12 @@ export const registerAliyunSmsActions = (props: { plugin: Plugin }) => {
       submitSetting: submitSetting(),
       setting: getSetting(),
       sendSms: sendSms(),
+      verification: verification(),
     },
   });
   app.acl.allow('aliyunSms', '*', 'loggedIn');
+  app.acl.allow('aliyunSms', 'sendSms', 'public');
+  app.acl.allow('aliyunSms', 'verification', 'public');
 };
 
 const getSetting = () => {
@@ -62,13 +65,23 @@ const submitSetting = () => {
 const sendSms = () => {
   return async (ctx: Context, next: () => any) => {
     const formData = ctx.request.body as INormalSmsProps;
-    // const aliyunSmsSettingRepo = ctx.db.getRepository('aliyunSmsSetting');
-    // const record = await aliyunSmsSettingRepo.findByTargetKey(ALIYUN_SMS_SETTING_RECORD_KEY);
-    // if (isNil(record)) {
-    //   throw new Error(`阿里云短信服务没有配置,请先配置基础信息`);
-    // }
-    console.log(`---------[ sendSms ]---------`);
-
+    const aliyunSmsSettingRepo = ctx.db.getRepository('aliyunSmsSetting');
+    const record = await aliyunSmsSettingRepo.findByTargetKey(ALIYUN_SMS_SETTING_RECORD_KEY);
+    if (isNil(record)) {
+      throw new Error(`阿里云短信服务没有配置,请先配置基础信息`);
+    }
     await SmsCenter.sendSms(formData);
+  };
+};
+
+const verification = () => {
+  return async (ctx: Context, next: () => any) => {
+    const formData = ctx.request.body as ISmsVerificationData;
+    const message = await SmsCenter.verificationCode(formData);
+
+    ctx.withoutDataWrapping = true;
+    ctx.body = {
+      message,
+    };
   };
 };

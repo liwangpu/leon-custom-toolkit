@@ -14,3 +14,8 @@ export interface INormalSmsProps {
    */
   verificationKey?: string;
 }
+
+export interface ISmsVerificationData {
+  verificationKey: string;
+  verificationCode: string;
+}

@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { useAPIClient } from '@nocobase/client';
+import { useAPIClient, useCurrentUserContext } from '@nocobase/client';
 import { createStyles, useResponsive } from 'antd-style';
 import { Plugin } from '@nocobase/client';
 import { observer } from 'mobx-react-lite';
@@ -18,6 +18,8 @@ import { PageHeaderHeight, PageHeaderHeight_SM, PrimaryColor } from './common';
 import { isNil } from 'lodash';
 import ServicePage from './ServicePage';
 import DownloadPage from './DownloadPage';
+import { useFreeTrialForm } from './forms/FreeTrialForm';
+import { useSignInForm } from './forms/SignInForm';
 
 interface INavItem {
   key: AppNameEnum;
@@ -150,11 +152,40 @@ const HomePage: React.FC = observer((props) => {
   const { appName: _appName } = useParams();
   const navigate = useNavigate();
   const apiClient = useAPIClient();
-  const appStore = useMemo(() => new AppStore({ apiClient, navigate }), [apiClient]);
+  const { contextHolder: freeTrialFormContextHolder, toggleModa: toggleFreeTrialFormModa } = useFreeTrialForm({
+    onNavigateLogin: () => {
+      toggleFreeTrialFormModa(false);
+      toggleSignInFormModa(true);
+    },
+  });
+  const { contextHolder: signInFormContextHolder, toggleModa: toggleSignInFormModa } = useSignInForm({
+    // show: true,
+    onNavigateSignIn() {
+      toggleSignInFormModa(false);
+      toggleFreeTrialFormModa(true);
+    },
+  });
+  const appStore = useMemo(
+    () =>
+      new AppStore({
+        apiClient,
+        navigate,
+        handleOpenSignInForm() {
+          toggleSignInFormModa(true);
+        },
+        handleOpenSignUpForm() {
+          toggleFreeTrialFormModa(true);
+        },
+      }),
+    [apiClient],
+  );
   const { lg } = useResponsive();
   const appName: AppNameEnum = (_appName || AppNameEnum.introduce) as any;
   const [activedApp, setActivedApp] = useState<INavItem>();
   const bgColor: string = activedApp?.bgColor || '#fff';
+  const currentUserContext = useCurrentUserContext();
+  const currentUser = currentUserContext?.data?.data;
+  const notLogin = isNil(currentUser) || isNil(currentUser.id);
 
   const handleNavigateTo = useEvent((appName: AppNameEnum) => {
     navigate(`/home/${appName}`);
@@ -234,6 +265,8 @@ const HomePage: React.FC = observer((props) => {
             </div>
             <div className={styles.navs}>{renderNavs()}</div>
             <HeaderOperator store={appStore} />
+            {freeTrialFormContextHolder()}
+            {signInFormContextHolder()}
           </div>
           <div className={styles.pageContent}>{renderPage()}</div>
           <div className={styles.pageFooter}>

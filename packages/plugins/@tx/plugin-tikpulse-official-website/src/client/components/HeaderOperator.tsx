@@ -1,14 +1,12 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { createStyles, useCurrentUserContext } from '@nocobase/client';
 import { observer } from 'mobx-react-lite';
-import { Button, Dropdown, MenuProps } from 'antd';
+import { Dropdown, MenuProps } from 'antd';
 import { useEvent } from '../hooks';
-import { isFunction, isNil } from 'lodash';
+import { isNil } from 'lodash';
 import { AppStore } from './store';
 import { LogoutOutlined } from '@ant-design/icons';
 import Avatar from '../assets/images/user.png';
-import { useFreeTrialForm } from './forms/FreeTrialForm';
-import { useSignInForm } from './forms/SignInForm';
 
 const useStyles = createStyles(({ css, responsive }) => {
   return {
@@ -108,22 +106,8 @@ const HeaderOperator: React.FC<IHeaderOperatorProps> = observer((props) => {
   const currentUser = currentUserContext?.data?.data;
   const notLogin = isNil(currentUser) || isNil(currentUser.id);
 
-  const { contextHolder: freeTrialFormContextHolder, toggleModa: toggleFreeTrialFormModa } = useFreeTrialForm({
-    onNavigateLogin: () => {
-      toggleFreeTrialFormModa(false);
-      toggleSignInFormModa(true);
-    },
-  });
-
-  const { contextHolder: signInFormContextHolder, toggleModa: toggleSignInFormModa } = useSignInForm({
-    onNavigateSignIn() {
-      toggleSignInFormModa(false);
-      toggleFreeTrialFormModa(true);
-    },
-  });
-
   const handleFreeTrial = useEvent(() => {
-    toggleSignInFormModa(true);
+    store.openSignInForm();
   });
 
   const handleLogout = useEvent(() => {
@@ -157,9 +141,6 @@ const HeaderOperator: React.FC<IHeaderOperatorProps> = observer((props) => {
 
   return (
     <div className={styles.operators}>
-      {freeTrialFormContextHolder()}
-      {signInFormContextHolder()}
-
       <button className={styles.requestDemoBtn} onClick={handleRequestDemo}>
         预约演示
       </button>
@@ -178,26 +159,3 @@ const HeaderOperator: React.FC<IHeaderOperatorProps> = observer((props) => {
 HeaderOperator.displayName = 'HeaderOperator';
 
 export default HeaderOperator;
-
-// export function useCompanySKUUniqueCheckRule(id: string) {
-//   const check = useEvent(async (val: string) => {
-//     // 如果以-结尾,说明正在编排sku,不必查询
-//     const { data } = await axios.request({
-//       url: '/api/production/query',
-//       method: 'POST',
-//       data: {
-//         select: ['companySKU'],
-//         filter: {
-//           companySKU: val.trim(),
-//         },
-//       },
-//     }) as IRequestResult;
-//     const { count, content } = data;
-//     if (id && count > 0 && content.some(c => c.id === id)) {
-//       return false;
-//     }
-//     return count > 0;
-//   });
-
-//   return useUniqueCheckRule({ message: 'SKU已经存在!', check });
-// }

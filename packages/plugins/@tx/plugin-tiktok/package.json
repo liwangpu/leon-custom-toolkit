@@ -1,6 +1,6 @@
 {
   "name": "@tx/plugin-tiktok",
-  "version": "0.0.121",
+  "version": "0.0.126",
   "main": "dist/server/index.js",
   "displayName": "泰香: tiktok管理",
   "displayName.zh-CN": "泰香: tiktok管理",
@@ -23,6 +23,7 @@
     "axios": "1.7.x",
     "dayjs": "1.x",
     "lodash": "4.x",
-    "antd": "5.x"
+    "antd": "5.x",
+    "@ant-design/plots": "2.x"
   }
 }

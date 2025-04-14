@@ -9,13 +9,9 @@ import { useEvent } from '../../hooks';
 import WideScreenContainer from '../WideScreenContainer';
 import { observer } from 'mobx-react-lite';
 import {
-  FirstLevelTitleFontSize,
   FirstLevelTitleFontSize_SM,
-  FirstLevelTitleFontWeight,
   FirstLevelTitleFontWeight_SM,
-  SecondLevelTitleFontSize,
   SecondLevelTitleFontSize_SM,
-  SecondLevelTitleFontWeight,
   SecondLevelTitleFontWeight_SM,
 } from '../common';
 
@@ -128,7 +124,7 @@ const Part1: React.FC = observer(() => {
   const { lg } = useResponsive();
 
   const handleFreeTrial = useEvent(() => {
-    store.toggleTrialModa(true);
+    store.openSignUpForm();
   });
 
   return (

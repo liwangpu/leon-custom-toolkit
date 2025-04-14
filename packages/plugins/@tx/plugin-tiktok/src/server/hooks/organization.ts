@@ -14,8 +14,9 @@ export function afterOrganizationCreate(props: { db: Database }) {
     const extra = organization.extra || {};
     const { initialPassword = '123456' } = extra;
     const userRep = db.getRepository('users');
+    const organizationRep = db.getRepository('organization');
     // 创建租户默认管理员
-    await userRep.create({
+    const manager = await userRep.create({
       values: {
         nickname: organization.director,
         username: organization.directorPhone,
@@ -36,6 +37,16 @@ export function afterOrganizationCreate(props: { db: Database }) {
         ],
       },
     });
+
+    setTimeout(() => {
+      organizationRep.update({
+        values: {
+          id: model.id,
+          managerId: manager.id,
+        },
+        filterByTk: model.id,
+      });
+    }, 3000);
 
     // // 创建租户试用套餐
     // //试用版本的套餐id

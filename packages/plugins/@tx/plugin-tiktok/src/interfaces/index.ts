@@ -103,6 +103,7 @@ export interface IServicePackage {
   needPurchase?: boolean;
   services?: Array<IPaidService>;
   remark?: string;
+  packageUidType?: string;
 }
 
 export interface IOrganizationPaidService {

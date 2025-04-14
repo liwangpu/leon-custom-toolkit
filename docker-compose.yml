@@ -22,17 +22,17 @@ services:
       - LOGGER_LEVEL=error
       - DB_DIALECT=postgres
       # # Server DB
-      # - DB_HOST=106.55.173.188
-      # - DB_PORT=9201
-      # - DB_DATABASE=tiktok
-      # - DB_USER=postgres
-      # - DB_PASSWORD=Leon.pu199139!
-      # Local DB
-      - DB_HOST=host.docker.internal
-      - DB_PORT=5432
-      - DB_DATABASE=tk
+      - DB_HOST=47.83.164.52
+      - DB_PORT=59201
+      - DB_DATABASE=tiktok2
       - DB_USER=postgres
       - DB_PASSWORD=Leon.pu199139!
+      # Local DB
+      # - DB_HOST=host.docker.internal
+      # - DB_PORT=5432
+      # - DB_DATABASE=tiktok2
+      # - DB_USER=postgres
+      # - DB_PASSWORD=Leon.pu199139!
     volumes:
       - ./storage:/app/nocobase/storage
     ports:

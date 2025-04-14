@@ -15,6 +15,7 @@ import { registerSellerLiveOverviewComponent } from './SellerLiveOverview';
 import { registerPaidServicePermissionSettingComponent } from './PaidServicePermission';
 import { registerAlipaySettingComponent } from './AlipaySetting';
 import { registerOrganizationInfoComponent } from './OrganizationInfo';
+import { registerTestComponent } from './test';
 
 export const registerComponents = (props: { plugin: Plugin }) => {
   registerPaymentComponent(props);
@@ -33,6 +34,6 @@ export const registerComponents = (props: { plugin: Plugin }) => {
   registerPaidServicePermissionSettingComponent(props);
   registerAlipaySettingComponent(props);
   registerOrganizationInfoComponent(props);
-  // registerTestComponent(props);
+  registerTestComponent(props);
   // registerTest2Component(props);
 };

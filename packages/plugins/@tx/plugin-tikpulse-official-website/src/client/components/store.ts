@@ -1,6 +1,6 @@
 import { APIClient } from '@nocobase/client';
 import { action, flow, makeObservable, observable } from 'mobx';
-import { isNil } from 'lodash';
+import { isFunction, isNil } from 'lodash';
 import { createContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { IPackage } from '../../interface';
@@ -15,8 +15,16 @@ export class AppStore {
   public services: IPackage[];
   public purchasedPackage: Map<string, { subAccount?: number }> = new Map();
   public loginIn: boolean;
+  public handleOpenSignInForm: () => void;
+  public handleOpenSignUpForm: () => void;
   public constructor(
-    public props: { apiClient: APIClient; navigate: ReturnType<typeof useNavigate>; loginIn?: boolean },
+    public props: {
+      apiClient: APIClient;
+      navigate: ReturnType<typeof useNavigate>;
+      handleOpenSignInForm?: () => void;
+      handleOpenSignUpForm?: () => void;
+      loginIn?: boolean;
+    },
   ) {
     makeObservable(this, {
       organizationId: observable,
@@ -35,6 +43,8 @@ export class AppStore {
       initialize: flow,
     });
     this.loginIn = props.loginIn;
+    this.handleOpenSignInForm = props.handleOpenSignInForm;
+    this.handleOpenSignUpForm = props.handleOpenSignUpForm;
   }
 
   public initialize = flow(function* (this: AppStore) {
@@ -106,6 +116,16 @@ export class AppStore {
     } else {
       this.organizationId = Number(organId);
     }
+  }
+
+  public openSignInForm() {
+    if (!isFunction(this.handleOpenSignInForm)) return;
+    this.handleOpenSignInForm();
+  }
+
+  public openSignUpForm() {
+    if (!isFunction(this.handleOpenSignUpForm)) return;
+    this.handleOpenSignUpForm();
   }
 }
 

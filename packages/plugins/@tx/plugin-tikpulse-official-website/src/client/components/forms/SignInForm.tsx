@@ -1,10 +1,9 @@
-import React, { useContext, useState } from 'react';
+import React, { useState } from 'react';
 import { createStyles, useAPIClient } from '@nocobase/client';
-import { Button, Form, Input, Modal, Space, Tabs, TabsProps, message } from 'antd';
+import { Button, Form, Input, Modal, Tabs, TabsProps, message } from 'antd';
 import CommonModalLayout from '../CommonModalLayout';
 import { useEvent } from '../../hooks';
-import { AppStoreContext } from '../store';
-import VerificationCodeInput from '../commons/VerificationCodeInput';
+import VerificationCodeInput, { useSmsVerificationRule } from '../commons/VerificationCodeInput';
 
 interface IPasswordLoginForm {
   account: string;
@@ -62,20 +61,23 @@ const useStyles = createStyles(({ css, responsive }) => {
   };
 });
 
-export const useSignInForm = (props: { onNavigateSignIn: () => void }) => {
-  const { onNavigateSignIn } = props;
+const testValue = {
+  // phone: '15577637102',
+  phone: '15721457986',
+  // phone: '15316063291',
+  // verificationCode: '123456',
+};
+
+export const useSignInForm = (props: { show?: boolean; onNavigateSignIn: () => void }) => {
+  const { onNavigateSignIn, show } = props;
   const { styles } = useStyles();
   const [passwordSignForm] = Form.useForm();
   const [phoneSignForm] = Form.useForm();
   const [loading, setLoading] = useState<boolean>(false);
-  const [showModa, setShowModa] = useState<boolean>(false);
+  const [showModa, setShowModa] = useState<boolean>(show);
   const apiClient = useAPIClient();
-  const store = useContext(AppStoreContext);
-  const canSendVerificationCode = Form.useWatch<IPhoneLoginForm>(
-    (val) => val.phone && val.phone.length === 11,
-    phoneSignForm,
-  );
-
+  const phone: string = Form.useWatch<IPhoneLoginForm>((val) => val.phone, phoneSignForm) as any;
+  const { validator: verificationCodeRule, setVerificationKey } = useSmsVerificationRule({ phone });
   const handlePasswordLogin = useEvent(async (formData: IPasswordLoginForm) => {
     await apiClient.auth.signIn({ account: formData.account, password: formData.password }, 'basic');
     message.success('登录成功!');
@@ -141,6 +143,7 @@ export const useSignInForm = (props: { onNavigateSignIn: () => void }) => {
           form={phoneSignForm}
           layout="vertical"
           autoComplete="off"
+          // initialValues={testValue}
           className={styles.passwordForm}
           onFinish={handlePasswordLogin}
         >
@@ -155,9 +158,9 @@ export const useSignInForm = (props: { onNavigateSignIn: () => void }) => {
           <Form.Item<IPhoneLoginForm>
             label="验证码"
             name="verificationCode"
-            rules={[{ required: true, message: '该项为必填信息!' }]}
+            rules={[{ required: true, message: '该项为必填信息!' }, verificationCodeRule]}
           >
-            <VerificationCodeInput disabled={!canSendVerificationCode} />
+            <VerificationCodeInput phone={phone} setVerificationKey={setVerificationKey} />
           </Form.Item>
 
           <div className={styles.operatorContainer}>
@@ -190,7 +193,7 @@ export const useSignInForm = (props: { onNavigateSignIn: () => void }) => {
     return (
       <CommonModalLayout title="登录">
         <div className={styles.tabsContainer}>
-          <Tabs className={styles.tabs} items={items} />
+          <Tabs defaultActiveKey="t1" className={styles.tabs} items={items} />
         </div>
       </CommonModalLayout>
     );

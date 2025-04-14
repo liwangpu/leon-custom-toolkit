@@ -1,8 +1,6 @@
 import { Plugin } from '@nocobase/server';
 import { Context } from '@nocobase/actions';
 import { isNil } from 'lodash';
-// import PluginAliyunSmsServer from '@tx/plugin-aliyun-sms';
-import { customAlphabet } from 'nanoid/non-secure';
 
 export const registerApplyUserActions = (props: { plugin: Plugin }) => {
   const { plugin } = props;
@@ -12,7 +10,6 @@ export const registerApplyUserActions = (props: { plugin: Plugin }) => {
     name: 'applyUser',
     actions: {
       requestTrial: requestTrial(),
-      sendPhoneVerificationSMS: sendPhoneVerificationSMS(),
     },
   });
   app.acl.allow('applyUser', '*', 'public');
@@ -103,29 +100,6 @@ const requestTrial = () => {
         account: formData.phone,
         password: '123456',
       },
-    };
-  };
-};
-
-const sendPhoneVerificationSMS = () => {
-  const genVerificationCode = customAlphabet('0123456789', 6);
-  return async (ctx: Context, next: () => any) => {
-    const formData = ctx.request.body as any;
-    console.log(`---------[ tisendPhoneVerificationSMStle ]---------`);
-    console.log(`formData:`, formData);
-
-    // const smsPulgin: PluginAliyunSmsServer = ctx.app.getPlugin(PluginAliyunSmsServer);
-    // await smsPulgin.sendSMSMessage({
-    //   ...formData,
-    //   signName: '南宁泰香农业',
-    //   templateCode: 'SMS_481215207',
-    //   params: { code: genVerificationCode() },
-    // });
-    // plugin.sendSMSMessage();
-
-    ctx.withoutDataWrapping = true;
-    ctx.body = {
-      data: null,
     };
   };
 };

@@ -23,6 +23,7 @@ export interface ILabelPanelProps {
   loading?: boolean;
   groups: Array<ILabelPanelGroup>;
   values?: { [key: string]: any };
+  footer?: React.ReactNode;
 }
 
 const useStyles = createStyles(({ css }) => {
@@ -61,6 +62,12 @@ const useStyles = createStyles(({ css }) => {
       & > *:last-of-type::after {
         display: none !important;
       }
+    `,
+    groupFooter: css`
+      display: flex;
+      flex-flow: column;
+      justify-content: center;
+      width: 100%;
     `,
     groupContentCustomRender: css`
       display: flex;
@@ -104,7 +111,7 @@ const useStyles = createStyles(({ css }) => {
 });
 
 export const LabelPanel: React.FC<ILabelPanelProps> = observer((props) => {
-  const { title, groups, values, loading } = props;
+  const { title, groups, values, loading, footer } = props;
   const { styles } = useStyles();
 
   const renderGroup = (group: ILabelPanelGroup) => {
@@ -143,6 +150,7 @@ export const LabelPanel: React.FC<ILabelPanelProps> = observer((props) => {
             {labels && labels.length ? labels.map((lb, idx) => renderLabel(lb)) : null}
           </div>
         )}
+        {footer && <div className={styles.groupFooter}>{footer}</div>}
       </div>
     );
   };

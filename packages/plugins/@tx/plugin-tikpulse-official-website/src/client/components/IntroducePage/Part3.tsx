@@ -5,7 +5,6 @@ import { observer } from 'mobx-react-lite';
 import {
   CommonPageContentHorizontalPadding,
   CommonPageContentHorizontalPadding_SM,
-  FirstLevelTitleFontSize,
   FirstLevelTitleFontSize_SM,
   FirstLevelTitleFontWeight,
   FirstLevelTitleFontWeight_SM,

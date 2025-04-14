@@ -1,6 +1,5 @@
 import { Plugin } from '@nocobase/server';
 import { Context } from '@nocobase/actions';
-import { isNil } from 'lodash';
 
 export const registerAssetsActions = (props: { plugin: Plugin }) => {
   const { plugin } = props;

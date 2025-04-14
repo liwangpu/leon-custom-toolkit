@@ -1,10 +1,8 @@
-import React, { useContext, useState } from 'react';
+import React, { useState } from 'react';
 import { createStyles, useAPIClient } from '@nocobase/client';
 import { Button, Form, Input, Modal, message } from 'antd';
 import CommonModalLayout from '../CommonModalLayout';
 import { useEvent } from '../../hooks';
-import { AppStoreContext } from '../store';
-import { GenerateShortId } from '../../utils';
 import VerificationCodeInput from '../commons/VerificationCodeInput';
 
 type IFreeTrialForm = {
@@ -18,12 +16,12 @@ type IFreeTrialForm = {
 };
 
 const testValue = {
-  name: '小昭昭',
+  name: '小秋秋',
   // phone: '15577637102',
-  company: '小昭昭的宇宙直通车',
-  phone: '15577637102',
+  company: '小秋秋的宇宙直通车',
+  phone: '15316063291',
   verificationCode: '123456',
-  email: 'zhao@gmail.com',
+  email: 'qiu@gmail.com',
   password: '888888',
   password2: '888888',
 };
@@ -58,7 +56,6 @@ export const useFreeTrialForm = (props: { onNavigateLogin: () => void }) => {
   const [loading, setLoading] = useState<boolean>(false);
   const [showModa, setShowModa] = useState<boolean>(false);
   const apiClient = useAPIClient();
-  const canSendVerificationCode = Form.useWatch<IFreeTrialForm>((val) => val.phone && val.phone.length === 11, form);
 
   const handleCancelFreeTrial = useEvent(() => {
     setShowModa(false);
@@ -67,6 +64,8 @@ export const useFreeTrialForm = (props: { onNavigateLogin: () => void }) => {
 
   const toggleModa = (show: boolean) => {
     setShowModa(show);
+    console.log(`---------[ toggleModa ]---------`);
+    console.log(`show:`, show);
   };
 
   const handleSubmitFreeTrial = useEvent(async (formData: IFreeTrialForm) => {
@@ -85,7 +84,7 @@ export const useFreeTrialForm = (props: { onNavigateLogin: () => void }) => {
       setTimeout(async () => {
         handleCancelFreeTrial();
         await apiClient.auth.signIn({ account: formData.phone, password: formData.password }, 'basic');
-        window.location.reload();
+        window.location.href = '/home/download';
       }, 1000);
     } catch (error) {
       console.log(`error:`, error);
@@ -100,7 +99,7 @@ export const useFreeTrialForm = (props: { onNavigateLogin: () => void }) => {
           labelCol={{ span: 6 }}
           wrapperCol={{ span: 18 }}
           form={form}
-          initialValues={testValue}
+          // initialValues={testValue}
           autoComplete="off"
           onFinish={handleSubmitFreeTrial}
         >
@@ -132,13 +131,13 @@ export const useFreeTrialForm = (props: { onNavigateLogin: () => void }) => {
             <Input addonBefore="+86" maxLength={11} />
           </Form.Item>
 
-          <Form.Item<IFreeTrialForm>
+          {/* <Form.Item<IFreeTrialForm>
             label="验证码"
             name="verificationCode"
             rules={[{ required: true, message: '该项为必填信息!' }]}
           >
-            <VerificationCodeInput disabled={!canSendVerificationCode} />
-          </Form.Item>
+            <VerificationCodeInput phone={phone} />
+          </Form.Item> */}
 
           <Form.Item<IFreeTrialForm>
             label="密码"

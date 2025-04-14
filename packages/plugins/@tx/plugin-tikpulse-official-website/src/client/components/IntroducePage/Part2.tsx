@@ -9,9 +9,7 @@ import {
   FirstLevelTitleFontSize_SM,
   FirstLevelTitleFontWeight,
   FirstLevelTitleFontWeight_SM,
-  SecondLevelTitleFontSize,
   SecondLevelTitleFontSize_SM,
-  SecondLevelTitleFontWeight,
   SecondLevelTitleFontWeight_SM,
 } from '../common';
 
