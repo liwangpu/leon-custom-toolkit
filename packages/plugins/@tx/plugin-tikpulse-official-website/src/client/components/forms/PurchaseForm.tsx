@@ -7,16 +7,7 @@ import queryString from 'query-string';
 import { isNil, round } from 'lodash';
 import { IPackage } from '../../../interface';
 import dayjs from 'dayjs';
-
-type IFreeTrialForm = {
-  name?: string;
-  phone?: string;
-  email?: string;
-  verificationCode?: string;
-  company?: string;
-  password?: string;
-  password2?: string;
-};
+import { useNavigate } from 'react-router';
 
 const useStyles = createStyles(({ css, token }) => {
   return {
@@ -60,6 +51,7 @@ export const usePurchaseForm = (props: { purchaseMethod: any; packageType: strin
   const { purchaseMethod, packageType } = props;
   const { styles } = useStyles();
   const [form] = Form.useForm();
+  const navigate = useNavigate();
   const [showModa, setShowModa] = useState<boolean>(false);
   const [isReduceSubAccount, setIsReduceSubAccount] = useState<boolean>(false);
   const [purchasePriceValue, setPurchasePriceValue] = useState<number>(0);
@@ -161,7 +153,8 @@ export const usePurchaseForm = (props: { purchaseMethod: any; packageType: strin
 
     const { duration, durationUnit } = values;
     const purchaseMonths = durationUnit === 'annual' ? duration * 12 : duration;
-    const baseUrl = `${window.location.origin}/api/payment:makePackagePayment`;
+    // const baseUrl = `${window.location.origin}/api/payment:makePackagePayment`;
+    const baseUrl = `/api/payment:makePackagePayment`;
     const url = queryString.stringifyUrl({
       url: baseUrl,
       query: {
@@ -171,7 +164,9 @@ export const usePurchaseForm = (props: { purchaseMethod: any; packageType: strin
       },
     });
 
-    window.open(url, '_blank');
+    // window.open(url, '_blank');
+    window.open(url, '_self');
+    // navigate(url);
     setShowModa(false);
   });
 

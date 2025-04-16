@@ -15,22 +15,23 @@ import { ILabelPanelProps, IndicatorCard, LabelPanel } from './LabelPanel';
 import TKVideoCard, { ITKVideoCardProps } from './TKVideoCard';
 import { Radio } from 'antd';
 import { useEvent } from '../hooks';
+import { lazy } from '@nocobase/client';
+import { formatEnglishNumber, getWofoldMaxNumber, pickProperty } from '../utils';
+import TwoChartContainer from './TwoChartContainer';
+import { isNil, max } from 'lodash';
+import { DATE_FILTER_OPTIONS } from '../consts';
+const { DualAxes: G2DualAxes } = lazy(() => import('@ant-design/plots'), 'DualAxes');
 
 const InfluencerOverviewName = 'InfluencerOverview';
 const InfluencerOverviewNameLowercase = InfluencerOverviewName.toLowerCase();
-
-const DATE_FILTER_OPTIONS = [
-  { value: '7', label: '7 天' },
-  { value: '15', label: '15 天' },
-  { value: '30', label: '30 天' },
-  { value: '90', label: '90 天' },
-];
 
 enum panelScope {
   basicOverview = 'basic.overview',
   basicSaleOverview = 'basic.sale.overview',
   basicVideoOverview = 'basic.video.overview',
   basicLiveOverview = 'basic.live.overview',
+  basicFollowerOverview = 'basic.follower.trending',
+  basicDiggOverview = 'basic.digg.trending',
 }
 
 export const registerInfluencerOverviewComponent = (props: { plugin: Plugin }) => {
@@ -295,6 +296,164 @@ const InfluencerOverview: React.FC<any> = withDynamicSchemaProps(
       );
     };
 
+    const renderTrendingCharts = () => {
+      const leftPart = () => {
+        const data = pickProperty(values, panelScope.basicFollowerOverview, []);
+        const maxYValue = max(data.map((d) => d['粉丝增长']));
+        const maxYValueInteger = getWofoldMaxNumber(maxYValue);
+        const config = {
+          xField: '日期',
+          data,
+          title: `粉丝的变化趋势（${dateFilterValue}）天`,
+          height: 300,
+          axis: {
+            x: {
+              labelFormatter: (text, index) => {
+                if (index % 5 === 0) {
+                  return text;
+                } else {
+                  return '';
+                }
+              },
+            },
+            y: {
+              labelFormatter: (text, index) => {
+                return formatEnglishNumber(text);
+              },
+            },
+          },
+          legend: {
+            color: {
+              itemMarker: (v) => {
+                if (v === '粉丝增长') return 'rect';
+                return 'smooth';
+              },
+              layout: {
+                justifyContent: 'center',
+                alignItems: 'center',
+                flexDirection: 'row',
+              },
+            },
+          },
+          children: [
+            {
+              type: 'interval',
+              yField: '粉丝增长',
+              axis: {
+                y: {
+                  title: '粉丝增长',
+                  position: 'right',
+                  titleFill: '#338AFF',
+                },
+              },
+              scale: {
+                y: {
+                  domainMax: maxYValueInteger,
+                },
+              },
+            },
+            {
+              type: 'line',
+              yField: '粉丝数',
+              shapeField: 'smooth',
+              axis: {
+                y: {
+                  title: '粉丝数',
+                  position: 'left',
+                  titleFill: '#4CCCCC',
+                },
+              },
+              scale: {
+                color: { relations: [['粉丝数', '#4CCCCC']] },
+              },
+              style: { lineWidth: 2 },
+            },
+          ],
+        };
+
+        return <G2DualAxes {...config} />;
+      };
+
+      const rightPart = () => {
+        const data = pickProperty(values, panelScope.basicDiggOverview, []);
+        const maxYValue = max(data.map((d) => d['点赞数增长']));
+        const maxYValueInteger = getWofoldMaxNumber(maxYValue);
+        const config = {
+          xField: '日期',
+          data,
+          title: `点赞的趋势（${dateFilterValue}）天`,
+          height: 300,
+          axis: {
+            x: {
+              labelFormatter: (text, index) => {
+                if (index % 5 === 0) {
+                  return text;
+                } else {
+                  return '';
+                }
+              },
+            },
+            y: {
+              labelFormatter: (text, index) => {
+                return formatEnglishNumber(text);
+              },
+            },
+          },
+          legend: {
+            color: {
+              itemMarker: (v) => {
+                if (v === '点赞数增长') return 'rect';
+                return 'smooth';
+              },
+              layout: {
+                justifyContent: 'center',
+                alignItems: 'center',
+                flexDirection: 'row',
+              },
+            },
+          },
+          children: [
+            {
+              type: 'interval',
+              yField: '点赞数增长',
+              axis: {
+                y: {
+                  title: '点赞数增长',
+                  position: 'right',
+                  titleFill: '#338AFF',
+                },
+              },
+              scale: {
+                y: {
+                  domainMax: maxYValueInteger,
+                },
+              },
+            },
+            {
+              type: 'line',
+              yField: '点赞数',
+              shapeField: 'smooth',
+              axis: {
+                y: {
+                  title: '点赞数',
+                  position: 'left',
+                  titleFill: '#4CCCCC',
+                },
+              },
+              scale: {
+                color: { relations: [['点赞数', '#4CCCCC']] },
+              },
+              style: { lineWidth: 2 },
+            },
+          ],
+        };
+
+        return <G2DualAxes {...config} />;
+      };
+
+      return <TwoChartContainer left={leftPart()} right={rightPart()} />;
+    };
+
     const settings: Partial<ILabelPanelProps> = {
       groups: [
         {
@@ -305,6 +464,7 @@ const InfluencerOverview: React.FC<any> = withDynamicSchemaProps(
         {
           key: panelScope.basicSaleOverview,
           title: `过去${dateFilterValue}天视频情况`,
+          footer: renderTrendingCharts(),
         },
         {
           key: 'k1',

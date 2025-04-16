@@ -1,7 +1,7 @@
 import axios, { AxiosInstance } from 'axios';
 import { Plugin } from '@nocobase/server';
 import dayjs from 'dayjs';
-import { isArray, isFunction, isNil, isNumber } from 'lodash';
+import { isArray, isFunction, isNil, isNumber, isString } from 'lodash';
 import { formatEnglishNumber } from '../utils';
 
 type IEchoSort = 'asc' | 'desc';
@@ -600,6 +600,46 @@ export const EchoTikAPI = (() => {
     });
   };
 
+  // // 把这种离散的数组内容合成双轴图
+  // [
+  //   {
+  //     "legend": "粉丝数",
+  //     "axis_x": "2025-03-31",
+  //     "axis_y": 13401103,
+  //     "axis_y_f": "13.40M"
+  //   },
+  //   {
+  //     "legend": "粉丝增长",
+  //     "axis_x": "2025-03-31",
+  //     "axis_y": 24056,
+  //     "axis_y_f": "24.06K"
+  //   },
+  //   ...
+  // ]
+  const mergeDualAxesDataFromArray = (props: {
+    datas: any[];
+    xAxisProperty: string;
+    yAxisProperty: string;
+    legendProperty: string;
+    xAxisPropertyAlias?: string;
+    xAxisPropertyDataOnlyMS?: boolean;
+  }) => {
+    const { datas, xAxisProperty, xAxisPropertyAlias, yAxisProperty, legendProperty, xAxisPropertyDataOnlyMS } = props;
+
+    const dsMap = new Map<string, Record<string, any>>();
+    for (const it of datas) {
+      const xAxisValue: string = it[xAxisProperty];
+      const date = xAxisPropertyDataOnlyMS ? xAxisValue.slice(5) : xAxisValue;
+      const rc = dsMap.get(date) || {};
+      const xAxisAlias = xAxisPropertyAlias || xAxisProperty;
+      rc[xAxisAlias] = date;
+      const legendValue = it[legendProperty];
+      rc[legendValue] = it[yAxisProperty];
+      dsMap.set(date, rc);
+    }
+    return [...dsMap.values()];
+  };
+
   const requestInfluencerTrend = async (props: { influencerId: string; dateRange: number }) => {
     const { influencerId, dateRange } = props;
     // https://echotik.live/api/v1/data/influencers/21609287/products?order=avg_price&sort=desc&page=1&per_page=10&product_categories=601352
@@ -660,7 +700,53 @@ export const EchoTikAPI = (() => {
       data['basic.live.overview'] = record;
     };
 
-    await Promise.all([requestBasicOverview(), requestSaleOverview(), requestVideoOverview(), requestLiveOverview()]);
+    const requestFollowerOverview = async () => {
+      const { data: res } = (await instance.request({
+        url,
+        params: {
+          tag: 'basic.follower.trending',
+          dateRange,
+        },
+      })) as any;
+
+      data['basic.follower.trending'] = mergeDualAxesDataFromArray({
+        datas: res.data,
+        xAxisProperty: 'axis_x',
+        yAxisProperty: 'axis_y',
+        legendProperty: 'legend',
+        xAxisPropertyAlias: '日期',
+        xAxisPropertyDataOnlyMS: true,
+      });
+    };
+
+    const requestDiggOverview = async () => {
+      const tag = 'basic.digg.trending';
+      const { data: res } = (await instance.request({
+        url,
+        params: {
+          tag,
+          dateRange,
+        },
+      })) as any;
+
+      data[tag] = mergeDualAxesDataFromArray({
+        datas: res.data,
+        xAxisProperty: 'axis_x',
+        yAxisProperty: 'axis_y',
+        legendProperty: 'legend',
+        xAxisPropertyAlias: '日期',
+        xAxisPropertyDataOnlyMS: true,
+      });
+    };
+
+    await Promise.all([
+      requestBasicOverview(),
+      requestSaleOverview(),
+      requestVideoOverview(),
+      requestLiveOverview(),
+      requestFollowerOverview(),
+      requestDiggOverview(),
+    ]);
 
     return {
       data,
@@ -970,6 +1056,37 @@ export const EchoTikAPI = (() => {
     return isFunction(transfer) ? transfer(data) : data;
   };
 
+  const transferENUnit = (value: string | number) => {
+    if (isString(value)) {
+      const unit = value[value.length - 1].toLocaleLowerCase();
+      let ma = Number(value.slice(0, value.length - 1));
+      switch (unit) {
+        case 'k':
+          ma = ma * 1000;
+          break;
+        case 'm':
+          ma = ma * 10000000;
+          break;
+        default:
+          break;
+      }
+      return ma;
+    } else {
+      return value;
+    }
+  };
+
+  const transferArrayEnUnit = (arr: any[], transferProperties: string[]) => {
+    if (!isArray(arr)) return arr;
+    return arr.map((it) => {
+      const val = { ...it };
+      for (const property of transferProperties) {
+        val[property] = transferENUnit(val[property]);
+      }
+      return val;
+    });
+  };
+
   const requestProductTrend = async (props: { id: string; dateRange: number }) => {
     const { id, dateRange } = props;
     // https://echotik.live/api/v1/data/products/1730294730237252435/analysis?tag=basic.overview&dateRange=30&start_time=&end_time=
@@ -991,7 +1108,72 @@ export const EchoTikAPI = (() => {
       data['basic.overview'] = formatEnNumberFormat(ds);
     };
 
-    await Promise.all([requestBasicOverview()]);
+    // 销量和销售额
+    const requestBasicSalesTrendingOverview = async () => {
+      const { data: res } = (await instance.request({
+        url,
+        params: {
+          tag: 'basic.sales.trending',
+          indicator: 'total_sale_cnt',
+          dateRange,
+        },
+      })) as any;
+
+      data['basic.sales.trending'] = mergeDualAxesDataFromArray({
+        datas: res.data,
+        xAxisProperty: 'axis_x',
+        yAxisProperty: 'axis_y',
+        legendProperty: 'legend',
+        xAxisPropertyAlias: '日期',
+        xAxisPropertyDataOnlyMS: true,
+      });
+    };
+
+    // 关联达人趋势
+    const requestInfluencerTrendingOverview = async () => {
+      const { data: res } = (await instance.request({
+        url,
+        params: {
+          tag: 'basic.sales.trending',
+          indicator: 'total_ifl_cnt',
+          dateRange,
+        },
+      })) as any;
+
+      data['basic.influencer.trending'] = mergeDualAxesDataFromArray({
+        datas: res.data,
+        xAxisProperty: 'axis_x',
+        yAxisProperty: 'axis_y',
+        legendProperty: 'legend',
+        xAxisPropertyAlias: '日期',
+        xAxisPropertyDataOnlyMS: true,
+      });
+    };
+
+    // 每日视频直播趋势
+    const requestInsightsTrendingOverview = async () => {
+      const { data: res } = (await instance.request({
+        url,
+        params: {
+          tag: 'basic.sales.insights',
+          dateRange,
+        },
+      })) as any;
+
+      const ds: Array<any> = res.data || [];
+      data['basic.insights.trending'] = ds.map((d) => ({
+        类别: d['legend'],
+        日期: (d['axis_x'] as string).slice(5),
+        数量: d['axis_y'],
+      }));
+    };
+
+    await Promise.all([
+      requestBasicOverview(),
+      requestBasicSalesTrendingOverview(),
+      requestInfluencerTrendingOverview(),
+      requestInsightsTrendingOverview(),
+    ]);
 
     return {
       data,
@@ -1676,19 +1858,106 @@ export const EchoTikAPI = (() => {
     const url = `/sellers/${id}/analysis`;
 
     const requestBasicOverview = async () => {
+      const tag = 'basic.overview';
       const { data: res } = (await instance.request({
         url,
         params: {
-          tag: 'basic.overview',
+          tag,
           dateRange,
         },
       })) as any;
 
       const ds: Array<any> = res.data;
-      data['basic.overview'] = formatEnNumberFormat(ds);
+      data[tag] = formatEnNumberFormat(ds);
     };
 
-    await Promise.all([requestBasicOverview()]);
+    const requestSalesCNTOverview = async () => {
+      const tag = 'basic.sales.trending';
+      const { data: res } = (await instance.request({
+        url,
+        params: {
+          tag,
+          indicator: 'total_sale_cnt',
+          dateRange,
+        },
+      })) as any;
+
+      data['basic.sales.cnt.trending'] = mergeDualAxesDataFromArray({
+        datas: res.data,
+        xAxisProperty: 'axis_x',
+        yAxisProperty: 'axis_y',
+        legendProperty: 'legend',
+        xAxisPropertyAlias: '日期',
+        xAxisPropertyDataOnlyMS: true,
+      });
+    };
+
+    const requestSalesGMVOverview = async () => {
+      const tag = 'basic.sales.trending';
+      const { data: res } = (await instance.request({
+        url,
+        params: {
+          tag,
+          indicator: 'total_sale_gmv_amt',
+          dateRange,
+        },
+      })) as any;
+
+      data['basic.sales.gmv.trending'] = mergeDualAxesDataFromArray({
+        datas: res.data,
+        xAxisProperty: 'axis_x',
+        yAxisProperty: 'axis_y',
+        legendProperty: 'legend',
+        xAxisPropertyAlias: '日期',
+        xAxisPropertyDataOnlyMS: true,
+      });
+    };
+
+    const requestInfluencerOverview = async () => {
+      const tag = 'basic.influencer.trending';
+      const { data: res } = (await instance.request({
+        url,
+        params: {
+          tag,
+          dateRange,
+        },
+      })) as any;
+
+      data[tag] = mergeDualAxesDataFromArray({
+        datas: res.data,
+        xAxisProperty: 'axis_x',
+        yAxisProperty: 'axis_y',
+        legendProperty: 'legend',
+        xAxisPropertyAlias: '日期',
+        xAxisPropertyDataOnlyMS: true,
+      });
+    };
+
+    const requestInsightsTrendingOverview = async () => {
+      const tag = 'basic.video.trending';
+      const { data: res } = (await instance.request({
+        url,
+        params: {
+          tag,
+          dateRange,
+        },
+      })) as any;
+
+      const ds: Array<any> = res.data || [];
+      data[tag] = ds.map((d) => ({
+        类别: d['legend'],
+        日期: (d['axis_x'] as string).slice(5),
+        数量: d['axis_y'],
+      }));
+    };
+
+    await Promise.all([
+      requestBasicOverview(),
+      requestSalesCNTOverview(),
+      requestSalesGMVOverview(),
+      requestInfluencerOverview(),
+      requestInsightsTrendingOverview(),
+    ]);
 
     return {
       data,

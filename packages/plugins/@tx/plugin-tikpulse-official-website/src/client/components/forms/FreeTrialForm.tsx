@@ -99,7 +99,7 @@ export const useFreeTrialForm = (props: { onNavigateLogin: () => void }) => {
           labelCol={{ span: 6 }}
           wrapperCol={{ span: 18 }}
           form={form}
-          // initialValues={testValue}
+          initialValues={testValue}
           autoComplete="off"
           onFinish={handleSubmitFreeTrial}
         >

@@ -16,6 +16,7 @@ export interface ILabelPanelGroup {
   // labels: Array<ILabelPanelLabel>;
   column?: number;
   customRender?: () => React.ReactNode;
+  footer?: React.ReactNode;
 }
 
 export interface ILabelPanelProps {
@@ -23,7 +24,6 @@ export interface ILabelPanelProps {
   loading?: boolean;
   groups: Array<ILabelPanelGroup>;
   values?: { [key: string]: any };
-  footer?: React.ReactNode;
 }
 
 const useStyles = createStyles(({ css }) => {
@@ -111,11 +111,11 @@ const useStyles = createStyles(({ css }) => {
 });
 
 export const LabelPanel: React.FC<ILabelPanelProps> = observer((props) => {
-  const { title, groups, values, loading, footer } = props;
+  const { title, groups, values, loading } = props;
   const { styles } = useStyles();
 
   const renderGroup = (group: ILabelPanelGroup) => {
-    const { key, title: groupTitle, column = 6, rightFilter, customRender } = group;
+    const { key, title: groupTitle, column = 6, rightFilter, customRender, footer } = group;
 
     const labels: Array<ILabelPanelLabel> = values[key] || [];
 

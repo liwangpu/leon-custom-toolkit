@@ -15,22 +15,21 @@ import { ILabelPanelProps, LabelPanel } from './LabelPanel';
 import { Radio } from 'antd';
 import { useEvent } from '../hooks';
 import { lazy } from '@nocobase/client';
-import { chartData1 } from './data';
-// const { DualAxes: G2DualAxes } = lazy(() => import('@ant-design/plots'), 'DualAxes');
-// const { Line: G2Line } = lazy(() => import('@ant-design/plots'), 'Line');
+import { formatEnglishNumber, getWofoldMaxNumber, pickProperty } from '../utils';
+import TwoChartContainer from './TwoChartContainer';
+import { isNil, max } from 'lodash';
+import { DATE_FILTER_OPTIONS } from '../consts';
+const { DualAxes: G2DualAxes } = lazy(() => import('@ant-design/plots'), 'DualAxes');
+const { Column: G2Column } = lazy(() => import('@ant-design/plots'), 'Column');
 
 const ProductOverviewName = 'ProductOverview';
 const ProductOverviewNameLowercase = ProductOverviewName.toLowerCase();
 
-const DATE_FILTER_OPTIONS = [
-  { value: '7', label: '7 天' },
-  { value: '15', label: '15 天' },
-  { value: '30', label: '30 天' },
-  { value: '90', label: '90 天' },
-];
-
 enum panelScope {
   basicOverview = 'basic.overview',
+  basicSalesTrending = 'basic.sales.trending',
+  basicInfluencerTrending = 'basic.influencer.trending',
+  basicInsightsTrending = 'basic.insights.trending',
 }
 
 export const registerProductOverviewComponent = (props: { plugin: Plugin }) => {
@@ -102,134 +101,207 @@ const ProductOverview: React.FC<any> = withDynamicSchemaProps(
       );
     };
 
-    // const renderSampleChar = () => {
-    //   const data = [
-    //     { year: '1991', value: 3 },
-    //     { year: '1992', value: 4 },
-    //     { year: '1993', value: 3.5 },
-    //     { year: '1994', value: 5 },
-    //     { year: '1995', value: 4.9 },
-    //     { year: '1996', value: 6 },
-    //     { year: '1997', value: 7 },
-    //     { year: '1998', value: 9 },
-    //     { year: '1999', value: 13 },
-    //   ];
+    const renderSalesVolumeChar = () => {
+      const data = pickProperty(values, panelScope.basicSalesTrending, []);
+      // 双轴图中，因为需要让两轴有一定上下间隔，否则显示会很难看，那么可以让柱形图（也就是右边y轴）让它的刻度线的最大值，是当前y轴数据值的两倍
+      const maxYValue = max(data.map((d) => d['日销量']));
+      const maxYValueInteger = getWofoldMaxNumber(maxYValue);
+      const config = {
+        xField: '日期',
+        data,
+        title: `销量和销售额（${dateFilterValue}）天`,
+        height: 300,
+        axis: {
+          x: {
+            labelFormatter: (text, index) => {
+              if (index % 5 === 0) {
+                return text;
+              } else {
+                return '';
+              }
+            },
+          },
+          y: {
+            labelFormatter: (text, index) => {
+              return formatEnglishNumber(text);
+            },
+          },
+        },
+        legend: {
+          color: {
+            itemMarker: (v) => {
+              if (v === '日销量') return 'rect';
+              return 'smooth';
+            },
+            layout: {
+              justifyContent: 'center',
+              alignItems: 'center',
+              flexDirection: 'row',
+            },
+          },
+        },
+        children: [
+          {
+            type: 'interval',
+            yField: '日销量',
+            axis: {
+              y: {
+                title: '日销量',
+                position: 'right',
+                titleFill: '#338AFF',
+              },
+            },
+            scale: {
+              y: {
+                domainMax: maxYValueInteger,
+              },
+            },
+          },
+          {
+            type: 'line',
+            yField: '总销量',
+            shapeField: 'smooth',
+            axis: {
+              y: {
+                title: '总销量',
+                position: 'left',
+                titleFill: '#4CCCCC',
+              },
+            },
+            scale: {
+              color: { relations: [['总销量', '#4CCCCC']] },
+            },
+            style: { lineWidth: 2 },
+          },
+        ],
+      };
+      return (
+        <div>
+          <G2DualAxes {...config} />
+        </div>
+      );
+    };
 
-    //   const config = {
-    //     data,
-    //     height: 400,
-    //     axis: {
-    //       x: {
-    //         title: 'xxxxxx',
-    //       },
-    //       y: {
-    //         title: '舍',
-    //       },
-    //     },
-    //     xField: 'year',
-    //     yField: 'value',
-    //   };
-    //   return <G2Line {...config} />;
-    // };
+    const renderFluencerCharts = () => {
+      const leftPart = () => {
+        const data = pickProperty(values, panelScope.basicInfluencerTrending, []);
+        const maxYValue = max(data.map((d) => d['达人数增量']));
+        const maxYValueInteger = getWofoldMaxNumber(maxYValue);
+        const config = {
+          xField: '日期',
+          data,
+          title: `关联达人趋势（${dateFilterValue}）天`,
+          height: 300,
+          axis: {
+            x: {
+              labelFormatter: (text, index) => {
+                if (index % 5 === 0) {
+                  return text;
+                } else {
+                  return '';
+                }
+              },
+            },
+            y: {
+              labelFormatter: (text, index) => {
+                return formatEnglishNumber(text);
+              },
+            },
+          },
+          legend: {
+            color: {
+              itemMarker: (v) => {
+                if (v === '达人数增量') return 'rect';
+                return 'smooth';
+              },
+              layout: {
+                justifyContent: 'center',
+                alignItems: 'center',
+                flexDirection: 'row',
+              },
+            },
+          },
+          children: [
+            {
+              type: 'interval',
+              yField: '达人数增量',
+              axis: {
+                y: {
+                  title: '达人数增量',
+                  position: 'right',
+                  titleFill: '#338AFF',
+                },
+              },
+              scale: {
+                y: {
+                  domainMax: maxYValueInteger,
+                },
+              },
+            },
+            {
+              type: 'line',
+              yField: '达人数',
+              shapeField: 'smooth',
+              axis: {
+                y: {
+                  title: '达人数',
+                  position: 'left',
+                  titleFill: '#4CCCCC',
+                },
+              },
+              scale: {
+                color: { relations: [['达人数', '#4CCCCC']] },
+              },
+              style: { lineWidth: 2 },
+            },
+          ],
+        };
 
-    // const renderSample2Char = () => {
-    //   const config = {
-    //     xField: 'time',
-    //     data: [
-    //       { time: '10:10', call: 4, waiting: 2, people: 2 },
-    //       { time: '10:15', call: 2, waiting: 6, people: 3 },
-    //       { time: '10:20', call: 13, waiting: 2, people: 5 },
-    //       { time: '10:25', call: 9, waiting: 9, people: 1 },
-    //       { time: '10:30', call: 5, waiting: 2, people: 3 },
-    //       { time: '10:35', call: 8, waiting: 2, people: 1 },
-    //       { time: '10:40', call: 13, waiting: 1, people: 2 },
-    //     ],
+        return <G2DualAxes {...config} />;
+      };
 
-    //     legend: {
-    //       color: {
-    //         itemMarker: (v) => {
-    //           if (v === 'waiting') return 'rect';
-    //           return 'smooth';
-    //         },
-    //       },
-    //     },
-    //     children: [
-    //       {
-    //         type: 'interval',
-    //         yField: 'waiting',
-    //         axis: {
-    //           x: {
-    //             title: 'xxxxxx',
-    //           },
-    //           y: {
-    //             title: '舍',
-    //           },
-    //         },
-    //       },
-    //       {
-    //         type: 'line',
-    //         yField: 'people',
-    //         shapeField: 'smooth',
-    //         scale: { color: { relations: [['people', '#fdae6b']] } },
-    //         axis: { y: { position: 'right' } },
-    //         style: { lineWidth: 2 },
-    //       },
-    //     ],
-    //   };
-    //   return <G2DualAxes {...config} />;
-    // };
+      const rightPart = () => {
+        const data = values ? values[panelScope.basicInsightsTrending] : [];
+        const config = {
+          xField: '日期',
+          yField: '数量',
+          colorField: '类别',
+          data,
+          title: `每日视频直播趋势（${dateFilterValue}）天`,
+          height: 300,
+          group: true,
+          legend: {
+            color: {
+              layout: {
+                justifyContent: 'center',
+                alignItems: 'center',
+                flexDirection: 'row',
+              },
+            },
+          },
+          style: {
+            // 矩形四个方向的内边距
+            inset: 5,
+            // 矩形单个方向的内边距
+            // insetLeft:5,
+            // insetRight:20,
+            // insetBottom:10
+            // insetTop:10
+          },
+        };
 
-    // const renderSalesVolumeChar = () => {
-    //   const config = {
-    //     xField: 'axis_x',
-    //     data: chartData1,
-    //     // data:[
-    //     //   {
-    //     //     legend: '总销量',
-    //     //     axis_x: '2025-03-14',
-    //     //     axis_y: 917515,
-    //     //     axis_y_f: '917.52K',
-    //     //   },
-    //     // ],
-    //     // legend: {
-    //     //   color: {
-    //     //     itemMarker: (v) => {
-    //     //       if (v === 'waiting') return 'rect';
-    //     //       return 'smooth';
-    //     //     },
-    //     //   },
-    //     // },
-    //     // axis: {
-    //     //   x: {
-    //     //     title: '日期',
-    //     //   },
-    //     // },
-    //     children: [
-    //       {
-    //         type: 'interval',
-    //         yField: 'axis_y',
-    //         axis: {
-    //           y: {
-    //             title: '日销量',
-    //           },
-    //         },
-    //       },
-    //       {
-    //         type: 'line',
-    //         yField: 'axis_y_f',
-    //         shapeField: 'smooth',
-    //         scale: { color: { relations: [['axis_y_f', '#fdae6b']] } },
-    //         axis: { y: { title: '总销量', position: 'right' } },
-    //         style: { lineWidth: 1 },
-    //       },
-    //     ],
-    //   };
-    //   return <G2DualAxes {...config} />;
-    // };
+        return <G2Column {...config} />;
+      };
+      return <TwoChartContainer left={leftPart()} right={rightPart()} />;
+    };
 
     const renderFooter = () => {
-      // return <div className={styles.chartContainer}>{renderSalesVolumeChar()}</div>;
-      return <></>;
+      return (
+        <div className={styles.chartContainer}>
+          {renderSalesVolumeChar()}
+          {renderFluencerCharts()}
+        </div>
+      );
     };
 
     const settings: Partial<ILabelPanelProps> = {
@@ -238,6 +310,7 @@ const ProductOverview: React.FC<any> = withDynamicSchemaProps(
           key: panelScope.basicOverview,
           title: `概览`,
           rightFilter: renderDateFilter(),
+          footer: renderFooter(),
         },
       ],
     };
@@ -262,7 +335,7 @@ const ProductOverview: React.FC<any> = withDynamicSchemaProps(
 
     return (
       <div className={styles.container}>
-        <LabelPanel {...(settings as any)} loading={loading} values={values} footer={renderFooter()} />
+        <LabelPanel {...(settings as any)} loading={loading} values={values} />
       </div>
     );
   },

@@ -504,7 +504,7 @@ const makePackagePayment = () => {
       throw new Error(`套餐信息已过期,请刷新或者尝试购买其他套餐`);
     }
 
-    // price = 0.1;
+    price = 0.1;
 
     const cost: IPaymentCost = {
       name: `${record.name}`,
@@ -557,7 +557,8 @@ const packagePaymentFeedback = AlipayCenter.completePayment(async ({ ctx, next, 
     <html>
       <head>
       <script>
-      window.close();
+     // window.close();
+     window.open('https://tikpulse.net/admin/settings/organization_info','_self')
       </script>
       </head>
     </html>`;
@@ -663,6 +664,7 @@ const packagePaymentFeedback = AlipayCenter.completePayment(async ({ ctx, next, 
     const organ = await organizationRep.findByTargetKey(organizationId);
     const organManagerId = organ.managerId;
     const userRepo = ctx.db.getRepository('users');
+
     const organUser = await userRepo.findOne({
       filter: {
         id: organManagerId,

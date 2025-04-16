@@ -7,6 +7,7 @@ import { Radio } from 'antd';
 import { useEvent } from '../hooks';
 import TKVideoCard, { ITKVideoCardProps } from './TKVideoCard';
 import { ISchema } from '@formily/json-schema';
+import { padEnd, floor } from 'lodash';
 
 export const registerTestComponent = (props: { plugin: Plugin }) => {
   const { plugin } = props;
@@ -29,7 +30,9 @@ const schema: ISchema = {
     // association,
     // action,
   },
-  'x-component': 'ProductOverview',
+  // 'x-component': 'InfluencerOverview',
+  // 'x-component': 'ProductOverview',
+  'x-component': 'SellerOverview',
   // properties: {
   //   demo: {
   //     type: 'array',
@@ -48,6 +51,7 @@ const useStyles = createStyles(({ css }) => {
       height: 100%;
       padding: 20px;
       background-color: rgb(242, 243, 245);
+      overflow: auto;
     `,
   };
 });
@@ -70,7 +74,8 @@ TestDemo.displayName = 'TestDemo';
 
 const dataContext: DataBlockContextValue<any> = {
   props: {
-    filterByTk: '1729401873273951198',
+    filterByTk: '7495150597721263036',
+    // filterByTk: '1729431948361436125',
   },
   dn: null,
 };
