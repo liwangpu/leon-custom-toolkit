@@ -91,8 +91,8 @@ export const AlipayCenter = (() => {
 
       await createCostRecord();
 
-      // 模拟测试跳转
-      return ctx.redirect(return_url);
+      // // 模拟测试跳转
+      // return ctx.redirect(return_url);
 
       // 金额为0,是不需要付款的，所以直接走下个流程
       if (cost.amount === 0) {

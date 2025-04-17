@@ -138,6 +138,9 @@ const PackageAndService: React.FC<{ noFooterBorder?: boolean }> = observer((prop
       if (isNil(store.organizationId)) return;
       const { data } = await apiClient.request({
         url: `servicePermissions:servicesInfo`,
+        params: {
+          organizationId: store.organizationId,
+        },
       });
       if (!isNil(data)) {
         const { organPackages, organServices } = data;

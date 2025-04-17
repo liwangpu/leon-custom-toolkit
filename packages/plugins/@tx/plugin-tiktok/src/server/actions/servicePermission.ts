@@ -21,6 +21,7 @@ export const registerServicePermissionsActions = (props: { plugin: Plugin }) => 
   });
   app.acl.allow('servicePermissions', '*', 'loggedIn');
   app.acl.allow('servicePermissions', 'checkOrganPackageIsExpired', 'public');
+  app.acl.allow('servicePermissions', 'servicesInfo', 'public');
 };
 
 const submitPermissions = () => {
@@ -55,9 +56,15 @@ const submitPermissions = () => {
 
 const getOrganizationServiceInfo = () => {
   return async (ctx: Context, next: () => any) => {
-    const { organizationId } = getUserInfo({
-      ctx,
-    });
+    let { organizationId } = ctx.query as any;
+    if (isNil(organizationId)) {
+      const { organizationId: organId } = getUserInfo({
+        ctx,
+      });
+      organizationId = organId;
+    }
+    console.log(`---------[ title ]---------`);
+    console.log(`organizationId:`, organizationId);
     let organPackages: IOrganizationServicePackage[] = [];
     let organServices: IOrganizationPaidService[] = [];
     ctx.withoutDataWrapping = true;
@@ -80,7 +87,7 @@ const getOrganizationServiceInfo = () => {
     const currentTime = dayjs();
     organPackages = await organServicePackageRepo.find({
       filter: {
-        organizationId,
+        organizationId: { $eq: organizationId },
       },
     });
 
@@ -105,7 +112,7 @@ const getOrganizationServiceInfo = () => {
         $and: [
           // 隐藏归属于套餐的服务
           { packages: { id: { $empty: true } } },
-          organizationId,
+          { organizationId: { $eq: organizationId } },
         ],
       },
     });

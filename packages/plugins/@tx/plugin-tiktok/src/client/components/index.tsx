@@ -16,6 +16,7 @@ import { registerPaidServicePermissionSettingComponent } from './PaidServicePerm
 import { registerAlipaySettingComponent } from './AlipaySetting';
 import { registerOrganizationInfoComponent } from './OrganizationInfo';
 import { registerTestComponent } from './test';
+import { registerHashTagOverviewComponent } from './HashTagOverview';
 
 export const registerComponents = (props: { plugin: Plugin }) => {
   registerPaymentComponent(props);
@@ -34,6 +35,7 @@ export const registerComponents = (props: { plugin: Plugin }) => {
   registerPaidServicePermissionSettingComponent(props);
   registerAlipaySettingComponent(props);
   registerOrganizationInfoComponent(props);
+  registerHashTagOverviewComponent(props);
   registerTestComponent(props);
   // registerTest2Component(props);
 };

@@ -32,7 +32,8 @@ const schema: ISchema = {
   },
   // 'x-component': 'InfluencerOverview',
   // 'x-component': 'ProductOverview',
-  'x-component': 'SellerOverview',
+  // 'x-component': 'SellerOverview',
+  'x-component': 'HashTagOverview',
   // properties: {
   //   demo: {
   //     type: 'array',
@@ -74,7 +75,7 @@ TestDemo.displayName = 'TestDemo';
 
 const dataContext: DataBlockContextValue<any> = {
   props: {
-    filterByTk: '7495150597721263036',
+    filterByTk: '229207',
     // filterByTk: '1729431948361436125',
   },
   dn: null,

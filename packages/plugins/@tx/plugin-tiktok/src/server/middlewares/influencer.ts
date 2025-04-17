@@ -1,8 +1,7 @@
-import { isArray, isNil } from 'lodash';
 import type { Plugin } from '@nocobase/server';
 import { getUserInfo } from './common';
-import { EchoTikAPI } from '../dataCenter';
-
+import { EchoTikAPI, IEchoSort } from '../dataCenter';
+import { parseListFilterCondition } from '../utils';
 /**
  * 实施达人库相关中间件
  * @param plugin pPlugin
@@ -26,59 +25,92 @@ const influencerListMiddeware = (plugin: Plugin) => {
     if (!(resourceName === 'influencers' && actionName === 'list')) return await next();
     // params 格式是 {filterByTk:number;resourceName:string;actionName:string;values:any;filter:any}
     const params = ctx.action.params;
-    const { filter, page, pageSize } = params;
-    const $and = filter['$and'];
-    // console.log(`---------[ influencerListMiddeware ]---------`);
+    const { filter, page, pageSize, sort } = params;
+    console.log(`---------[ influencerListMiddeware ]---------`);
     // console.log(`params:`, params);
-    // console.log(`$and:`, JSON.stringify($and));
-    const searchMap = new Map<string, any>();
-    if (isArray($and)) {
-      for (const it of $and) {
-        const propeties = Object.keys(it);
+    console.log(`filter:`, JSON.stringify(filter));
+
+    const searchMap: Map<string, any> = await parseListFilterCondition({
+      filter,
+      async parseFn(condition, add) {
+        // console.log(`condition:`, condition);
+        const propeties = Object.keys(condition);
 
         for (const propety of propeties) {
-          const kv = it[propety];
+          const kv = condition[propety];
           // console.log(`propety:`, propety);
           // console.log(`kv:`, kv);
           switch (propety) {
             case 'keyword':
-              searchMap.set(propety, kv['$includes']);
+              add(propety, kv['$includes']);
               break;
             case 'search_followers_count':
-              searchMap.set(propety, kv['$eq']);
-              break;
             case 'search_digg_count':
-              searchMap.set(propety, kv['$eq']);
+            case 'searchConditionUid':
+            case 'time_type':
+              add(propety, kv['$eq']);
               break;
             case 'sales_flag':
-              searchMap.set(propety, kv['$isTruly']);
+              add(propety, kv['$isTruly']);
               break;
             case 'is_live':
-              searchMap.set(propety, kv['$isTruly']);
+              add(propety, kv['$isTruly']);
               break;
             case 'country':
-              searchMap.set(propety, kv['id']['$eq']);
+              add(propety, kv['id']['$eq']);
               break;
             case 'productionCategory':
-              searchMap.set(propety, kv['categoryId']['$eq']);
+              add(propety, kv['categoryId']['$eq']);
+              break;
+            case 'influencerCategory':
+              add(propety, kv['key']['$eq']);
               break;
             default:
               break;
           }
         }
-      }
+      },
+    })();
+
+    let orderFieldMapping: Record<string, any> = {};
+    const searchConditionUid = searchMap.get('searchConditionUid');
+    switch (searchConditionUid) {
+      case '带货达人榜':
+        orderFieldMapping = {
+          product_ifl_gmv_amt: 'total_gmv_amt',
+          video_count: 'total_post_video_cnt',
+          follower_count: 'total_followers_cnt',
+        };
+        break;
+      case '飙升达人榜':
+        orderFieldMapping = {
+          follower_count: 'total_followers_cnt',
+        };
+        break;
+      case '直播带货达人榜':
+        orderFieldMapping = {
+          // follower_count: 'total_followers_cnt',
+        };
+        break;
+      default:
+        break;
     }
-    // console.log(`searchMap:`, searchMap);
+
+    console.log(`searchMap:`, searchMap);
     const { data: ds, meta } = await EchoTikAPI.requestInfluencerList({
       keyword: searchMap.get('keyword'),
       country: searchMap.get('country'),
       salesFlag: searchMap.get('sales_flag'),
       isLive: searchMap.get('is_live'),
       productCategory: searchMap.get('productionCategory'),
+      influencerCategory: searchMap.get('influencerCategory'),
       followersCount: searchMap.get('search_followers_count'),
       diggCount: searchMap.get('search_digg_count'),
+      time_type: searchMap.get('time_type'),
+      searchConditionUid,
       page,
       pageSize,
+      ...EchoTikAPI.transferNocoSortToEchoSort({ sort, orderFieldMapping }),
     });
     ctx.withoutDataWrapping = true;
     ctx.body = {

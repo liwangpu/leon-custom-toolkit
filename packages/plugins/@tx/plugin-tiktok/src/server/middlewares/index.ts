@@ -19,6 +19,7 @@ import { implementPermissionMiddleware } from './permission';
 import { implementSignInMiddleware } from './signIn';
 import { implementUserRoleMiddleware } from './userRole';
 import { implementRoleCheckMiddleware } from './roleCheck';
+// import { implementHashTagMiddleware } from './hashTag';
 
 export * from './common';
 
@@ -45,6 +46,7 @@ export const implementMiddlewares = (props: { plugin: Plugin }) => {
     implementSignInMiddleware(plugin);
     implementUserRoleMiddleware(plugin);
     implementRoleCheckMiddleware(plugin);
+    // implementHashTagMiddleware(plugin);
     // 养号计划关键词新增/编辑和删除触发养号计划更新
     app.acl.use(searchTermDetailMiddeware(plugin));
     // 监听db事件,填写organizationId字段信息

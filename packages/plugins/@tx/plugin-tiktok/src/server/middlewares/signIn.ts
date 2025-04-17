@@ -22,14 +22,15 @@ const signInMiddeware = (plugin: Plugin) => {
     const expiredPackages: any[] = await organServicePackageRepo.find({
       filter: { $and: [{ organizationId: { $eq: organizationId } }] },
     });
+
     ctx.res.setHeader('x-organization-id', organizationId);
 
     const currentTime = dayjs();
-    const hasExpirated = expiredPackages.some((pck) => {
+    const hasEnabled = expiredPackages.some((pck) => {
       const _expirationDate = pck.expirationDate;
-      return currentTime.isAfter(dayjs(_expirationDate));
+      return currentTime.isBefore(dayjs(_expirationDate));
     });
-    if (!hasExpirated) return;
+    if (hasEnabled) return;
     return ctx.throw(400, '该组织套餐已到期,请先续费后再使用!');
 
     // const expiredPackages: any[] = await organServicePackageRepo.find({

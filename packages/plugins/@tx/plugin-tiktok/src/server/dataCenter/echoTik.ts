@@ -4,7 +4,7 @@ import dayjs from 'dayjs';
 import { isArray, isFunction, isNil, isNumber, isString } from 'lodash';
 import { formatEnglishNumber } from '../utils';
 
-type IEchoSort = 'asc' | 'desc';
+export type IEchoSort = 'asc' | 'desc';
 export const EchoTikAPI = (() => {
   let plugin: Plugin;
 
@@ -340,6 +340,55 @@ export const EchoTikAPI = (() => {
     };
   };
 
+  /**
+   * 带货达人榜
+   * @param props
+   * @returns
+   */
+  const requestChampionSalesList = async (props: {
+    time_type: string;
+    country: number;
+    productCategory: string;
+    page: number;
+    pageSize: number;
+  }) => {
+    // https://echotik.live/api/v1/data/influencers/leaderboard/champion-sales?time_type=weekly&time_range=20250407-20250413&page=1&influencer_role=2&influencer_categories=&product_categories=&per_page=20;
+    const { time_type, country, productCategory, page, pageSize } = props;
+    const url = `${echoTipAPIBase}/influencers/leaderboard/champion-sales?`;
+
+    const token = await getToken();
+    const region = await getCountryRegion(country);
+    const timeRange = getTimeRange(time_type);
+    const params: any = {
+      page,
+      per_page: pageSize,
+      time_type,
+      time_range: timeRange,
+      order: 'sale_cnt',
+    };
+
+    if (productCategory !== 'All') {
+      params.product_categories = productCategory;
+    }
+
+    const { data: res } = await axios.request({
+      url,
+      method: 'GET',
+      headers: {
+        Authorization: token,
+        'x-region': region,
+      },
+      params,
+    });
+
+    const meta = genMeta({ resData: res, page, pageSize });
+
+    return {
+      data: res.data as Array<any>,
+      meta,
+    };
+  };
+
   const requestHotSellList = async (props: {
     time_type: string;
     country: number;
@@ -444,24 +493,49 @@ export const EchoTikAPI = (() => {
     salesFlag?: boolean;
     isLive?: boolean;
     productCategory?: string;
+    influencerCategory?: string;
     followersCount?: string;
     diggCount?: string;
+    searchConditionUid?: string;
+    time_type?: string;
+    order?: string;
+    sort?: IEchoSort;
   }) => {
-    const { keyword, country, salesFlag, isLive, productCategory, followersCount, diggCount, page, pageSize } = props;
+    const {
+      keyword,
+      country,
+      salesFlag,
+      isLive,
+      productCategory,
+      influencerCategory,
+      followersCount,
+      diggCount,
+      searchConditionUid,
+      time_type,
+      page,
+      pageSize,
+      order,
+      sort,
+    } = props;
     // const url=`https://echotik.live/api/v1/data/influencers?page=1&per_page=&influencer_categories=&product_categories=&show_case=&is_email=&order=follower_30d_count&sort=desc&keyword=`;
-    const url = `${echoTipAPIBase}/influencers`;
+    let url = `${echoTipAPIBase}/influencers`;
     const region = await getCountryRegion(country);
 
     const instance = await getAxiosInstance();
+
+    const transfers: Array<(item: Record<string, any>) => void> = [];
 
     const params: Record<string, any> = {
       page,
       per_page: pageSize,
       product_categories: productCategory,
       keyword,
-      influencer_categories: undefined,
+      time_type,
+      influencer_categories: influencerCategory,
       followers_count: followersCount,
       likes_count: diggCount,
+      order,
+      sort,
     };
     if (salesFlag) {
       params['sales_flag'] = 1;
@@ -470,6 +544,72 @@ export const EchoTikAPI = (() => {
       params['is_live'] = 1;
     }
 
+    if (!isNil(searchConditionUid)) {
+      switch (searchConditionUid) {
+        case '带货达人榜':
+          {
+            // https://echotik.live/api/v1/data/influencers/leaderboard/champion-sales?time_type=weekly&time_range=20250407-20250413&page=1&influencer_role=2&influencer_categories=&product_categories=&per_page=20
+            url = `${echoTipAPIBase}/influencers/leaderboard/champion-sales`;
+            params['time_range'] = getTimeRange(time_type);
+            transfers.push((item) => {
+              const categoryName: string = item.category_product;
+              if (!isNil(categoryName)) {
+                item['productionCategory'] = {
+                  categoryId: categoryName,
+                  name: categoryName,
+                };
+              }
+              item['influencer_name'] = item.nick_name;
+              item['sales'] = item.total_sales_cnt;
+              item['product_ifl_gmv_amt'] = item.total_gmv_amt;
+              item['video_count'] = item.total_post_video_cnt;
+              item['follower_count'] = item.total_followers_cnt;
+            });
+          }
+          break;
+        case '飙升达人榜':
+          {
+            // https://echotik.live/api/v1/data/influencers/leaderboard/followers-increment?time_type=daily&time_range=20250415&page=1&influencer_role=&influencer_categories=&product_categories=&order=total_followers_increment&per_page=20
+            url = `${echoTipAPIBase}/influencers/leaderboard/followers-increment`;
+            params['time_range'] = getTimeRange(time_type);
+            transfers.push((item) => {
+              const categoryName: string = item.category;
+              if (!isNil(categoryName)) {
+                item['influencerCategory'] = {
+                  categoryId: categoryName,
+                  name: categoryName,
+                };
+              }
+              item['influencer_name'] = item.nick_name;
+              item['follower_count'] = item.total_followers_cnt;
+            });
+          }
+          break;
+        case '直播带货达人榜':
+          {
+            // https://echotik.live/api/v1/data/influencers/leaderboard/hot-live?time_type=monthly&time_range=20250301-20250331&page=1&influencer_role=&influencer_categories=&product_categories=&order=total_live_cnt&per_page=20
+            url = `${echoTipAPIBase}/influencers/leaderboard/hot-live`;
+            params['time_range'] = getTimeRange(time_type);
+            transfers.push((item) => {
+              const categoryName: string = item.category_product;
+              if (!isNil(categoryName)) {
+                item['productionCategory'] = {
+                  categoryId: categoryName,
+                  name: categoryName,
+                };
+              }
+              item['influencer_name'] = item.nick_name;
+              item['total_live_count'] = item.total_live_cnt;
+              item['sales'] = item.total_live_sale_cnt;
+              item['product_ifl_gmv_amt'] = item.total_live_gmv_amt;
+            });
+          }
+          break;
+        default:
+          break;
+      }
+    }
+    console.log(`params:`, params);
     const { data: res } = await instance.request({
       url,
       method: 'GET',
@@ -482,7 +622,12 @@ export const EchoTikAPI = (() => {
     const meta = genMeta({ resData: res, page, pageSize });
 
     return {
-      data: res.data as Array<any>,
+      data: (res.data as Array<any>).map((item) => {
+        for (const transfer of transfers) {
+          transfer(item);
+        }
+        return item;
+      }),
       meta,
     };
   };
@@ -2132,6 +2277,227 @@ export const EchoTikAPI = (() => {
     };
   };
 
+  const hasTagIdTool = (() => {
+    const splitFlag = '@';
+    const defaultRegion = 'US';
+    const generateTagId = (id: string, region: string = defaultRegion) => {
+      return `${id}${splitFlag}${region}`;
+    };
+    const parseId = (id: string) => {
+      let region = defaultRegion;
+      const idx = id.indexOf(splitFlag);
+      if (idx > -1) {
+        region = id.slice(idx + 1);
+        id = id.slice(0, idx);
+      }
+      return { region, id };
+    };
+    return {
+      generateTagId,
+      parseId,
+    };
+  })();
+
+  const requestHashTagList = async (props: {
+    page: number;
+    pageSize: number;
+    keyword?: string;
+    country?: number;
+    searchCondition?: Map<string, any>;
+    order?: string;
+    sort?: IEchoSort;
+  }) => {
+    const { searchCondition, page, pageSize, order, sort } = props;
+    // https://echotik.live/api/v1/data/tags?page=1&per_page=10&sort=desc&order=views_count&keyword=
+    const url = `${echoTipAPIBase}/tags`;
+    let region: string;
+
+    const instance = await getAxiosInstance();
+
+    const transfers: Array<(item: Record<string, any>) => void> = [];
+
+    const params: Record<string, any> = {
+      page,
+      per_page: pageSize,
+      order,
+      sort,
+    };
+
+    const { conditionCheck, countryConditionCheck } = searchConditionJudgement(searchCondition);
+
+    await conditionCheck({
+      field: 'tag_title',
+      cb({ value }) {
+        params['keyword'] = value;
+      },
+    });
+
+    await countryConditionCheck({
+      field: 'country',
+      cb({ value }) {
+        region = value;
+      },
+    });
+
+    await conditionCheck({
+      field: 'searchConditionViewCount',
+      cb({ value }) {
+        params['views_count'] = value;
+      },
+    });
+
+    await conditionCheck({
+      field: 'searchConditionDiggCount',
+      cb({ value }) {
+        params['digg_count'] = value;
+      },
+    });
+
+    region = region || 'US';
+
+    transfers.push((it) => {
+      if (!isNil(region)) {
+        it['tag_id'] = hasTagIdTool.generateTagId(it.tag_id, region);
+      }
+      return it;
+    });
+
+    const { data: res } = await instance.request({
+      url,
+      method: 'GET',
+      headers: {
+        'x-region': region,
+      },
+      params,
+    });
+
+    const meta = genMeta({ resData: res, page, pageSize });
+
+    return {
+      data: (res.data as Array<any>).map((item) => {
+        for (const transfer of transfers) {
+          transfer(item);
+        }
+        return item;
+      }),
+      meta,
+    };
+  };
+
+  const requestHasTagDetail = async (props: { dataId: string }) => {
+    const { dataId: _id } = props;
+    const { id: dataId, region } = hasTagIdTool.parseId(_id);
+
+    const instance = await getAxiosInstance();
+    const {
+      data: { data, msg, code },
+    } = (await instance.request({
+      url: `/tags/${dataId}`,
+      headers: {
+        'x-region': region,
+      },
+      params: {
+        region,
+      },
+    })) as any;
+
+    const { id: countryKey } = data.region || {};
+    let country;
+    if (!isNil(countryKey)) {
+      country = await getCountryByKey(countryKey);
+    }
+
+    return {
+      ...data,
+      video_count: data.videos_count,
+      follower_count: data.followers_count,
+      view_count: data.views,
+      country,
+    };
+  };
+
+  const requestHashTagVideoList = async (props: {
+    tagId: string;
+    page: number;
+    pageSize: number;
+    order?: string;
+    sort?: IEchoSort;
+  }) => {
+    const { tagId: _id, page, pageSize, order, sort } = props;
+    const { id: tagId, region } = hasTagIdTool.parseId(_id);
+    // https://echotik.live/api/v1/data/tags/229207/videos?page=1&per_page=12&is_sale=0&dateRange=30&sort=desc&order=publish_time&region=US
+    const url = `${echoTipAPIBase}/tags/${tagId}/videos`;
+
+    const instance = await getAxiosInstance();
+
+    const params: Record<string, any> = {
+      page,
+      per_page: pageSize,
+      order,
+      sort,
+      region,
+    };
+
+    const { data: res } = await instance.request({
+      url,
+      method: 'GET',
+      headers: {
+        'x-region': region,
+      },
+      params,
+    });
+
+    const meta = genMeta({ resData: res, page, pageSize });
+
+    return {
+      data: (res.data as Array<any>).map((item) => {
+        // for (const transfer of transfers) {
+        //   transfer(item);
+        // }
+        return item;
+      }),
+      meta,
+    };
+  };
+
+  const requestHashTagsTrend = async (props: { id: string }) => {
+    const { id: _id } = props;
+    const { id, region } = hasTagIdTool.parseId(_id);
+    // https://echotik.live/api/v1/data/tags/229207/analysis?tag=basic.tags.trending&region=US&dateRange=30
+
+    const instance = await getAxiosInstance();
+    const data: Record<string, any> = {};
+
+    const url = `/tags/${id}/analysis`;
+    const tag = 'basic.tags.trending';
+    const requestBasicOverview = async () => {
+      const { data: res } = (await instance.request({
+        url,
+        headers: {
+          'x-region': region,
+        },
+        params: {
+          tag,
+          dateRange: 30,
+          region,
+        },
+      })) as any;
+
+      const ds: Array<any> = res.data || [];
+      data[tag] = ds.map((d) => ({
+        类别: d['legend'],
+        日期: (d['axis_x'] as string).slice(5),
+        数量: d['axis_y'],
+      }));
+    };
+
+    await Promise.all([requestBasicOverview()]);
+
+    return {
+      data,
+    };
+  };
+
   return {
     startup,
     transferNocoSortToEchoSort,
@@ -2175,5 +2541,9 @@ export const EchoTikAPI = (() => {
     requestSellerInfluencerList,
     requestSellerVideoList,
     requestSellerLiveList,
+    requestHashTagList,
+    requestHasTagDetail,
+    requestHashTagVideoList,
+    requestHashTagsTrend,
   };
 })();

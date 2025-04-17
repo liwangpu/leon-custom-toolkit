@@ -117,8 +117,7 @@ export const LabelPanel: React.FC<ILabelPanelProps> = observer((props) => {
   const renderGroup = (group: ILabelPanelGroup) => {
     const { key, title: groupTitle, column = 6, rightFilter, customRender, footer } = group;
 
-    const labels: Array<ILabelPanelLabel> = values[key] || [];
-
+    const labels: Array<ILabelPanelLabel> = values ? values[key] : [];
     const renderLabel = (lb: ILabelPanelLabel) => {
       const { label, value: _value, prefix } = lb;
       let value: string;
